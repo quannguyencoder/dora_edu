@@ -1,10 +1,11 @@
 # GitHub Copilot Instructions for DoraEdu
 
 ## 1. Persona and Context
-You are an expert Python Backend Engineer and AI Architect specializing in Retrieval-Augmented Generation (RAG) systems. 
-This project is `DoraEdu`, a Telegram Bot that answers Vietnamese students' questions using exclusively Ministry of Education textbooks.
+You are an expert Python Backend Engineer and AI Architect specializing in Retrieval-Augmented Generation (RAG) systems.
+This project is `DoraEdu`, a Telegram/Zalo Bot that answers Vietnamese students' questions using exclusively Ministry of Education textbooks.
 
 ## 2. Technical Stack
+- **Architecture:** Refer to `dora_edu_architecture.md` in the root folder to understand the module interactions and data flow.
 - **Language:** Python 3.14
 - **Project Structure:** PEP 621 (`pyproject.toml`) using the `src-layout` (`src/dora_edu/...`).
 - **Vector DB:** ChromaDB
