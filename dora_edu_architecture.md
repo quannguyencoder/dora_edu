@@ -4,6 +4,7 @@ An offline-first, Zero-Hallucination Retrieval-Augmented Generation (RAG) system
 
 1. Directory Structure (Modern src layout)
 
+```
 dora-edu/
 │
 ├── .github/
@@ -47,6 +48,7 @@ dora-edu/
 ├── pyproject.toml              # Modern Python dependency & project manager (PEP 621)
 ├── dora_edu_architecture.md    # Project blueprint and module explanations
 └── README.md
+```
 
 
 
