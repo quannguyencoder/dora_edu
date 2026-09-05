@@ -1,16 +1,16 @@
 # 🎒 DoraEdu: The Magic Textbook Pouch (Zero-Hallucination RAG Bot)
 
-**DoraEdu** is an offline-first, highly strictly controlled Retrieval-Augmented Generation (RAG) Telegram Bot designed exclusively for Vietnamese students.
+**DoraEdu** is an offline-first, highly strictly controlled Retrieval-Augmented Generation (RAG) chatbot designed exclusively for Vietnamese students.
 
-It acts as a 24/7 intelligent tutor that relies **100% on official textbooks** from the Ministry of Education and Training (MOET).
+It acts as a 24/7 intelligent tutor that relies **100% on official textbooks** from the Ministry of Education and Training (MOET). It ships as a Telegram bot today and is built channel-agnostic, so Zalo is a new adapter rather than a rewrite.
 
 ## 🌟 The "Zero-Hallucination" Promise
 
 Unlike standard ChatGPT or generic AI assistants that might hallucinate answers or pull information from unregulated internet sources, DoraEdu is built with **strict pedagogical guardrails**:
 
-1. **Metadata Isolation:** A 6th-grade student asking about Math will ONLY receive answers from 6th-grade textbooks. The vector database filters context rigorously before sending it to the LLM.
-2. **Context-bound Generation:** The system prompt forces the LLM to reply with *"This information is not in your textbook"* if the answer cannot be found in the retrieved documents.
-3. **Socratic Tutoring:** The bot is designed to guide students toward the answer rather than just giving them the final solution, preventing rote copying.
+1. **Metadata Isolation:** A 6th-grade student asking about Math will ONLY receive answers from 6th-grade Math textbooks. `Retriever.retrieve()` only accepts a `StudentProfile`, whose `grade` and `subject` are both mandatory — so no query can reach ChromaDB unfiltered.
+2. **Context-bound Generation:** The system prompt forces the LLM to reply with *"Cô chưa tìm thấy thông tin này trong sách giáo khoa của em"* if the answer cannot be found in the retrieved documents. When retrieval returns nothing, that answer is returned **without calling the LLM at all**.
+3. **Socratic Tutoring:** The bot guides students toward the answer with hints and questions instead of handing over the finished solution, preventing rote copying.
 
 ## 🏗️ System Architecture
 
@@ -21,11 +21,15 @@ graph TD;
     A[MOET PDF Textbooks] --> B(PDF Parser & Cleaner)
     B --> C(Semantic Text Chunker)
     C --> D[(ChromaDB: Vector + Metadata)]
-    E[Student via Telegram] --> F(Query Intent & Metadata Extractor)
-    F --> D
-    D -- Context Retrieved --> G{LLM Generation}
-    G -- "Pedagogical Prompt" --> E
+    E[Student via Telegram / Zalo] --> F(Channel Adapter)
+    F --> G(TutorService: session + grade/subject scope)
+    G --> D
+    D -- Context Retrieved --> H{LLM Generation}
+    H -- "Pedagogical Prompt" --> F
+    F --> E
 ```
+
+See `dora_edu_architecture.md` for the full module map and layering rules.
 
 ## 🚀 Quick Start (Development)
 
@@ -33,52 +37,88 @@ This project uses modern Python packaging via `pyproject.toml` (PEP 621).
 
 ### 1. Prerequisites
 
-* Python >= 3.14
+* Python >= 3.12
 * A Telegram Bot Token (from BotFather)
-* OpenAI API Key (or local LLM setup)
+* OpenAI API Key — or any OpenAI-compatible endpoint via `OPENAI_BASE_URL`, including a local model
 
 ### 2. Installation
 
 Clone the repository and install the project along with its dependencies using editable mode:
 
 ```bash
-git clone https://github.com/npak243/dora-edu.git
-cd dora-edu
+git clone https://github.com/quannguyencoder/dora_edu.git
+cd dora_edu
 
 # Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 
 # Install the project and dependencies via pyproject.toml
-pip install -e .
+pip install -e ".[dev]"
 ```
+
+The first run downloads the local embedding model (`sentence-transformers`), after which retrieval works offline.
 
 ### 3. Environment Variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` and fill it in:
 
-```env
-TELEGRAM_BOT_TOKEN="your_token_here"
-OPENAI_API_KEY="your_api_key"
-CHROMA_DB_PATH="./vector_db"
+```bash
+cp .env.example .env
 ```
+
+Only `TELEGRAM_BOT_TOKEN` and `OPENAI_API_KEY` are required; every other value has a working default.
 
 ## 🛠️ Usage
 
-Since we define entry points in `pyproject.toml`, you can run the system using the provided CLI commands.
+Entry points are defined in `pyproject.toml`.
 
 **1. Data Ingestion (Admin Only):**
-Process the textbook PDFs and build the ChromaDB index.
+Process the textbook PDFs and build the ChromaDB index. `--path` accepts a single PDF or a directory searched recursively.
+
 ```bash
-dora-ingest --path ./data/raw_pdfs --subject History --grade 12
+dora-ingest --path ./data/raw_pdfs --subject "Lich su" --grade 12
 ```
+
+Useful flags:
+
+| Flag | Meaning |
+|---|---|
+| `--grade` | Grade level 1-12, stored as filter metadata (required) |
+| `--subject` | Subject name; aliases are normalised, so `toan`, `Toán` and `TOAN` all store `Toán` (required) |
+| `--book-title` | Title cited back to the student; defaults to the PDF file name |
+| `--dry-run` | Parse and chunk without writing to ChromaDB |
+
+Re-running ingestion on the same PDF upserts rather than duplicating, so it is safe to repeat.
 
 **2. Start the Bot:**
 Launch the Telegram polling loop.
+
 ```bash
 dora-run-bot
 ```
 
+### Student commands
+
+| Command | Purpose |
+|---|---|
+| `/start` | Welcome message and onboarding |
+| `/lop <1-12>` | Set the student's grade |
+| `/mon <tên môn>` | Set the subject, e.g. `/mon Toán` |
+| `/toi` | Show the current grade and subject |
+| `/xoa` | Clear the conversation history |
+| `/trogiup` | Show help |
+
+The bot refuses to search the textbooks until both a grade and a subject are set.
+
+## 🧪 Tests
+
+```bash
+pytest
+```
+
+The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, and a fake second channel proving that adding Zalo requires no changes to the RAG or LLM layers.
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please ensure you read `.github/copilot-instructions.md` to understand our coding standards.
+Contributions are welcome! Please read `.github/copilot-instructions.md` and `claude.md` to understand our coding standards.

@@ -22,26 +22,46 @@ dora-edu/
 ├── src/
 │   └── dora_edu/               # Main application package
 │       ├── __init__.py
-│       ├── config.py           # Environment variables and system settings
+│       ├── config.py           # Environment variables and system settings (pydantic-settings)
+│       ├── models.py           # Shared domain models: StudentProfile, TextbookMetadata,
+│       │                       #   ParsedPage, TextChunk, RetrievedChunk + subject/grade
+│       │                       #   normalisation. Platform- and vendor-neutral.
 │       ├── data_pipeline/
 │       │   ├── __init__.py
-│       │   ├── pdf_parser.py   # PDF extraction logic
-│       │   └── text_chunker.py # Overlap chunking logic
+│       │   ├── pdf_parser.py   # PDF extraction, cleaning, running-header removal
+│       │   ├── text_chunker.py # Sentence-aligned overlap chunking
+│       │   └── ingest.py       # `dora-ingest` CLI: parse -> chunk -> index
 │       ├── rag_engine/
 │       │   ├── __init__.py
-│       │   ├── indexer.py      # Embedding and ChromaDB insertion
+│       │   ├── store.py        # Shared ChromaDB client + embedding function
+│       │   ├── indexer.py      # Embedding and ChromaDB insertion (idempotent upsert)
 │       │   └── retriever.py    # Query logic with metadata filtering (Subject/Grade)
 │       ├── llm/
 │       │   ├── __init__.py
-│       │   ├── generator.py    # LLM API communication (OpenAI/Gemini/Claude)
-│       │   └── prompts.py      # System prompts and strict RAG guardrails
+│       │   ├── generator.py    # LLM API communication (AnswerGenerator interface + OpenAI)
+│       │   └── prompts.py      # System prompts and strict RAG guardrails (Vietnamese)
 │       └── bot/
 │           ├── __init__.py
-│           ├── session.py      # Sliding window chat history management
-│           └── telegram_app.py # Telegram bot webhook/polling entry point
+│           ├── adapter.py      # ChannelAdapter interface + IncomingMessage/OutgoingMessage
+│           ├── core.py         # TutorService: channel-independent tutoring brain
+│           ├── session.py      # Sliding window chat history + student profile
+│           ├── telegram/
+│           │   ├── __init__.py
+│           │   ├── adapter.py  # Telegram-specific adapter (long polling)
+│           │   └── app.py      # `dora-run-bot` entry point
+│           └── zalo/           # (Planned) Zalo adapter - a sibling of telegram/
 │
 ├── tests/                      # Unit tests (pytest)
-│   └── ...
+│   ├── conftest.py             # Fake ChromaDB collection and fake generator
+│   ├── test_models.py
+│   ├── test_pdf_parser.py
+│   ├── test_text_chunker.py
+│   ├── test_retriever.py       # Grade/subject isolation rule
+│   ├── test_prompts.py         # Anti-hallucination + Socratic guardrails
+│   ├── test_generator.py
+│   ├── test_session.py
+│   ├── test_core.py
+│   └── test_adapter.py         # Proves a new channel needs no core changes
 │
 ├── .env.example                # Example environment variables
 ├── .gitignore
@@ -51,9 +71,26 @@ dora-edu/
 ```
 
 
-
 2. Core Data Flow
 
-Ingestion (Admin): pdf_parser.py -> text_chunker.py -> indexer.py (Saves to vector_db/ with grade and subject metadata).
+Ingestion (Admin): `ingest.py` walks the PDFs -> `pdf_parser.py` extracts and cleans each page ->
+`text_chunker.py` builds sentence-aligned chunks with overlap -> `indexer.py` embeds them and upserts
+into `vector_db/`, stamping every row with `grade` and `subject`.
 
-Retrieval (Student): telegram_app.py receives query -> retriever.py searches ChromaDB matching the student's grade -> generator.py formats prompt with Context -> LLM returns the exact answer.
+Retrieval (Student): the channel adapter (`bot/telegram/adapter.py`) normalises the platform message into
+an `IncomingMessage` -> `bot/core.py` resolves the student's session and profile -> `retriever.py` queries
+ChromaDB **always filtered by that student's `grade` and `subject`** -> `generator.py` builds the
+pedagogical prompt from `prompts.py` around the retrieved context -> the reply travels back out through the
+same adapter.
+
+
+3. Layering Rules
+
+- `models.py`, `rag_engine/`, `llm/` and `bot/core.py` never import a messaging library. Adding Zalo means
+  writing `bot/zalo/adapter.py` against `ChannelAdapter` and nothing else.
+- `store.py` is the single place that decides the embedding model and distance metric, so the indexer and
+  the retriever cannot drift apart.
+- `Retriever.retrieve()` only accepts a `StudentProfile`, whose `grade` and `subject` are both mandatory and
+  validated. That is what makes the isolation rule structural rather than a convention.
+- `generator.py` returns the fixed "not in your textbook" answer without calling the LLM at all when
+  retrieval comes back empty.

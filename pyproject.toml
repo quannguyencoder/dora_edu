@@ -7,17 +7,19 @@ name = "dora-edu"
 version = "0.1.0"
 description = "A Zero-Hallucination RAG chatbot for Vietnamese students based on official textbooks."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 authors = [
     { name = "DoraEdu Team", email = "hello@doraedu.com" }
 ]
 dependencies = [
     "chromadb>=0.4.0",
-    "PyPDF2>=3.0.0",
+    "pypdf>=4.0.0",
     "sentence-transformers>=2.2.0",
     "python-telegram-bot>=21.0",
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "openai>=1.30.0",
 ]
 
 [project.optional-dependencies]
@@ -29,8 +31,12 @@ dev = [
 ]
 
 [project.scripts]
-dora-run-bot = "dora_edu.bot.telegram_app:main"
-dora-ingest = "dora_edu.data_pipeline.pdf_parser:main"
+dora-run-bot = "dora_edu.bot.telegram.app:main"
+dora-ingest = "dora_edu.data_pipeline.ingest:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

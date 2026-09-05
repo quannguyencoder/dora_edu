@@ -8,6 +8,10 @@ ENV/
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+build/
+dist/
+.pytest_cache/
 
 # Data & DB (Do not commit raw PDFs or Vector DB)
 data/raw_pdfs/*
