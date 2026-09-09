@@ -106,3 +106,35 @@ class TextbookIndexer:
     def count(self) -> int:
         """Return the total number of chunks currently stored."""
         return self._collection.count()
+
+    def has_source(self, grade: int, subject: str, source_file: str) -> bool:
+        """Check whether any chunk from this exact book is already indexed.
+
+        Lets a bulk ingestion run be safely resumed after an interruption
+        (e.g. a scheduled stop) without re-running OCR and embedding on
+        books that were already indexed.
+
+        Args:
+            grade: Grade the book was indexed under.
+            subject: Canonical subject the book was indexed under.
+            source_file: The PDF's file name, as stored on every chunk's metadata.
+
+        Returns:
+            ``True`` if at least one chunk from this exact (grade, subject,
+            source_file) is already present.
+
+        Raises:
+            RuntimeError: If ChromaDB rejects the lookup.
+        """
+        where = {
+            "$and": [
+                {"grade": {"$eq": grade}},
+                {"subject": {"$eq": subject}},
+                {"source_file": {"$eq": source_file}},
+            ]
+        }
+        try:
+            result = self._collection.get(where=where, limit=1)
+        except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
+            raise RuntimeError(f"Failed to check existing chunks for {source_file}: {exc}") from exc
+        return bool(result.get("ids"))

@@ -38,7 +38,8 @@ This project uses modern Python packaging via `pyproject.toml` (PEP 621).
 ### 1. Prerequisites
 
 * Python >= 3.12
-* A Telegram Bot Token (from BotFather)
+* [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) with the Vietnamese language pack — most real MOET textbook PDFs are scans with no text layer, so `dora-ingest`/`dora-bulk-ingest` OCR them locally. On macOS: `brew install tesseract tesseract-lang`. On Debian/Ubuntu: `apt install tesseract-ocr tesseract-ocr-vie`.
+* A Telegram Bot Token (from BotFather) and/or a Zalo Official Account access token + secret key, depending on which channel(s) you run
 * OpenAI API Key — or any OpenAI-compatible endpoint via `OPENAI_BASE_URL`, including a local model
 
 ### 2. Installation
@@ -91,11 +92,21 @@ Useful flags:
 
 Re-running ingestion on the same PDF upserts rather than duplicating, so it is safe to repeat.
 
-**2. Start the Bot:**
-Launch the Telegram polling loop.
+**2. Bulk Data Ingestion (Admin Only):**
+Index every PDF already collected under `data/raw_pdfs/<grade>/`, inferring each book's grade, subject and title from its filename (the real MOET naming convention, e.g. `SGKToan9tapmot.pdf`).
 
 ```bash
-dora-run-bot
+dora-bulk-ingest --dry-run   # preview grade/subject/title inference for every file first
+dora-bulk-ingest             # then actually parse, OCR, chunk and index them all
+```
+
+A file whose name cannot be parsed, or whose filename-encoded grade disagrees with its folder, is skipped and reported rather than guessed at.
+
+**3. Start the Bot:**
+
+```bash
+dora-run-bot        # Telegram, long polling
+dora-run-zalo-bot   # Zalo OA, webhook server (put a reverse proxy + TLS in front, and register the public URL with your OA)
 ```
 
 ### Student commands
@@ -117,7 +128,7 @@ The bot refuses to search the textbooks until both a grade and a subject are set
 pytest
 ```
 
-The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, and a fake second channel proving that adding Zalo requires no changes to the RAG or LLM layers.
+The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, filename-to-metadata inference for the real textbook corpus, and both the real Zalo adapter and a throwaway fake channel proving that adding a new channel requires no changes to the RAG or LLM layers.
 
 ## 🤝 Contributing
 

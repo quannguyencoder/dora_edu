@@ -35,6 +35,25 @@ class FakeCollection:
             "distances": [[row["distance"] for row in matched]],
         }
 
+    def upsert(
+        self, ids: list[str], documents: list[str], metadatas: list[dict[str, Any]]
+    ) -> None:
+        """Insert or replace rows by id, the way ``TextbookIndexer`` writes chunks."""
+        for row_id, document, metadata in zip(ids, documents, metadatas):
+            self.rows = [row for row in self.rows if row.get("id") != row_id]
+            self.rows.append({"id": row_id, "text": document, "metadata": metadata, "distance": 0.0})
+
+    def get(self, where: dict[str, Any] | None = None, limit: int | None = None) -> dict[str, Any]:
+        """Return the ids of rows whose metadata satisfies ``where``."""
+        matched = [row for row in self.rows if _matches(row["metadata"], where)]
+        if limit is not None:
+            matched = matched[:limit]
+        return {"ids": [row["id"] for row in matched]}
+
+    def count(self) -> int:
+        """Return the number of rows currently stored."""
+        return len(self.rows)
+
 
 def _matches(metadata: dict[str, Any], where: dict[str, Any] | None) -> bool:
     """Evaluate the subset of ChromaDB's ``where`` grammar the retriever emits."""

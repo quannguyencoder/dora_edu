@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     zalo_access_token: str | None = None
     zalo_oa_secret: str | None = None
+    zalo_webhook_host: str = "0.0.0.0"
+    zalo_webhook_port: int = Field(default=8080, ge=1, le=65535)
 
     # --- LLM generation -----------------------------------------------------
     openai_api_key: str | None = None

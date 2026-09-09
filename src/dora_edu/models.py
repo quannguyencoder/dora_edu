@@ -43,6 +43,15 @@ _SUBJECT_ALIASES: dict[str, str] = {
     "khoahoctunhien": "Khoa học tự nhiên",
     "kntn": "Khoa học tự nhiên",
     "lichsuvadiali": "Lịch sử và Địa lí",
+    "khoahoc": "Khoa học",
+    "daoduc": "Đạo đức",
+    "tunhienvaxahoi": "Tự nhiên và Xã hội",
+    "giaoducthechat": "Giáo dục thể chất",
+    "amnhac": "Âm nhạc",
+    "mithuat": "Mĩ thuật",
+    "hoatdongtrainghiem": "Hoạt động trải nghiệm",
+    "hoatdongtrainghiemhuongnghiep": "Hoạt động trải nghiệm, hướng nghiệp",
+    "giaoduckinhtevaphapluat": "Giáo dục Kinh tế và Pháp luật",
 }
 
 
