@@ -26,14 +26,18 @@ class Settings(BaseSettings):
 
     # --- Messaging channels -------------------------------------------------
     telegram_bot_token: str | None = None
+    discord_bot_token: str | None = None
     zalo_access_token: str | None = None
     zalo_oa_secret: str | None = None
     zalo_webhook_host: str = "0.0.0.0"
     zalo_webhook_port: int = Field(default=8080, ge=1, le=65535)
 
     # --- LLM generation -----------------------------------------------------
+    #: Which backend `build_generator()` constructs: "openai" or "gemini".
+    llm_provider: str = "openai"
     openai_api_key: str | None = None
     openai_base_url: str | None = None
+    gemini_api_key: str | None = None
     llm_model: str = "gpt-4o-mini"
     llm_temperature: float = 0.3
     llm_max_tokens: int = 800

@@ -2,7 +2,7 @@
 
 **DoraEdu** is an offline-first, highly strictly controlled Retrieval-Augmented Generation (RAG) chatbot designed exclusively for Vietnamese students.
 
-It acts as a 24/7 intelligent tutor that relies **100% on official textbooks** from the Ministry of Education and Training (MOET). It ships as a Telegram bot today and is built channel-agnostic, so Zalo is a new adapter rather than a rewrite.
+It acts as a 24/7 intelligent tutor that relies **100% on official textbooks** from the Ministry of Education and Training (MOET). It ships as a Discord bot today and is built channel-agnostic, so Telegram and Zalo are adapters rather than rewrites.
 
 ## 🌟 The "Zero-Hallucination" Promise
 
@@ -21,7 +21,7 @@ graph TD;
     A[MOET PDF Textbooks] --> B(PDF Parser & Cleaner)
     B --> C(Semantic Text Chunker)
     C --> D[(ChromaDB: Vector + Metadata)]
-    E[Student via Telegram / Zalo] --> F(Channel Adapter)
+    E[Student via Discord / Telegram / Zalo] --> F(Channel Adapter)
     F --> G(TutorService: session + grade/subject scope)
     G --> D
     D -- Context Retrieved --> H{LLM Generation}
@@ -39,7 +39,7 @@ This project uses modern Python packaging via `pyproject.toml` (PEP 621).
 
 * Python >= 3.12
 * [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) with the Vietnamese language pack — most real MOET textbook PDFs are scans with no text layer, so `dora-ingest`/`dora-bulk-ingest` OCR them locally. On macOS: `brew install tesseract tesseract-lang`. On Debian/Ubuntu: `apt install tesseract-ocr tesseract-ocr-vie`.
-* A Telegram Bot Token (from BotFather) and/or a Zalo Official Account access token + secret key, depending on which channel(s) you run
+* A Discord Bot Token (from the [Discord Developer Portal](https://discord.com/developers/applications)) and/or a Telegram Bot Token (from BotFather) and/or a Zalo Official Account access token + secret key, depending on which channel(s) you run
 * OpenAI API Key — or any OpenAI-compatible endpoint via `OPENAI_BASE_URL`, including a local model
 
 ### 2. Installation
@@ -105,8 +105,9 @@ A file whose name cannot be parsed, or whose filename-encoded grade disagrees wi
 **3. Start the Bot:**
 
 ```bash
-dora-run-bot        # Telegram, long polling
-dora-run-zalo-bot   # Zalo OA, webhook server (put a reverse proxy + TLS in front, and register the public URL with your OA)
+dora-run-discord-bot   # Discord, gateway connection (no public URL needed)
+dora-run-bot            # Telegram, long polling
+dora-run-zalo-bot       # Zalo OA, webhook server (put a reverse proxy + TLS in front, and register the public URL with your OA)
 ```
 
 ### Student commands
@@ -128,7 +129,7 @@ The bot refuses to search the textbooks until both a grade and a subject are set
 pytest
 ```
 
-The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, filename-to-metadata inference for the real textbook corpus, and both the real Zalo adapter and a throwaway fake channel proving that adding a new channel requires no changes to the RAG or LLM layers.
+The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, filename-to-metadata inference for the real textbook corpus, the real Discord and Zalo adapters, and a throwaway fake channel proving that adding a new channel requires no changes to the RAG or LLM layers.
 
 ## 🤝 Contributing
 

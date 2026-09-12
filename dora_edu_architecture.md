@@ -47,6 +47,10 @@ dora-edu/
 │           ├── adapter.py      # ChannelAdapter interface + IncomingMessage/OutgoingMessage
 │           ├── core.py         # TutorService: channel-independent tutoring brain
 │           ├── session.py      # Sliding window chat history + student profile
+│           ├── discord/
+│           │   ├── __init__.py
+│           │   ├── adapter.py  # Discord-specific adapter (gateway/WebSocket)
+│           │   └── app.py      # `dora-run-discord-bot` entry point -- primary channel
 │           ├── telegram/
 │           │   ├── __init__.py
 │           │   ├── adapter.py  # Telegram-specific adapter (long polling)
@@ -69,6 +73,9 @@ dora-edu/
 │   ├── test_core.py
 │   ├── test_adapter.py         # Proves a new channel needs no core changes
 │   ├── test_catalog.py         # Filename -> grade/subject/title inference
+│   ├── test_indexer.py         # Upsert idempotency + bulk-ingest resume check
+│   ├── test_bulk_ingest.py     # Resume/--force orchestration
+│   ├── test_discord_adapter.py # DiscordAdapter against fake gateway objects
 │   ├── test_zalo_webhook.py    # Signature verification + payload validation
 │   └── test_zalo_adapter.py    # ZaloAdapter against a fake httpx client
 │
@@ -90,18 +97,20 @@ book's grade/subject/title from its filename, and drives the same per-book path 
 `dora-ingest` CLI: `text_chunker.py` builds sentence-aligned chunks with overlap -> `indexer.py` embeds them
 and upserts into `vector_db/`, stamping every row with `grade` and `subject`.
 
-Retrieval (Student): the channel adapter (`bot/telegram/adapter.py` or `bot/zalo/adapter.py`) normalises the
-platform message into an `IncomingMessage` -> `bot/core.py` resolves the student's session and profile ->
-`retriever.py` queries ChromaDB **always filtered by that student's `grade` and `subject`** -> `generator.py`
-builds the pedagogical prompt from `prompts.py` around the retrieved context -> the reply travels back out
-through the same adapter (a Telegram message, or a Zalo OA Send API call).
+Retrieval (Student): the channel adapter (`bot/discord/adapter.py`, `bot/telegram/adapter.py`, or
+`bot/zalo/adapter.py`) normalises the platform message into an `IncomingMessage` -> `bot/core.py` resolves
+the student's session and profile -> `retriever.py` queries ChromaDB **always filtered by that student's
+`grade` and `subject`** -> `generator.py` builds the pedagogical prompt from `prompts.py` around the
+retrieved context -> the reply travels back out through the same adapter (a Discord channel message, a
+Telegram message, or a Zalo OA Send API call).
 
 
 3. Layering Rules
 
-- `models.py`, `rag_engine/`, `llm/` and `bot/core.py` never import a messaging library. `bot/zalo/` was
-  added as a sibling of `bot/telegram/`, written against `ChannelAdapter` alone, with zero changes to any of
-  those layers -- `test_adapter.py` and `test_zalo_adapter.py` both exercise that same unchanged `TutorService`.
+- `models.py`, `rag_engine/`, `llm/` and `bot/core.py` never import a messaging library. `bot/discord/` and
+  `bot/zalo/` were each added as a sibling of `bot/telegram/`, written against `ChannelAdapter` alone, with
+  zero changes to any of those layers -- `test_adapter.py`, `test_discord_adapter.py` and `test_zalo_adapter.py`
+  all exercise that same unchanged `TutorService`.
 - `store.py` is the single place that decides the embedding model and distance metric, so the indexer and
   the retriever cannot drift apart.
 - `Retriever.retrieve()` only accepts a `StudentProfile`, whose `grade` and `subject` are both mandatory and

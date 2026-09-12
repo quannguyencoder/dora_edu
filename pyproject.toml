@@ -18,11 +18,13 @@ dependencies = [
     "pytesseract>=0.3.10",
     "sentence-transformers>=2.2.0",
     "python-telegram-bot>=21.0",
+    "discord.py>=2.3.0",
     "httpx>=0.27.0",
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "openai>=1.30.0",
+    "google-genai>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +38,7 @@ dev = [
 [project.scripts]
 dora-run-bot = "dora_edu.bot.telegram.app:main"
 dora-run-zalo-bot = "dora_edu.bot.zalo.app:main"
+dora-run-discord-bot = "dora_edu.bot.discord.app:main"
 dora-ingest = "dora_edu.data_pipeline.ingest:main"
 dora-bulk-ingest = "dora_edu.data_pipeline.bulk_ingest:main"
 

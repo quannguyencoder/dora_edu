@@ -1,4 +1,4 @@
-"""Zalo OA bot entry point (``dora-run-zalo-bot``)."""
+"""Discord bot entry point (``dora-run-discord-bot``)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import logging
 import sys
 
 from dora_edu.bot.core import TutorService
+from dora_edu.bot.discord.adapter import DiscordAdapter
 from dora_edu.bot.session import SessionStore
-from dora_edu.bot.zalo.adapter import ZaloAdapter
 from dora_edu.config import get_settings
 from dora_edu.llm.generator import build_generator
 from dora_edu.rag_engine.retriever import Retriever
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> int:
-    """Start the DoraEdu Zalo OA webhook bot.
+    """Start the DoraEdu Discord bot.
 
     Returns:
         ``0`` on a clean shutdown, ``1`` when the bot cannot start.
@@ -36,15 +36,9 @@ def main() -> int:
             sessions=SessionStore(max_turns=settings.session_max_turns),
             settings=settings,
         )
-        adapter = ZaloAdapter(
-            tutor,
-            access_token=settings.zalo_access_token or "",
-            oa_secret=settings.zalo_oa_secret or "",
-            host=settings.zalo_webhook_host,
-            port=settings.zalo_webhook_port,
-        )
+        adapter = DiscordAdapter(tutor, token=settings.discord_bot_token or "")
     except (ValueError, RuntimeError) as exc:
-        logger.error("Cannot start DoraEdu Zalo bot: %s", exc)
+        logger.error("Cannot start DoraEdu: %s", exc)
         logger.error("Run 'dora-ingest' first, and check the values in your .env file.")
         return 1
 
