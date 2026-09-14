@@ -53,6 +53,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Parse and chunk without writing anything to ChromaDB.",
     )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path("data/processed"),
+        help=(
+            "Cache OCR'd page text here, keyed by <grade>/<file>.json, so "
+            "re-chunking the same PDFs later skips OCR entirely (default: data/processed)."
+        ),
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable OCR text caching (always re-run OCR).",
+    )
     return parser
 
 
@@ -64,6 +78,7 @@ def ingest_file(
     indexer: TextbookIndexer | None,
     chunk_size: int,
     chunk_overlap: int,
+    cache_dir: Path | None = None,
 ) -> int:
     """Parse, chunk and index one textbook PDF.
 
@@ -75,11 +90,13 @@ def ingest_file(
         indexer: Destination index, or ``None`` for a dry run.
         chunk_size: Target chunk length in characters.
         chunk_overlap: Overlap between consecutive chunks.
+        cache_dir: Directory to cache/reuse OCR'd page text under; OCR always
+            re-runs when omitted.
 
     Returns:
         The number of chunks produced (and indexed, unless this is a dry run).
     """
-    pages = parse_pdf(pdf_path)
+    pages = parse_pdf(pdf_path, cache_dir=cache_dir)
     if not pages:
         logger.warning("%s: no extractable text, skipping", pdf_path.name)
         return 0
@@ -144,6 +161,8 @@ def main(argv: list[str] | None = None) -> int:
             logger.error("%s", exc)
             return 1
 
+    cache_dir = None if args.no_cache else args.cache_dir
+
     total_chunks = 0
     failed: list[str] = []
     for pdf_path in pdf_paths:
@@ -156,6 +175,7 @@ def main(argv: list[str] | None = None) -> int:
                 indexer=indexer,
                 chunk_size=settings.chunk_size,
                 chunk_overlap=settings.chunk_overlap,
+                cache_dir=cache_dir,
             )
         except (ValueError, FileNotFoundError, RuntimeError) as exc:
             logger.error("Failed to ingest %s: %s", pdf_path.name, exc)

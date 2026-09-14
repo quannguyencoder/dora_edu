@@ -30,8 +30,13 @@ logger = logging.getLogger(__name__)
 
 #: Shown when the LLM provider is unreachable, so students never see a stack trace.
 _SERVICE_ERROR_ANSWER = (
-    "Xin lỗi em, cô đang gặp chút trục trặc kỹ thuật. 😔 "
-    "Em thử hỏi lại sau ít phút nhé!"
+    "Xin lỗi bạn, mình đang gặp chút trục trặc kỹ thuật. 😔 "
+    "Bạn thử hỏi lại sau ít phút nhé!"
+)
+
+#: Shown when the LLM provider rejects a request for being rate-limited.
+_RATE_LIMIT_ANSWER = (
+    "Hiện có nhiều bạn đang hỏi mình cùng lúc. Bạn chờ một chút rồi hỏi lại nhé! ⏳"
 )
 
 
@@ -130,7 +135,7 @@ class OpenAIAnswerGenerator(AnswerGenerator):
         except RateLimitError as exc:
             logger.error("LLM rate limit hit: %s", exc)
             return GeneratedAnswer(
-                answer="Hiện có nhiều bạn đang hỏi cô cùng lúc. Em chờ cô một chút rồi hỏi lại nhé! ⏳",
+                answer=_RATE_LIMIT_ANSWER,
                 grounded=False,
             )
         except APIStatusError as exc:
@@ -226,7 +231,7 @@ class GeminiAnswerGenerator(AnswerGenerator):
             if exc.code == 429:
                 logger.error("LLM rate limit hit: %s", exc)
                 return GeneratedAnswer(
-                    answer="Hiện có nhiều bạn đang hỏi cô cùng lúc. Em chờ cô một chút rồi hỏi lại nhé! ⏳",
+                    answer=_RATE_LIMIT_ANSWER,
                     grounded=False,
                 )
             logger.error("LLM provider returned %s: %s", exc.code, exc)

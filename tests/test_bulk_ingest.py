@@ -43,8 +43,10 @@ def data_root(tmp_path: Path) -> Path:
 def _patch_common(monkeypatch, settings, already_indexed: set[str]) -> list[Any]:
     ingested: list[Any] = []
 
-    def fake_ingest_file(pdf_path, *, grade, subject, book_title, indexer, chunk_size, chunk_overlap):
-        del chunk_size, chunk_overlap
+    def fake_ingest_file(
+        pdf_path, *, grade, subject, book_title, indexer, chunk_size, chunk_overlap, cache_dir=None
+    ):
+        del chunk_size, chunk_overlap, cache_dir
         ingested.append((pdf_path.name, grade, subject, book_title, indexer))
         return 7
 

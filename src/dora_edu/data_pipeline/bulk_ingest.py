@@ -56,6 +56,20 @@ def build_parser() -> argparse.ArgumentParser:
             "file name) is skipped, so an interrupted run can resume cheaply."
         ),
     )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path("data/processed"),
+        help=(
+            "Cache OCR'd page text here, keyed by <grade>/<file>.json, so "
+            "re-chunking the same corpus later skips OCR entirely (default: data/processed)."
+        ),
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable OCR text caching (always re-run OCR).",
+    )
     return parser
 
 
@@ -123,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
             logger.error("%s", exc)
             return 1
 
+    cache_dir = None if args.no_cache else args.cache_dir
+
     total_chunks = 0
     skipped_already_indexed = 0
     ingest_failed: list[str] = []
@@ -152,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
                 indexer=indexer,
                 chunk_size=settings.chunk_size,
                 chunk_overlap=settings.chunk_overlap,
+                cache_dir=cache_dir,
             )
         except (ValueError, FileNotFoundError, RuntimeError) as exc:
             logger.error("[%d/%d] Failed %s: %s", i, len(pdf_paths), pdf_path.name, exc)

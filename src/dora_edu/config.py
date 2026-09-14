@@ -49,10 +49,10 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
     # --- Retrieval tuning ---------------------------------------------------
-    retrieval_top_k: int = Field(default=5, ge=1, le=20)
+    retrieval_top_k: int = Field(default=10, ge=1, le=20)
     max_retrieval_distance: float = Field(default=1.1, gt=0.0)
-    chunk_size: int = Field(default=900, ge=200)
-    chunk_overlap: int = Field(default=150, ge=0)
+    chunk_size: int = Field(default=450, ge=200)
+    chunk_overlap: int = Field(default=80, ge=0)
 
     # --- Session ------------------------------------------------------------
     session_max_turns: int = Field(default=6, ge=1)

@@ -104,21 +104,21 @@ class TutorService:
             return self._describe_profile(session)
         if name in {"xoa", "reset"}:
             session.clear_history()
-            return OutgoingMessage(text="Cô đã xoá lịch sử trò chuyện rồi nhé! Em hỏi tiếp đi. 😊")
+            return OutgoingMessage(text="Mình đã xoá lịch sử trò chuyện rồi nhé! Bạn hỏi tiếp đi. 😊")
 
         logger.info("Unknown command %r from %s", name, message.channel)
         return OutgoingMessage(
-            text=f"Cô chưa hiểu lệnh /{name}. Em xem lại các lệnh bằng /trogiup nhé!"
+            text=f"Mình chưa hiểu lệnh /{name}. Bạn xem lại các lệnh bằng /trogiup nhé!"
         )
 
     def _set_grade(self, argument: str, session: Session) -> OutgoingMessage:
         """Set or update the student's grade, keeping any subject already chosen."""
         if not argument:
-            return OutgoingMessage(text="Em nhập lớp giúp cô nhé, ví dụ: /lop 6")
+            return OutgoingMessage(text="Bạn nhập lớp giúp mình nhé, ví dụ: /lop 6")
         try:
             grade = validate_grade(argument)
         except ValueError:
-            return OutgoingMessage(text="Lớp phải là số từ 1 đến 12 em nhé. Ví dụ: /lop 8")
+            return OutgoingMessage(text="Lớp phải là số từ 1 đến 12 bạn nhé. Ví dụ: /lop 8")
 
         # Changing grade invalidates the conversation: the retrieval scope moved.
         if session.grade != grade:
@@ -127,20 +127,20 @@ class TutorService:
 
         if session.subject is None:
             return OutgoingMessage(
-                text=f"Cô ghi nhận em học lớp {grade}. Giờ em chọn môn nhé, ví dụ: /mon Toán"
+                text=f"Mình ghi nhận bạn học lớp {grade}. Giờ bạn chọn môn nhé, ví dụ: /mon Toán"
             )
         return OutgoingMessage(
-            text=f"Đã chọn lớp {grade}, môn {session.subject}. Em hỏi cô đi nào! 😊"
+            text=f"Đã chọn lớp {grade}, môn {session.subject}. Bạn hỏi mình đi nào! 😊"
         )
 
     def _set_subject(self, argument: str, session: Session) -> OutgoingMessage:
         """Set or update the student's subject, keeping any grade already chosen."""
         if not argument:
-            return OutgoingMessage(text="Em nhập môn giúp cô nhé, ví dụ: /mon Lịch sử")
+            return OutgoingMessage(text="Bạn nhập môn giúp mình nhé, ví dụ: /mon Lịch sử")
         try:
             subject = normalize_subject(argument)
         except ValueError:
-            return OutgoingMessage(text="Em nhập tên môn giúp cô nhé, ví dụ: /mon Ngữ văn")
+            return OutgoingMessage(text="Bạn nhập tên môn giúp mình nhé, ví dụ: /mon Ngữ văn")
 
         if session.subject != subject:
             session.clear_history()
@@ -148,11 +148,11 @@ class TutorService:
 
         if session.grade is None:
             return OutgoingMessage(
-                text=f"Cô ghi nhận môn {subject}. Giờ em cho cô biết em học lớp mấy nhé, "
+                text=f"Mình ghi nhận môn {subject}. Giờ bạn cho mình biết bạn học lớp mấy nhé, "
                 "ví dụ: /lop 6"
             )
         return OutgoingMessage(
-            text=f"Đã chọn lớp {session.grade}, môn {subject}. Em cứ hỏi cô thoải mái nhé! 😊"
+            text=f"Đã chọn lớp {session.grade}, môn {subject}. Bạn cứ hỏi mình thoải mái nhé! 😊"
         )
 
     def _describe_profile(self, session: Session) -> OutgoingMessage:
@@ -160,7 +160,7 @@ class TutorService:
         if not session.has_profile:
             return OutgoingMessage(text=prompts.PROFILE_REQUIRED_MESSAGE)
         return OutgoingMessage(
-            text=f"Hiện em đang học lớp {session.grade}, môn {session.subject}. 📘"
+            text=f"Hiện bạn đang học lớp {session.grade}, môn {session.subject}. 📘"
         )
 
     # --- Questions ----------------------------------------------------------
@@ -169,7 +169,7 @@ class TutorService:
         """Answer a free-form question, scoped to the student's grade and subject."""
         question = message.text.strip()
         if not question:
-            return OutgoingMessage(text="Em nhắn câu hỏi cho cô nhé! 😊")
+            return OutgoingMessage(text="Bạn nhắn câu hỏi cho mình nhé! 😊")
 
         # Rule: never query the vector store without a grade and a subject.
         if not session.has_profile:
@@ -181,7 +181,7 @@ class TutorService:
         except (ValueError, RuntimeError) as exc:
             logger.error("Retrieval failed for %s: %s", message.session_key, exc)
             return OutgoingMessage(
-                text="Cô đang gặp trục trặc khi tra cứu sách. Em thử lại sau ít phút nhé! 😔"
+                text="Mình đang gặp trục trặc khi tra cứu sách. Bạn thử lại sau ít phút nhé! 😔"
             )
 
         result = self._generator.generate(question, chunks, profile, session.history())

@@ -7,6 +7,7 @@ ever reads them from the local filesystem and runs OCR locally via Tesseract
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 import unicodedata
@@ -163,17 +164,65 @@ def _ocr_page_image(page: object, *, source: str, page_number: int) -> str:
     return "\n".join(text for text in texts if text.strip())
 
 
-def parse_pdf(pdf_path: Path, *, strip_boilerplate: bool = True, ocr: bool = True) -> list[ParsedPage]:
+def _cache_path_for(pdf_path: Path, cache_dir: Path) -> Path:
+    """Return the cache file a parsed PDF's pages are stored under.
+
+    Mirrors the PDF's own ``<grade>/<name>.pdf`` layout under ``data/raw_pdfs/``
+    so the cache is easy to inspect by hand, e.g.
+    ``data/processed/9/SGKToan9tapmot.json``.
+    """
+    return cache_dir / pdf_path.parent.name / f"{pdf_path.stem}.json"
+
+
+def _load_cached_pages(cache_path: Path) -> list[ParsedPage] | None:
+    """Load previously parsed pages from ``cache_path``, or ``None`` if absent/unreadable.
+
+    A corrupt or unreadable cache file is treated as a cache miss (re-parsed
+    and overwritten) rather than a fatal error -- the cache is purely an
+    optimisation, never a source of truth.
+    """
+    if not cache_path.is_file():
+        return None
+    try:
+        raw = json.loads(cache_path.read_text(encoding="utf-8"))
+        return [ParsedPage.model_validate(item) for item in raw]
+    except (OSError, ValueError) as exc:
+        logger.warning("Ignoring unreadable OCR cache %s: %s", cache_path, exc)
+        return None
+
+
+def _save_cached_pages(cache_path: Path, pages: list[ParsedPage]) -> None:
+    """Persist parsed pages to ``cache_path`` so re-chunking skips OCR next time."""
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = [page.model_dump() for page in pages]
+        cache_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not write OCR cache %s: %s", cache_path, exc)
+
+
+def parse_pdf(
+    pdf_path: Path,
+    *,
+    strip_boilerplate: bool = True,
+    ocr: bool = True,
+    cache_dir: Path | None = None,
+) -> list[ParsedPage]:
     """Extract and clean every text-bearing page of one textbook PDF.
 
     Most MOET textbook PDFs are scans with no embedded text layer at all, so
     any page ``pypdf`` cannot extract text from falls back to local Tesseract
-    OCR on that page's embedded image before being treated as empty.
+    OCR on that page's embedded image before being treated as empty. OCR is
+    by far the most expensive step, so when ``cache_dir`` is given the result
+    is cached to (and, on a hit, read straight back from) a JSON file there --
+    re-chunking the same corpus with different settings never re-runs OCR.
 
     Args:
         pdf_path: Path to a local PDF file.
         strip_boilerplate: Whether to remove running headers and footers.
         ocr: Whether to OCR pages that have no extractable text layer.
+        cache_dir: Directory to cache/reuse parsed pages under, keyed by the
+            PDF's path; caching is disabled when omitted.
 
     Returns:
         Cleaned pages in reading order; pages that yield no text (neither a
@@ -186,6 +235,13 @@ def parse_pdf(pdf_path: Path, *, strip_boilerplate: bool = True, ocr: bool = Tru
     """
     if not pdf_path.is_file():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
+
+    cache_path = _cache_path_for(pdf_path, cache_dir) if cache_dir is not None else None
+    if cache_path is not None:
+        cached = _load_cached_pages(cache_path)
+        if cached is not None:
+            logger.debug("%s: loaded %d cached page(s), skipping OCR", pdf_path.name, len(cached))
+            return cached
 
     try:
         reader = PdfReader(str(pdf_path))
@@ -223,6 +279,10 @@ def parse_pdf(pdf_path: Path, *, strip_boilerplate: bool = True, ocr: bool = Tru
             empty_count,
             len(raw_pages),
         )
+
+    if cache_path is not None:
+        _save_cached_pages(cache_path, parsed)
+
     return parsed
 
 
