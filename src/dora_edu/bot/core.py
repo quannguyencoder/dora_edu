@@ -39,7 +39,10 @@ def parse_command(text: str) -> tuple[str, str] | None:
     stripped = text.strip()
     if not stripped.startswith(_COMMAND_PREFIX):
         return None
-    head, _, argument = stripped[1:].partition(" ")
+    # A student easily types a stray space right after the slash ("/ lop 8");
+    # without stripping it here, `head` comes out empty and the whole message
+    # silently falls through to _handle_question instead of running the command.
+    head, _, argument = stripped[1:].lstrip().partition(" ")
     command = head.split("@", 1)[0].lower()
     if not command:
         return None

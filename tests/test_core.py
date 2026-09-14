@@ -45,6 +45,11 @@ def _say(text: str, user_id: str = "1", channel: str = "telegram") -> IncomingMe
         ("/LOP 6", ("lop", "6")),
         ("/lop@DoraEduBot 6", ("lop", "6")),
         ("/trogiup", ("trogiup", "")),
+        # A stray space right after the slash is a common typo on mobile
+        # keyboards and must still be recognised as a command.
+        ("/ lop 8", ("lop", "8")),
+        ("/  mon toan", ("mon", "toan")),
+        ("/ trogiup", ("trogiup", "")),
         ("Phan so la gi?", None),
         ("", None),
     ],
