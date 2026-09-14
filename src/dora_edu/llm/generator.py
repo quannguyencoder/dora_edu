@@ -217,36 +217,42 @@ class GeminiAnswerGenerator(AnswerGenerator):
             if m["role"] != "system"
         ]
 
-        try:
-            response = self._client.models.generate_content(
-                model=self._settings.llm_model,
-                contents=contents,
-                config=genai_types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=self._settings.llm_temperature,
-                    max_output_tokens=self._settings.llm_max_tokens,
-                    # Keep reasoning light: a tutoring reply doesn't need deep
-                    # chain-of-thought, and a heavier budget was eating most
-                    # of max_output_tokens before any visible answer appeared.
-                    thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
-                ),
-            )
-        except ClientError as exc:
-            if exc.code == 429:
-                logger.error("LLM rate limit hit: %s", exc)
-                return GeneratedAnswer(
-                    answer=_RATE_LIMIT_ANSWER,
-                    grounded=False,
-                )
-            logger.error("LLM provider returned %s: %s", exc.code, exc)
-            return GeneratedAnswer(answer=_SERVICE_ERROR_ANSWER, grounded=False)
-        except ServerError as exc:
-            logger.error("LLM provider unreachable: %s", exc)
-            return GeneratedAnswer(answer=_SERVICE_ERROR_ANSWER, grounded=False)
+        config = genai_types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            temperature=self._settings.llm_temperature,
+            max_output_tokens=self._settings.llm_max_tokens,
+            # Keep reasoning light: a tutoring reply doesn't need deep
+            # chain-of-thought, and a heavier budget was eating most
+            # of max_output_tokens before any visible answer appeared.
+            thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
+        )
 
-        content = (getattr(response, "text", None) or "").strip()
+        # Sampling occasionally comes back with an empty candidate for no
+        # discernible reason (confirmed by hand: the identical request often
+        # succeeds on a plain retry) -- one retry is far cheaper than telling
+        # a student who asked a perfectly answerable question "not found".
+        content = ""
+        for attempt in range(2):
+            try:
+                response = self._client.models.generate_content(
+                    model=self._settings.llm_model, contents=contents, config=config
+                )
+            except ClientError as exc:
+                if exc.code == 429:
+                    logger.error("LLM rate limit hit: %s", exc)
+                    return GeneratedAnswer(answer=_RATE_LIMIT_ANSWER, grounded=False)
+                logger.error("LLM provider returned %s: %s", exc.code, exc)
+                return GeneratedAnswer(answer=_SERVICE_ERROR_ANSWER, grounded=False)
+            except ServerError as exc:
+                logger.error("LLM provider unreachable: %s", exc)
+                return GeneratedAnswer(answer=_SERVICE_ERROR_ANSWER, grounded=False)
+
+            content = (getattr(response, "text", None) or "").strip()
+            if content:
+                break
+            logger.warning("LLM returned an empty completion (attempt %d/2)", attempt + 1)
+
         if not content:
-            logger.warning("LLM returned an empty completion; falling back to the refusal")
             return GeneratedAnswer(answer=prompts.NO_CONTEXT_ANSWER, grounded=False)
 
         return GeneratedAnswer(

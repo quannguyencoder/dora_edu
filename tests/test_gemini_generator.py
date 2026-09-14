@@ -41,6 +41,20 @@ class _StubModels:
         return type("Response", (), {"text": self.text})()
 
 
+class _FlakyThenGoodModels:
+    """Returns an empty completion once, then a real answer -- simulates the
+    sampling flakiness observed in practice (an identical retry succeeds)."""
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.calls: list[dict[str, Any]] = []
+
+    def generate_content(self, **kwargs: Any) -> Any:
+        self.calls.append(kwargs)
+        content = "" if len(self.calls) == 1 else self.text
+        return type("Response", (), {"text": content})()
+
+
 @pytest.fixture
 def generator(settings) -> GeminiAnswerGenerator:
     settings = settings.model_copy(update={"gemini_api_key": "test-key"})
@@ -90,12 +104,26 @@ def test_system_prompt_travels_as_system_instruction_not_a_content_turn(generato
 
 
 def test_an_empty_completion_falls_back_to_the_refusal(generator) -> None:
-    _install(generator, _StubModels(""))
+    models = _StubModels("")
+    _install(generator, models)
 
     result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
 
     assert result.answer == prompts.NO_CONTEXT_ANSWER
     assert result.grounded is False
+    # One retry is attempted before giving up.
+    assert len(models.calls) == 2
+
+
+def test_an_empty_completion_is_retried_and_can_still_succeed(generator) -> None:
+    models = _FlakyThenGoodModels("Day la cau tra loi that su")
+    _install(generator, models)
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.answer == "Day la cau tra loi that su"
+    assert result.grounded is True
+    assert len(models.calls) == 2
 
 
 def test_a_rate_limit_error_becomes_a_friendly_message(generator) -> None:
