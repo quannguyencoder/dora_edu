@@ -40,7 +40,9 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     llm_model: str = "gpt-4o-mini"
     llm_temperature: float = 0.3
-    llm_max_tokens: int = 800
+    #: Generous headroom for "thinking" models (e.g. Gemini), which spend a
+    #: chunk of this budget on internal reasoning before the visible answer.
+    llm_max_tokens: int = 2048
     llm_timeout_seconds: float = 30.0
 
     # --- Vector store -------------------------------------------------------

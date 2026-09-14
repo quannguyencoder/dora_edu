@@ -225,6 +225,10 @@ class GeminiAnswerGenerator(AnswerGenerator):
                     system_instruction=system_instruction,
                     temperature=self._settings.llm_temperature,
                     max_output_tokens=self._settings.llm_max_tokens,
+                    # Keep reasoning light: a tutoring reply doesn't need deep
+                    # chain-of-thought, and a heavier budget was eating most
+                    # of max_output_tokens before any visible answer appeared.
+                    thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
                 ),
             )
         except ClientError as exc:
