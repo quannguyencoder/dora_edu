@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from dora_edu.config import Settings, get_settings
 from dora_edu.llm import prompts
-from dora_edu.models import RetrievedChunk, StudentProfile
+from dora_edu.models import RetrievedChunk, StudentProfile, strip_diacritics
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,28 @@ class GeneratedAnswer(BaseModel):
     citations: list[str] = Field(default_factory=list)
 
 
+def _match_subject(raw: str, subjects: list[str]) -> str | None:
+    """Match a free-form LLM reply back to one of the offered canonical subjects.
+
+    Diacritic- and case-insensitive substring match, so "Môn Toán." or "toan"
+    both resolve to "Toán". If the reply's normalised text contains more than
+    one candidate subject (an ambiguous or rambling reply), this refuses to
+    guess and returns ``None`` rather than picking one arbitrarily.
+
+    Args:
+        raw: The LLM's raw reply to the classification prompt.
+        subjects: Canonical subject names it was asked to choose from.
+
+    Returns:
+        The one matching subject, or ``None`` if zero or several matched.
+    """
+    normalised = strip_diacritics(raw).lower()
+    matches = [
+        subject for subject in subjects if strip_diacritics(subject).lower() in normalised
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 class AnswerGenerator(ABC):
     """Interface every LLM backend implements.
 
@@ -68,6 +90,25 @@ class AnswerGenerator(ABC):
         history: list[dict[str, str]] | None = None,
     ) -> GeneratedAnswer:
         """Produce a tutoring answer grounded in ``chunks``."""
+
+    @abstractmethod
+    def classify_subject(self, question: str, subjects: list[str]) -> str | None:
+        """Pick which of ``subjects`` ``question`` is most likely about.
+
+        Used when a student has not pinned a subject with ``/mon``: semantic
+        vector distance alone is not reliable enough to tell subjects apart
+        (a history question can embed closer to a math passage than to the
+        right history one), so this asks the LLM directly instead.
+
+        Args:
+            question: The student's question, in Vietnamese.
+            subjects: Candidate subjects to choose from (that grade's
+                indexed subjects); never empty when called by the bot layer.
+
+        Returns:
+            One of ``subjects`` verbatim, or ``None`` when nothing in
+            ``subjects`` plausibly matches, or the provider is unreachable.
+        """
 
 
 class OpenAIAnswerGenerator(AnswerGenerator):
@@ -152,6 +193,34 @@ class OpenAIAnswerGenerator(AnswerGenerator):
             grounded=True,
             citations=[chunk.citation for chunk in chunks],
         )
+
+    def classify_subject(self, question: str, subjects: list[str]) -> str | None:
+        """Ask the model which of ``subjects`` best fits ``question``.
+
+        A minimal, single-turn, zero-temperature call -- this only ever needs
+        to output one subject name, not a tutoring answer.
+        """
+        if not subjects:
+            return None
+
+        prompt = (
+            f'Học sinh hỏi: "{question}"\n\n'
+            f"Câu hỏi này thuộc môn học nào trong danh sách sau: {', '.join(subjects)}?\n"
+            "Chỉ trả lời đúng tên 1 môn có trong danh sách, không giải thích gì thêm."
+        )
+        try:
+            response = self._client.chat.completions.create(
+                model=self._settings.llm_model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                max_tokens=20,
+            )
+        except (APITimeoutError, APIConnectionError, RateLimitError, APIStatusError) as exc:
+            logger.warning("Subject classification unreachable: %s", exc)
+            return None
+
+        content = (response.choices[0].message.content or "").strip() if response.choices else ""
+        return _match_subject(content, subjects)
 
 
 #: OpenAI's chat-message role for an LLM reply; Gemini calls the same turn "model".
@@ -260,6 +329,37 @@ class GeminiAnswerGenerator(AnswerGenerator):
             grounded=True,
             citations=[chunk.citation for chunk in chunks],
         )
+
+    def classify_subject(self, question: str, subjects: list[str]) -> str | None:
+        """Ask the model which of ``subjects`` best fits ``question``.
+
+        A minimal, single-turn, zero-temperature call -- this only ever needs
+        to output one subject name, not a tutoring answer.
+        """
+        if not subjects:
+            return None
+
+        prompt = (
+            f'Học sinh hỏi: "{question}"\n\n'
+            f"Câu hỏi này thuộc môn học nào trong danh sách sau: {', '.join(subjects)}?\n"
+            "Chỉ trả lời đúng tên 1 môn có trong danh sách, không giải thích gì thêm."
+        )
+        try:
+            response = self._client.models.generate_content(
+                model=self._settings.llm_model,
+                contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])],
+                config=genai_types.GenerateContentConfig(
+                    temperature=0,
+                    max_output_tokens=200,
+                    thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
+                ),
+            )
+        except (ClientError, ServerError) as exc:
+            logger.warning("Subject classification unreachable: %s", exc)
+            return None
+
+        content = (getattr(response, "text", None) or "").strip()
+        return _match_subject(content, subjects)
 
 
 def build_generator(settings: Settings | None = None) -> AnswerGenerator:

@@ -23,6 +23,7 @@ class FakeCollection:
     def __init__(self, rows: list[dict[str, Any]] | None = None) -> None:
         self.rows = rows or []
         self.queries: list[dict[str, Any]] = []
+        self.get_calls: list[dict[str, Any]] = []
 
     def query(self, **kwargs: Any) -> dict[str, Any]:
         """Return the rows whose metadata satisfies the recorded ``where`` clause."""
@@ -43,12 +44,19 @@ class FakeCollection:
             self.rows = [row for row in self.rows if row.get("id") != row_id]
             self.rows.append({"id": row_id, "text": document, "metadata": metadata, "distance": 0.0})
 
-    def get(self, where: dict[str, Any] | None = None, limit: int | None = None) -> dict[str, Any]:
-        """Return the ids of rows whose metadata satisfies ``where``."""
+    def get(
+        self, where: dict[str, Any] | None = None, limit: int | None = None, **_ignored: Any
+    ) -> dict[str, Any]:
+        """Return the ids/metadatas of rows whose metadata satisfies ``where``."""
+        self.get_calls.append({"where": where, "limit": limit, **_ignored})
         matched = [row for row in self.rows if _matches(row["metadata"], where)]
         if limit is not None:
             matched = matched[:limit]
-        return {"ids": [row["id"] for row in matched]}
+        return {
+            "ids": [row.get("id") for row in matched],
+            "metadatas": [row["metadata"] for row in matched],
+            "documents": [row["text"] for row in matched],
+        }
 
     def count(self) -> int:
         """Return the number of rows currently stored."""
@@ -71,9 +79,14 @@ def _matches(metadata: dict[str, Any], where: dict[str, Any] | None) -> bool:
 class FakeGenerator(AnswerGenerator):
     """Records what it was asked to generate and returns a canned answer."""
 
-    def __init__(self, answer: str = "Cau tra loi mau") -> None:
+    def __init__(self, answer: str = "Cau tra loi mau", classify_subject_response: str | None = None) -> None:
         self.answer = answer
         self.calls: list[dict[str, Any]] = []
+        self.classify_calls: list[dict[str, Any]] = []
+        #: `None` by default: mirrors a real classifier being inconclusive, so
+        #: callers fall back to Retriever.retrieve_best_subject the same way
+        #: they would if the LLM were briefly unreachable.
+        self._classify_subject_response = classify_subject_response
 
     def generate(
         self,
@@ -91,6 +104,10 @@ class FakeGenerator(AnswerGenerator):
             }
         )
         return GeneratedAnswer(answer=self.answer, grounded=bool(chunks))
+
+    def classify_subject(self, question: str, subjects: list[str]) -> str | None:
+        self.classify_calls.append({"question": question, "subjects": list(subjects)})
+        return self._classify_subject_response
 
 
 @pytest.fixture

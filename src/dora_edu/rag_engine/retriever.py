@@ -5,6 +5,11 @@ Core safety rule: no query ever reaches ChromaDB without both a ``grade`` and a
 shown 9th-grade content. The rule is enforced structurally — :meth:`Retriever.retrieve`
 only accepts a :class:`~dora_edu.models.StudentProfile`, whose two fields are
 both mandatory and validated.
+
+:meth:`Retriever.retrieve_best_subject` lets a student skip ``/mon`` by trying
+every subject indexed for their grade and keeping whichever matched best --
+each attempt is still a normal, fully-filtered :meth:`retrieve` call, so the
+rule above holds exactly as strictly as when the subject is chosen by hand.
 """
 
 from __future__ import annotations
@@ -49,6 +54,75 @@ class Retriever:
         """
         self._settings = settings or get_settings()
         self._collection = get_collection(self._settings, create=False)
+        self._subjects_by_grade: dict[int, list[str]] = {}
+
+    def list_subjects(self, grade: int) -> list[str]:
+        """Return every distinct subject indexed for ``grade``.
+
+        Cached for the lifetime of this ``Retriever``, since the corpus does
+        not change while the bot is running.
+
+        Args:
+            grade: Grade level to look up.
+
+        Returns:
+            Canonical subject names with at least one indexed chunk for
+            ``grade``, sorted alphabetically.
+
+        Raises:
+            RuntimeError: If the ChromaDB lookup fails.
+        """
+        if grade not in self._subjects_by_grade:
+            try:
+                result = self._collection.get(where={"grade": {"$eq": grade}}, include=["metadatas"])
+            except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
+                raise RuntimeError(f"ChromaDB metadata lookup failed: {exc}") from exc
+            subjects = {m["subject"] for m in result.get("metadatas") or [] if m.get("subject")}
+            self._subjects_by_grade[grade] = sorted(subjects)
+        return self._subjects_by_grade[grade]
+
+    def retrieve_best_subject(
+        self, question: str, grade: int, *, top_k: int | None = None
+    ) -> tuple[list[RetrievedChunk], str | None]:
+        """Find which subject of ``grade`` best matches ``question``, and its passages.
+
+        Tries every subject indexed for ``grade`` in turn -- each attempt goes
+        through :meth:`retrieve`, so every single ChromaDB query stays filtered
+        by both grade and subject; nothing is ever searched unscoped.
+
+        Args:
+            question: The student's question, in Vietnamese.
+            grade: The student's grade; the subject is not yet known.
+            top_k: Passages to fetch per subject tried; falls back to the
+                configured default.
+
+        Returns:
+            The best-matching subject's passages (nearest first) and its
+            name; an empty list and ``None`` when no subject of this grade
+            has anything close enough to ``question``.
+
+        Raises:
+            ValueError: If ``question`` is empty.
+            RuntimeError: If a ChromaDB query fails.
+        """
+        best_chunks: list[RetrievedChunk] = []
+        best_subject: str | None = None
+        best_distance = float("inf")
+        for subject in self.list_subjects(grade):
+            profile = StudentProfile(grade=grade, subject=subject)
+            chunks = self.retrieve(question, profile, top_k=top_k)
+            if chunks and chunks[0].distance < best_distance:
+                best_distance = chunks[0].distance
+                best_subject = subject
+                best_chunks = chunks
+
+        logger.info(
+            "Auto-detected subject=%s for grade=%d (%d candidate subjects tried)",
+            best_subject,
+            grade,
+            len(self._subjects_by_grade.get(grade, [])),
+        )
+        return best_chunks, best_subject
 
     def retrieve(
         self,

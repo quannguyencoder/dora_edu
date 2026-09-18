@@ -179,3 +179,32 @@ def test_build_generator_rejects_an_unknown_provider(settings) -> None:
     settings = settings.model_copy(update={"llm_provider": "claude"})
     with pytest.raises(ValueError, match="Unsupported LLM_PROVIDER"):
         build_generator(settings)
+
+
+# --- Subject classification -------------------------------------------------
+
+
+def test_classify_subject_returns_none_for_an_empty_subject_list(generator) -> None:
+    assert generator.classify_subject("Phan so la gi?", []) is None
+
+
+def test_classify_subject_matches_the_models_reply(generator) -> None:
+    models = _StubModels("Toán")
+    _install(generator, models)
+
+    assert generator.classify_subject("Phan so la gi?", ["Toán", "Lịch sử"]) == "Toán"
+    # No system_instruction/history plumbing needed for this minimal call.
+    assert models.calls[0]["config"].max_output_tokens == 200
+
+
+def test_classify_subject_returns_none_when_the_reply_is_ambiguous(generator) -> None:
+    _install(generator, _StubModels("Có thể là Toán hoặc Lịch sử"))
+
+    assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None
+
+
+def test_classify_subject_returns_none_when_the_provider_is_unreachable(generator) -> None:
+    error = ServerError(503, {"message": "unavailable"})
+    _install(generator, _StubModels(error=error))
+
+    assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None

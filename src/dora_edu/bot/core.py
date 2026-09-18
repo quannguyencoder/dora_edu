@@ -130,7 +130,8 @@ class TutorService:
 
         if session.subject is None:
             return OutgoingMessage(
-                text=f"Mình ghi nhận bạn học lớp {grade}. Giờ bạn chọn môn nhé, ví dụ: /mon Toán"
+                text=f"Mình ghi nhận bạn học lớp {grade}. Bạn hỏi luôn được rồi, mình sẽ tự "
+                "nhận diện môn theo câu hỏi nhé! Muốn cố định 1 môn thì gõ /mon, ví dụ: /mon Toán 😊"
             )
         return OutgoingMessage(
             text=f"Đã chọn lớp {grade}, môn {session.subject}. Bạn hỏi mình đi nào! 😊"
@@ -160,8 +161,13 @@ class TutorService:
 
     def _describe_profile(self, session: Session) -> OutgoingMessage:
         """Report the student's current grade and subject."""
-        if not session.has_profile:
+        if session.grade is None:
             return OutgoingMessage(text=prompts.PROFILE_REQUIRED_MESSAGE)
+        if session.subject is None:
+            return OutgoingMessage(
+                text=f"Hiện bạn đang học lớp {session.grade}. Môn thì mình tự nhận diện theo "
+                "từng câu hỏi của bạn. 📘"
+            )
         return OutgoingMessage(
             text=f"Hiện bạn đang học lớp {session.grade}, môn {session.subject}. 📘"
         )
@@ -169,17 +175,29 @@ class TutorService:
     # --- Questions ----------------------------------------------------------
 
     def _handle_question(self, message: IncomingMessage, session: Session) -> OutgoingMessage:
-        """Answer a free-form question, scoped to the student's grade and subject."""
+        """Answer a free-form question, scoped to the student's grade and subject.
+
+        The subject only needs to be set explicitly (``/mon``) when the student
+        wants to pin one; otherwise it is detected per question. Either way,
+        every retrieval call that actually reaches ChromaDB still carries both
+        a grade and a subject filter.
+        """
         question = message.text.strip()
         if not question:
             return OutgoingMessage(text="Bạn nhắn câu hỏi cho mình nhé! 😊")
 
-        # Rule: never query the vector store without a grade and a subject.
-        if not session.has_profile:
+        # Rule: never query the vector store without at least a grade.
+        if session.grade is None:
             return OutgoingMessage(text=prompts.PROFILE_REQUIRED_MESSAGE)
 
-        profile = session.profile
         try:
+            if session.subject is not None:
+                subject = session.subject
+            else:
+                subject = self._detect_subject(question, session.grade)
+                if subject is None:
+                    return OutgoingMessage(text=prompts.SUBJECT_NOT_DETECTED_MESSAGE)
+            profile = StudentProfile(grade=session.grade, subject=subject)
             chunks = self._retriever.retrieve(question, profile)
         except (ValueError, RuntimeError) as exc:
             logger.error("Retrieval failed for %s: %s", message.session_key, exc)
@@ -190,3 +208,25 @@ class TutorService:
         result = self._generator.generate(question, chunks, profile, session.history())
         session.record_turn(question, result.answer)
         return OutgoingMessage(text=result.answer)
+
+    def _detect_subject(self, question: str, grade: int) -> str | None:
+        """Work out which subject of ``grade`` a subject-less question is about.
+
+        Vector distance alone is not reliable enough to tell subjects apart
+        (a history question can embed closer to a math passage than to the
+        right history one), so this asks the LLM to classify the question
+        first. If the LLM is unreachable, it falls back to the nearest-match
+        heuristic rather than failing the question outright.
+
+        Returns:
+            One of the grade's indexed subjects, or ``None`` when neither
+            approach finds a plausible match.
+        """
+        subjects = self._retriever.list_subjects(grade)
+        detected = self._generator.classify_subject(question, subjects)
+        if detected is not None:
+            return detected
+
+        logger.info("LLM subject classification inconclusive; falling back to nearest match")
+        _chunks, detected = self._retriever.retrieve_best_subject(question, grade)
+        return detected

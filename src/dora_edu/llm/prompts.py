@@ -19,28 +19,36 @@ NO_CONTEXT_ANSWER = (
     "/lop và /mon."
 )
 
-#: Shown when the student has not told the bot which grade/subject they study.
+#: Shown when the student has not told the bot which grade they study.
 PROFILE_REQUIRED_MESSAGE = (
-    "Trước tiên bạn cho mình biết bạn đang học lớp mấy và môn gì nhé! 😊\n\n"
-    "Ví dụ:\n"
-    "• /lop 6\n"
-    "• /mon Toán"
+    "Trước tiên bạn cho mình biết bạn đang học lớp mấy nhé! 😊\n\n"
+    "Ví dụ: /lop 6\n\n"
+    "Môn học thì mình sẽ tự nhận diện theo từng câu hỏi của bạn — nếu muốn cố định "
+    "1 môn, gõ thêm /mon, ví dụ: /mon Toán."
+)
+
+#: Shown when a question could not be matched to any subject of the student's grade.
+SUBJECT_NOT_DETECTED_MESSAGE = (
+    "Mình chưa xác định được câu hỏi này thuộc môn nào trong sách giáo khoa của "
+    "bạn. 📘\n\n"
+    "Bạn thử hỏi cụ thể hơn, hoặc chọn cố định 1 môn bằng lệnh /mon, ví dụ: /mon Toán."
 )
 
 WELCOME_MESSAGE = (
     "Chào bạn! Mình là DoraEdu 🎒 — gia sư đồng hành cùng bạn 24/7.\n\n"
     "Mình chỉ trả lời dựa trên sách giáo khoa chính thức của Bộ Giáo dục và Đào tạo, "
     "nên bạn cứ yên tâm là kiến thức luôn đúng chương trình.\n\n"
-    "Để bắt đầu, bạn hãy cho mình biết:\n"
-    "• /lop 6 — bạn đang học lớp mấy\n"
-    "• /mon Toán — bạn muốn hỏi môn gì\n\n"
-    "Sau đó bạn cứ đặt câu hỏi thoải mái nhé!"
+    "Để bắt đầu, bạn chỉ cần cho mình biết:\n"
+    "• /lop 6 — bạn đang học lớp mấy\n\n"
+    "Môn học mình sẽ tự nhận diện theo từng câu hỏi — nếu muốn cố định 1 môn thì gõ "
+    "thêm /mon Toán chẳng hạn. Sau đó bạn cứ đặt câu hỏi thoải mái nhé!"
 )
 
 HELP_MESSAGE = (
     "Các lệnh bạn có thể dùng:\n\n"
-    "• /lop <số> — chọn lớp, ví dụ: /lop 8\n"
-    "• /mon <tên môn> — chọn môn, ví dụ: /mon Lịch sử\n"
+    "• /lop <số> — chọn lớp, ví dụ: /lop 8 (bắt buộc)\n"
+    "• /mon <tên môn> — cố định 1 môn, ví dụ: /mon Lịch sử (không bắt buộc — "
+    "mặc định mình tự nhận diện môn theo câu hỏi)\n"
     "• /toi — xem lớp và môn bạn đang chọn\n"
     "• /xoa — xoá lịch sử trò chuyện\n"
     "• /trogiup — xem lại hướng dẫn này\n\n"

@@ -161,3 +161,137 @@ def test_retrieval_failure_is_reported_without_leaking_internals(tutor, collecti
 
 def test_tutor_service_is_callable_as_a_message_handler(tutor) -> None:
     assert tutor(_say("/start")).text == prompts.WELCOME_MESSAGE
+
+
+# --- Subject auto-detection (no /mon set) ----------------------------------
+
+
+def test_a_question_with_only_grade_set_still_gets_answered(tutor, generator) -> None:
+    tutor.handle(_say("/lop 6"))
+    reply = tutor.handle(_say("Phan so la gi?"))
+
+    assert reply.text == "Cau tra loi mau"
+    assert generator.calls[0]["profile"].grade == 6
+    assert generator.calls[0]["profile"].subject == "Toán"
+
+
+def test_auto_detected_queries_still_carry_both_filters(tutor, collection) -> None:
+    tutor.handle(_say("/lop 6"))
+    tutor.handle(_say("Phan so la gi?"))
+
+    for call in collection.queries:
+        fields = {list(clause)[0] for clause in call["where"]["$and"]}
+        assert fields == {"grade", "subject"}
+
+
+def test_an_explicit_mon_still_overrides_auto_detection(tutor, generator) -> None:
+    tutor.handle(_say("/lop 6"))
+    tutor.handle(_say("/mon Lich su"))
+    tutor.handle(_say("Bach Dang o dau?"))
+
+    assert generator.calls[0]["profile"].subject == "Lịch sử"
+
+
+def test_setting_only_grade_mentions_auto_detection(tutor) -> None:
+    reply = tutor.handle(_say("/lop 6"))
+
+    assert "tự nhận diện" in reply.text or "/mon" in reply.text
+
+
+def test_profile_command_without_a_subject_mentions_auto_detection(tutor) -> None:
+    tutor.handle(_say("/lop 6"))
+    reply = tutor.handle(_say("/toi"))
+
+    assert "lớp 6" in reply.text
+    assert "tự nhận diện" in reply.text
+
+
+def test_no_subject_detected_gets_a_dedicated_message(monkeypatch, settings, generator) -> None:
+    from dora_edu.bot.session import SessionStore
+    from dora_edu.rag_engine import retriever as retriever_module
+    from dora_edu.rag_engine.retriever import Retriever
+
+    far = [
+        {
+            "text": "Khong lien quan.",
+            "distance": 1.9,
+            "metadata": {"grade": 6, "subject": "Toán", "book_title": "SGK", "page_start": 1},
+        }
+    ]
+    monkeypatch.setattr(
+        retriever_module, "get_collection", lambda *a, **k: FakeCollection(far)
+    )
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+    )
+
+    tutor.handle(_say("/lop 6"))
+    reply = tutor.handle(_say("Cau hoi khong lien quan gi ca"))
+
+    assert reply.text == prompts.SUBJECT_NOT_DETECTED_MESSAGE
+    assert generator.calls == []
+
+
+def test_auto_detect_retrieval_failure_is_reported_without_leaking_internals(
+    tutor, collection
+) -> None:
+    def explode(**kwargs):
+        raise RuntimeError("chroma exploded")
+
+    collection.query = explode
+    tutor.handle(_say("/lop 6"))
+    reply = tutor.handle(_say("Phan so la gi?"))
+
+    assert "chroma" not in reply.text.lower()
+    assert "trục trặc" in reply.text
+
+
+def test_llm_classification_is_tried_before_the_distance_fallback(monkeypatch, settings) -> None:
+    from dora_edu.bot.session import SessionStore
+    from dora_edu.rag_engine import retriever as retriever_module
+    from dora_edu.rag_engine.retriever import Retriever
+
+    # Distances alone would pick "Toán" (see textbook_rows), but the fake
+    # classifier is told to prefer "Lịch sử" -- its answer must win.
+    rows = [
+        {
+            "text": "Phan so lop 6: tu so va mau so.",
+            "distance": 0.10,
+            "metadata": {"grade": 6, "subject": "Toán", "book_title": "SGK Toán 6", "page_start": 12},
+        },
+        {
+            "text": "Chien thang Bach Dang nam 938.",
+            "distance": 0.12,
+            "metadata": {
+                "grade": 6, "subject": "Lịch sử", "book_title": "SGK Lịch sử 6", "page_start": 44,
+            },
+        },
+    ]
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: FakeCollection(rows))
+    generator = FakeGenerator(classify_subject_response="Lịch sử")
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+    )
+
+    tutor.handle(_say("/lop 6"))
+    tutor.handle(_say("Bach Dang o dau?"))
+
+    assert generator.calls[0]["profile"].subject == "Lịch sử"
+    assert generator.classify_calls[0]["subjects"] == ["Lịch sử", "Toán"]
+
+
+def test_falls_back_to_distance_when_the_llm_classification_is_inconclusive(
+    tutor, generator
+) -> None:
+    # FakeGenerator.classify_subject returns None by default (as if the LLM
+    # call failed or gave an ambiguous reply); the bot must still answer.
+    tutor.handle(_say("/lop 6"))
+    tutor.handle(_say("Phan so la gi?"))
+
+    assert generator.calls[0]["profile"].subject == "Toán"

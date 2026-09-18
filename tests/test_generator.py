@@ -9,7 +9,7 @@ import pytest
 from openai import APIConnectionError, APITimeoutError, RateLimitError
 
 from dora_edu.llm import prompts
-from dora_edu.llm.generator import OpenAIAnswerGenerator
+from dora_edu.llm.generator import OpenAIAnswerGenerator, _match_subject
 from dora_edu.models import RetrievedChunk, StudentProfile
 
 PROFILE = StudentProfile(grade=6, subject="Toán")
@@ -117,3 +117,43 @@ def test_provider_failures_become_friendly_vietnamese_messages(generator, make_e
     assert result.grounded is False
     assert result.answer
     assert "Traceback" not in result.answer
+
+
+# --- Subject classification -------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("raw", "subjects", "expected"),
+    [
+        ("Toán", ["Toán", "Lịch sử"], "Toán"),
+        ("toan", ["Toán", "Lịch sử"], "Toán"),
+        ("Môn học là: Lịch sử.", ["Toán", "Lịch sử"], "Lịch sử"),
+        ("Ngữ văn", ["Toán", "Lịch sử"], None),
+        ("Toán hoặc Lịch sử", ["Toán", "Lịch sử"], None),
+        ("", ["Toán", "Lịch sử"], None),
+    ],
+)
+def test_match_subject(raw, subjects, expected) -> None:
+    assert _match_subject(raw, subjects) == expected
+
+
+def test_classify_subject_returns_none_for_an_empty_subject_list(generator) -> None:
+    assert generator.classify_subject("Phan so la gi?", []) is None
+
+
+def test_classify_subject_matches_the_models_reply(generator) -> None:
+    _install(generator, _StubCompletions("Toán"))
+
+    assert generator.classify_subject("Phan so la gi?", ["Toán", "Lịch sử"]) == "Toán"
+
+
+def test_classify_subject_returns_none_when_the_reply_is_ambiguous(generator) -> None:
+    _install(generator, _StubCompletions("Có thể là Toán hoặc Lịch sử"))
+
+    assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None
+
+
+def test_classify_subject_returns_none_when_the_provider_is_unreachable(generator) -> None:
+    _install(generator, _StubCompletions(error=APIConnectionError(request=_openai_request())))
+
+    assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None
