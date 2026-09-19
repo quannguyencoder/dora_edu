@@ -43,6 +43,13 @@ def test_system_prompt_requires_socratic_guidance_over_final_answers() -> None:
     assert "chép bài" in prompt
 
 
+def test_system_prompt_requires_full_outlines_to_be_given_directly() -> None:
+    prompt = prompts.build_system_prompt(StudentProfile(grade=6, subject="Ngữ văn"))
+
+    assert "DÀN Ý/CẤU TRÚC/BỐ CỤC" in prompt
+    assert "KHÔNG áp dụng quy tắc 4/5" in prompt
+
+
 def test_refusal_message_is_vietnamese_and_mentions_the_textbook() -> None:
     assert "sách giáo khoa" in prompts.NO_CONTEXT_ANSWER
 
