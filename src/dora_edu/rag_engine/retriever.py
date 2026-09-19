@@ -6,6 +6,16 @@ shown 9th-grade content. The rule is enforced structurally — :meth:`Retriever.
 only accepts a :class:`~dora_edu.models.StudentProfile`, whose two fields are
 both mandatory and validated.
 
+The grade filter is a ceiling, not an exact match: a grade-9 student can still
+be shown grade-1..8 content (useful for reviewing earlier material) but never
+grade-10+ content. Only the upper bound is safety-critical, so it is the one
+enforced everywhere; the lower bound (grade 1) needs no explicit filter.
+
+:meth:`Retriever.retrieve_best_subject` lets a student skip ``/mon`` by trying
+every subject indexed for their grade and keeping whichever matched best --
+each attempt is still a normal, fully-filtered :meth:`retrieve` call, so the
+rule above holds exactly as strictly as when the subject is chosen by hand.
+
 :meth:`Retriever.retrieve_best_subject` lets a student skip ``/mon`` by trying
 every subject indexed for their grade and keeping whichever matched best --
 each attempt is still a normal, fully-filtered :meth:`retrieve` call, so the
@@ -29,15 +39,20 @@ logger = logging.getLogger(__name__)
 def build_metadata_filter(profile: StudentProfile) -> dict[str, Any]:
     """Build the mandatory ChromaDB ``where`` clause for one student.
 
+    Grade is a ceiling (``<=``), not an exact match: a student may review
+    material from any grade at or below their own, but never from a higher
+    one -- that upper bound is the safety-critical part of grade isolation.
+
     Args:
         profile: The student's validated grade and subject.
 
     Returns:
-        A ChromaDB filter matching only chunks of that exact grade and subject.
+        A ChromaDB filter matching chunks of that subject, from ``profile``'s
+        grade or any grade below it.
     """
     return {
         "$and": [
-            {"grade": {"$eq": profile.grade}},
+            {"grade": {"$lte": profile.grade}},
             {"subject": {"$eq": profile.subject}},
         ]
     }
@@ -57,24 +72,25 @@ class Retriever:
         self._subjects_by_grade: dict[int, list[str]] = {}
 
     def list_subjects(self, grade: int) -> list[str]:
-        """Return every distinct subject indexed for ``grade``.
+        """Return every distinct subject indexed at or below ``grade``.
 
         Cached for the lifetime of this ``Retriever``, since the corpus does
         not change while the bot is running.
 
         Args:
-            grade: Grade level to look up.
+            grade: The student's grade; subjects from this grade and any
+                grade below it are included (mirrors :func:`build_metadata_filter`).
 
         Returns:
-            Canonical subject names with at least one indexed chunk for
-            ``grade``, sorted alphabetically.
+            Canonical subject names with at least one indexed chunk at or
+            below ``grade``, sorted alphabetically.
 
         Raises:
             RuntimeError: If the ChromaDB lookup fails.
         """
         if grade not in self._subjects_by_grade:
             try:
-                result = self._collection.get(where={"grade": {"$eq": grade}}, include=["metadatas"])
+                result = self._collection.get(where={"grade": {"$lte": grade}}, include=["metadatas"])
             except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
                 raise RuntimeError(f"ChromaDB metadata lookup failed: {exc}") from exc
             subjects = {m["subject"] for m in result.get("metadatas") or [] if m.get("subject")}

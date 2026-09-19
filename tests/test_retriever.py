@@ -25,7 +25,7 @@ def test_metadata_filter_always_constrains_both_grade_and_subject() -> None:
     where = build_metadata_filter(StudentProfile(grade=6, subject="Toán"))
 
     clauses = {list(clause)[0]: clause for clause in where["$and"]}
-    assert clauses["grade"] == {"grade": {"$eq": 6}}
+    assert clauses["grade"] == {"grade": {"$lte": 6}}
     assert clauses["subject"] == {"subject": {"$eq": "Toán"}}
 
 
@@ -43,6 +43,18 @@ def test_grade_six_student_never_receives_grade_nine_content(retriever) -> None:
     assert results
     assert all(chunk.metadata["grade"] == 6 for chunk in results)
     assert all("lop 9" not in chunk.text for chunk in results)
+
+
+def test_a_higher_grade_student_can_still_review_lower_grade_content(retriever) -> None:
+    # The grade filter is a ceiling: a grade-9 student reviewing earlier
+    # material must still be able to reach grade-6 content of the same
+    # subject, while never reaching a grade above their own.
+    results = retriever.retrieve("Toan hoc", StudentProfile(grade=9, subject="Toán"))
+
+    grades = {chunk.metadata["grade"] for chunk in results}
+    assert 6 in grades
+    assert 9 in grades
+    assert all(grade <= 9 for grade in grades)
 
 
 def test_subject_is_isolated_as_strictly_as_grade(retriever) -> None:
@@ -93,8 +105,29 @@ def test_list_subjects_returns_every_subject_indexed_for_that_grade(retriever) -
     assert retriever.list_subjects(6) == ["Lịch sử", "Toán"]
 
 
-def test_list_subjects_is_empty_for_a_grade_with_no_content(retriever) -> None:
-    assert retriever.list_subjects(12) == []
+def test_list_subjects_is_empty_below_every_indexed_grade(retriever) -> None:
+    # textbook_rows only has grade 6 and 9 content; grade 1 sees neither
+    # under the "at or below" ceiling.
+    assert retriever.list_subjects(1) == []
+
+
+def test_list_subjects_includes_subjects_only_taught_in_lower_grades(monkeypatch, settings) -> None:
+    rows = [
+        {
+            "text": "Dao duc lop 1.",
+            "distance": 0.1,
+            "metadata": {"grade": 1, "subject": "Đạo đức", "book_title": "SGK", "page_start": 1},
+        },
+        {
+            "text": "Toan lop 9.",
+            "distance": 0.1,
+            "metadata": {"grade": 9, "subject": "Toán", "book_title": "SGK", "page_start": 1},
+        },
+    ]
+    collection = FakeCollection(rows)
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    assert Retriever(settings).list_subjects(9) == ["Toán", "Đạo đức"]
 
 
 def test_list_subjects_is_cached_after_the_first_call(retriever, collection) -> None:
@@ -141,7 +174,7 @@ def test_retrieve_best_subject_returns_none_when_nothing_is_close_enough(
 
 
 def test_retrieve_best_subject_on_an_unknown_grade_returns_none(retriever) -> None:
-    chunks, subject = retriever.retrieve_best_subject("Phan so la gi?", grade=12)
+    chunks, subject = retriever.retrieve_best_subject("Phan so la gi?", grade=1)
 
     assert chunks == []
     assert subject is None

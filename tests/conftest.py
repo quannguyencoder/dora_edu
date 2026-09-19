@@ -70,9 +70,18 @@ def _matches(metadata: dict[str, Any], where: dict[str, Any] | None) -> bool:
     if "$and" in where:
         return all(_matches(metadata, clause) for clause in where["$and"])
     for field, condition in where.items():
-        expected = condition["$eq"] if isinstance(condition, dict) else condition
-        if metadata.get(field) != expected:
-            return False
+        if not isinstance(condition, dict):
+            if metadata.get(field) != condition:
+                return False
+        elif "$eq" in condition:
+            if metadata.get(field) != condition["$eq"]:
+                return False
+        elif "$lte" in condition:
+            actual = metadata.get(field)
+            if actual is None or actual > condition["$lte"]:
+                return False
+        else:
+            raise ValueError(f"Unsupported where condition: {condition!r}")
     return True
 
 

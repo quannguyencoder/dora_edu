@@ -71,7 +71,7 @@ def test_setting_grade_then_subject_completes_the_profile(tutor, collection) -> 
     tutor.handle(_say("Phan so la gi?"))
 
     where = collection.queries[0]["where"]
-    assert {"grade": {"$eq": 6}} in where["$and"]
+    assert {"grade": {"$lte": 6}} in where["$and"]
     assert {"subject": {"$eq": "Toán"}} in where["$and"]
 
 
