@@ -16,16 +16,21 @@ from dora_edu.data_pipeline import bulk_ingest as bulk_ingest_module
 
 
 class FakeIndexer:
-    """Records ``has_source`` lookups and reports a fixed set of already-indexed books."""
+    """Records ``has_source``/``index_chunks`` calls; reports fixed already-indexed books."""
 
     def __init__(self, settings: Any, already_indexed: set[str]) -> None:
         del settings
         self.already_indexed = already_indexed
         self.lookups: list[tuple[int, str, str]] = []
+        self.index_chunks_calls: list[Any] = []
 
     def has_source(self, grade: int, subject: str, source_file: str) -> bool:
         self.lookups.append((grade, subject, source_file))
         return source_file in self.already_indexed
+
+    def index_chunks(self, chunks: list[Any], metadata: Any) -> int:
+        self.index_chunks_calls.append((chunks, metadata))
+        return len(chunks)
 
     def count(self) -> int:
         return 999
@@ -78,6 +83,28 @@ def test_force_reingests_even_already_indexed_books(monkeypatch, settings, data_
     assert exit_code == 0
     ingested_files = {name for name, *_ in ingested}
     assert ingested_files == {"SGKToan6tapmot.pdf", "SGKToan6taphai.pdf"}
+
+
+def test_manual_patches_are_reapplied_after_a_normal_run(monkeypatch, settings, data_root) -> None:
+    from dora_edu.data_pipeline.manual_patches import PATCHES
+
+    ingested = _patch_common(monkeypatch, settings, already_indexed=set())
+
+    exit_code = bulk_ingest_module.main(["--data-root", str(data_root)])
+
+    assert exit_code == 0
+    indexer = ingested[-1][-1]
+    assert len(indexer.index_chunks_calls) == len(PATCHES)
+
+
+def test_manual_patches_are_not_applied_during_a_dry_run(monkeypatch, settings, data_root) -> None:
+    # There is no indexer at all in a dry run -- nothing to patch.
+    ingested = _patch_common(monkeypatch, settings, already_indexed=set())
+
+    exit_code = bulk_ingest_module.main(["--data-root", str(data_root), "--dry-run"])
+
+    assert exit_code == 0
+    assert all(indexer is None for *_, indexer in ingested)
 
 
 def test_dry_run_never_checks_or_writes_the_index(monkeypatch, settings, data_root) -> None:
