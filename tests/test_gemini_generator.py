@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 import pytest
 from google.genai.errors import ClientError, ServerError
 
@@ -176,6 +177,28 @@ def test_a_generic_client_error_becomes_a_friendly_message(generator) -> None:
 
     assert result.grounded is False
     assert "Traceback" not in result.answer
+
+
+def test_a_connection_level_failure_becomes_a_friendly_message_not_a_crash(generator) -> None:
+    # google-genai's own retry wrapper re-raises a connection-level failure
+    # (timeout, reset, DNS...) as a plain httpx exception, not ClientError or
+    # ServerError, once its retry budget is spent. Reproduced live: this
+    # exact gap crashed the whole Discord message handler, leaving a student
+    # with no reply at all instead of a friendly error.
+    error = httpx.ConnectError("connection reset")
+    _install(generator, _StubModels(error=error))
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.grounded is False
+    assert "Traceback" not in result.answer
+
+
+def test_classify_subject_returns_none_on_a_connection_level_failure(generator) -> None:
+    error = httpx.ReadTimeout("timed out")
+    _install(generator, _StubModels(error=error))
+
+    assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None
 
 
 # --- Model fallback on rate limit -------------------------------------------

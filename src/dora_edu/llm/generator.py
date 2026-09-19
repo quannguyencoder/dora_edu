@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 
+import httpx
 from google import genai
 from google.genai import types as genai_types
 from google.genai.errors import ClientError, ServerError
@@ -335,6 +336,16 @@ class GeminiAnswerGenerator(AnswerGenerator):
                 return None, False
             except ServerError as exc:
                 logger.error("LLM provider unreachable: %s", exc)
+                return None, False
+            except httpx.HTTPError as exc:
+                # A connection-level failure (timeout, reset, DNS...) rather
+                # than an HTTP error response -- google-genai's own retry
+                # wrapper re-raises these as plain httpx exceptions instead
+                # of ClientError/ServerError once its retry budget is spent.
+                # Uncaught, this crashes the whole message handler and
+                # leaves the student with no reply at all, not just a wrong
+                # one -- treat it the same as ServerError.
+                logger.error("LLM provider connection failed: %s", exc)
                 return None, False
 
             content = (getattr(response, "text", None) or "").strip()

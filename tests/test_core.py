@@ -207,6 +207,25 @@ def test_tutor_service_is_callable_as_a_message_handler(tutor) -> None:
     assert tutor(_say("/start")).text == prompts.WELCOME_MESSAGE
 
 
+def test_a_completely_unexpected_error_still_gets_a_reply_not_silence(tutor, generator) -> None:
+    # Reproduced live: an exception type nobody had specifically handled yet
+    # (a raw httpx connection error deep inside classify_subject) propagated
+    # all the way up and crashed the whole message handler -- the student
+    # got no reply at all, not even an apology. handle() is the outermost
+    # boundary for one message and must never let that happen again,
+    # regardless of which specific exception type shows up next time.
+    def explode(*args, **kwargs):
+        raise KeyError("some exception type nothing downstream expected")
+
+    generator.generate = explode
+    tutor.handle(_say("/lop 6"))
+    tutor.handle(_say("/mon toan"))
+    reply = tutor.handle(_say("Phan so la gi?"))
+
+    assert reply.text
+    assert "trục trặc" in reply.text
+
+
 def test_a_freshly_constructed_empty_session_store_is_still_used(
     monkeypatch, collection, generator, settings
 ) -> None:

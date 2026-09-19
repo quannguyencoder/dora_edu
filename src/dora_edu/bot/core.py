@@ -85,11 +85,27 @@ class TutorService:
         Returns:
             The reply to send back on the originating channel.
         """
-        session = self._sessions.get(message.session_key)
-        command = parse_command(message.text)
-        if command is not None:
-            return self._handle_command(command, message, session)
-        return self._handle_question(message, session)
+        try:
+            session = self._sessions.get(message.session_key)
+            command = parse_command(message.text)
+            if command is not None:
+                return self._handle_command(command, message, session)
+            return self._handle_question(message, session)
+        except Exception as exc:
+            # This is the outermost boundary for one student's message: every
+            # layer below already catches the specific errors it knows how
+            # to handle, but a genuinely unexpected failure here (a new SDK
+            # exception type, a bug) must never propagate past this point.
+            # A crash here reaches the adapter as an uncaught exception,
+            # which every channel logs and silently drops -- the student
+            # gets no reply at all, not even an apology, which is worse
+            # than any of the specific error messages below.
+            logger.exception(
+                "Unexpected error handling message from %s: %s", message.session_key, exc
+            )
+            return OutgoingMessage(
+                text="Mình đang gặp trục trặc kỹ thuật. Bạn thử lại sau ít phút nhé! 😔"
+            )
 
     # --- Commands -----------------------------------------------------------
 
