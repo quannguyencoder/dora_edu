@@ -14,7 +14,7 @@ from dora_edu.bot.session import Session, SessionStore
 from dora_edu.config import Settings, get_settings
 from dora_edu.llm import prompts
 from dora_edu.llm.generator import NOT_SUBJECT_SPECIFIC, AnswerGenerator
-from dora_edu.models import StudentProfile, normalize_subject, validate_grade
+from dora_edu.models import KNOWN_SUBJECTS, StudentProfile, normalize_subject, validate_grade
 from dora_edu.rag_engine.retriever import Retriever
 
 logger = logging.getLogger(__name__)
@@ -145,6 +145,14 @@ class TutorService:
             subject = normalize_subject(argument)
         except ValueError:
             return OutgoingMessage(text="Bạn nhập tên môn giúp mình nhé, ví dụ: /mon Ngữ văn")
+
+        # subject flows straight into the LLM system prompt (build_system_prompt),
+        # so only a real, indexed subject may pass -- never arbitrary student text.
+        if subject not in KNOWN_SUBJECTS:
+            return OutgoingMessage(
+                text="Mình chưa có môn này trong sách. Bạn nhập đúng tên môn học nhé, "
+                "ví dụ: /mon Toán, /mon Ngữ văn, /mon Lịch sử..."
+            )
 
         if session.subject != subject:
             session.clear_history()

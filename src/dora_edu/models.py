@@ -55,6 +55,15 @@ _SUBJECT_ALIASES: dict[str, str] = {
 }
 
 
+#: Every canonical subject name a book was actually indexed under. Used to
+#: reject a ``/mon`` argument that isn't a real subject -- ``profile.subject``
+#: is interpolated straight into the LLM system prompt (see
+#: :func:`dora_edu.llm.prompts.build_system_prompt`), so accepting arbitrary
+#: student-typed text here would let a student inject text with system-level
+#: authority instead of it merely appearing in their own chat turn.
+KNOWN_SUBJECTS: frozenset[str] = frozenset(_SUBJECT_ALIASES.values())
+
+
 def strip_diacritics(text: str) -> str:
     """Return ``text`` with Vietnamese diacritics and ``đ``/``Đ`` removed."""
     decomposed = unicodedata.normalize("NFD", text)

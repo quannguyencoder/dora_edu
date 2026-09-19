@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from dora_edu.models import (
+    KNOWN_SUBJECTS,
     RetrievedChunk,
     StudentProfile,
     TextbookMetadata,
@@ -36,6 +37,16 @@ def test_normalize_subject_maps_aliases_to_one_canonical_name(raw: str, expected
 
 def test_normalize_subject_keeps_unknown_subjects_but_collapses_whitespace() -> None:
     assert normalize_subject("  mon  hoc  moi  ") == "Mon hoc moi"
+
+
+def test_known_subjects_only_contains_canonical_alias_values() -> None:
+    assert "Toán" in KNOWN_SUBJECTS
+    assert "Ngữ văn" in KNOWN_SUBJECTS
+    # normalize_subject() itself still accepts free-form text (ingestion
+    # needs that for a brand-new subject), but KNOWN_SUBJECTS -- used to
+    # gate the student-facing /mon command -- must reject anything that
+    # isn't a real, already-indexed subject.
+    assert normalize_subject("mon hoc moi") not in KNOWN_SUBJECTS
 
 
 def test_normalize_subject_rejects_blank_input() -> None:
