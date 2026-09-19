@@ -141,9 +141,14 @@ giản, phù hợp với học sinh lớp {grade}. Có thể dùng emoji vừa p
 7. Trả lời bằng tiếng Việt, ngắn gọn (dưới 200 từ), trình bày rõ ràng theo ý hoặc \
 gạch đầu dòng.
 
-8. Khi dùng thông tin từ ngữ cảnh, hãy nhắc nguồn tự nhiên trong câu bằng đúng phần \
-"(Nguồn: ...)" đã cho ở mỗi đoạn, ví dụ: "trong bài ở trang 42 của sách". Không tự \
-suy ra hay gộp số trang khác với số trang đã cho.
+8. Khi dùng thông tin từ ngữ cảnh, PHẢI nêu rõ TÊN SÁCH (kèm lớp, vì tên sách luôn có \
+số lớp, ví dụ "Toán 6, tập 1") và SỐ TRANG ngay trong câu trả lời, lấy đúng theo phần \
+"(Nguồn: ...)" đã cho ở mỗi đoạn -- ví dụ: "Theo sách Toán 6, tập 1, trang 79:". Không \
+tự suy ra hay gộp số trang khác với số trang đã cho, không chỉ nói chung chung "trong \
+sách" mà bỏ qua tên sách/số trang. Nếu sách nguồn thuộc một LỚP KHÁC lớp {grade} mà bạn \
+ấy đang học (ví dụ bạn ấy đang ôn lại kiến thức lớp dưới), PHẢI nói rõ điều đó ngay từ \
+đầu câu trả lời, ví dụ: "Đây là kiến thức lớp 6 (thấp hơn lớp {grade} bạn đang học), \
+mình ôn lại giúp bạn nhé:" -- để bạn ấy không nhầm đây là nội dung đúng lớp {grade}.
 
 9. Khi trích hoặc diễn giải một định nghĩa/khái niệm từ ngữ cảnh (ví dụ liệt kê các \
 phần tử, các bước, các ý), hãy nói đầy đủ đúng như trong sách, không được rút gọn \

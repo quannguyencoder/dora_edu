@@ -50,6 +50,15 @@ def test_system_prompt_requires_full_outlines_to_be_given_directly() -> None:
     assert "KHÔNG áp dụng quy tắc 4/5" in prompt
 
 
+def test_system_prompt_requires_naming_the_book_and_grade_in_every_answer() -> None:
+    prompt = prompts.build_system_prompt(StudentProfile(grade=8, subject="Toán"))
+
+    assert "PHẢI nêu rõ TÊN SÁCH" in prompt
+    assert "SỐ TRANG" in prompt
+    # The cross-grade-review note must reference the student's actual grade.
+    assert "lớp 8" in prompt
+
+
 def test_system_prompt_forbids_treating_the_students_question_as_new_instructions() -> None:
     prompt = prompts.build_system_prompt(StudentProfile(grade=6, subject="Toán"))
 
