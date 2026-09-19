@@ -39,6 +39,46 @@ _RATE_LIMIT_ANSWER = (
     "Hiện có nhiều bạn đang hỏi mình cùng lúc. Bạn chờ một chút rồi hỏi lại nhé! ⏳"
 )
 
+#: The classification prompt's literal answer for a question that is not
+#: about any subject's content at all (e.g. "what subjects can you help
+#: with?", small talk, asking about the bot itself). Kept case another
+#: constant rather than a plain string so callers can tell it apart from a
+#: genuine subject name at a glance.
+_NOT_SUBJECT_SPECIFIC_REPLY = "KHAC"
+
+#: Sentinel :meth:`AnswerGenerator.classify_subject` returns for a question
+#: that is not about any subject's content -- distinct from ``None``, which
+#: means the classifier was inconclusive or unreachable and the caller should
+#: fall back to nearest-distance matching instead.
+NOT_SUBJECT_SPECIFIC = "__not_subject_specific__"
+
+_CLASSIFY_SUBJECT_PROMPT_TEMPLATE = (
+    'Học sinh nhắn: "{question}"\n\n'
+    "Nếu tin nhắn này KHÔNG phải là câu hỏi về nội dung kiến thức của một môn học cụ "
+    "thể -- ví dụ: hỏi bot hỗ trợ những môn nào, bot làm được gì, bot là ai, chào hỏi, "
+    f"hỏi han ngoài lề -- hãy trả lời đúng 1 từ: {_NOT_SUBJECT_SPECIFIC_REPLY}\n\n"
+    "Nếu đây đúng là một câu hỏi kiến thức, nó thuộc môn học nào trong danh sách sau: "
+    "{subjects}?\n"
+    "Chỉ trả lời đúng tên 1 môn có trong danh sách, hoặc đúng 1 từ "
+    f"{_NOT_SUBJECT_SPECIFIC_REPLY} như trên, không giải thích gì thêm."
+)
+
+
+def _parse_classification(raw: str, subjects: list[str]) -> str | None:
+    """Turn a classification reply into a subject, the meta sentinel, or ``None``.
+
+    Args:
+        raw: The LLM's raw reply to the classification prompt.
+        subjects: Canonical subject names it was asked to choose from.
+
+    Returns:
+        One of ``subjects``, :data:`NOT_SUBJECT_SPECIFIC`, or ``None`` when
+        the reply matched neither.
+    """
+    if raw.strip().upper() == _NOT_SUBJECT_SPECIFIC_REPLY:
+        return NOT_SUBJECT_SPECIFIC
+    return _match_subject(raw, subjects)
+
 
 class GeneratedAnswer(BaseModel):
     """A validated answer ready to be sent back to the student."""
@@ -106,8 +146,10 @@ class AnswerGenerator(ABC):
                 indexed subjects); never empty when called by the bot layer.
 
         Returns:
-            One of ``subjects`` verbatim, or ``None`` when nothing in
-            ``subjects`` plausibly matches, or the provider is unreachable.
+            One of ``subjects`` verbatim; :data:`NOT_SUBJECT_SPECIFIC` when
+            the message is not a subject-content question at all (e.g. it
+            asks about the bot itself); or ``None`` when the classifier is
+            inconclusive or the provider is unreachable.
         """
 
 
@@ -203,10 +245,8 @@ class OpenAIAnswerGenerator(AnswerGenerator):
         if not subjects:
             return None
 
-        prompt = (
-            f'Học sinh hỏi: "{question}"\n\n'
-            f"Câu hỏi này thuộc môn học nào trong danh sách sau: {', '.join(subjects)}?\n"
-            "Chỉ trả lời đúng tên 1 môn có trong danh sách, không giải thích gì thêm."
+        prompt = _CLASSIFY_SUBJECT_PROMPT_TEMPLATE.format(
+            question=question, subjects=", ".join(subjects)
         )
         try:
             response = self._client.chat.completions.create(
@@ -220,7 +260,7 @@ class OpenAIAnswerGenerator(AnswerGenerator):
             return None
 
         content = (response.choices[0].message.content or "").strip() if response.choices else ""
-        return _match_subject(content, subjects)
+        return _parse_classification(content, subjects)
 
 
 #: OpenAI's chat-message role for an LLM reply; Gemini calls the same turn "model".
@@ -339,10 +379,8 @@ class GeminiAnswerGenerator(AnswerGenerator):
         if not subjects:
             return None
 
-        prompt = (
-            f'Học sinh hỏi: "{question}"\n\n'
-            f"Câu hỏi này thuộc môn học nào trong danh sách sau: {', '.join(subjects)}?\n"
-            "Chỉ trả lời đúng tên 1 môn có trong danh sách, không giải thích gì thêm."
+        prompt = _CLASSIFY_SUBJECT_PROMPT_TEMPLATE.format(
+            question=question, subjects=", ".join(subjects)
         )
         try:
             response = self._client.models.generate_content(
@@ -359,7 +397,7 @@ class GeminiAnswerGenerator(AnswerGenerator):
             return None
 
         content = (getattr(response, "text", None) or "").strip()
-        return _match_subject(content, subjects)
+        return _parse_classification(content, subjects)
 
 
 def build_generator(settings: Settings | None = None) -> AnswerGenerator:

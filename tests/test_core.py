@@ -295,3 +295,26 @@ def test_falls_back_to_distance_when_the_llm_classification_is_inconclusive(
     tutor.handle(_say("Phan so la gi?"))
 
     assert generator.calls[0]["profile"].subject == "Toán"
+
+
+def test_a_meta_question_about_the_bot_lists_subjects_without_touching_retrieval(
+    monkeypatch, settings, collection
+) -> None:
+    from dora_edu.llm.generator import NOT_SUBJECT_SPECIFIC
+
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+    generator = FakeGenerator(classify_subject_response=NOT_SUBJECT_SPECIFIC)
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+    )
+
+    tutor.handle(_say("/lop 6"))
+    reply = tutor.handle(_say("Ban co the ho tro nhung mon nao"))
+
+    assert "Toán" in reply.text
+    assert "Lịch sử" in reply.text
+    assert collection.queries == []
+    assert generator.calls == []

@@ -34,6 +34,32 @@ SUBJECT_NOT_DETECTED_MESSAGE = (
     "Bạn thử hỏi cụ thể hơn, hoặc chọn cố định 1 môn bằng lệnh /mon, ví dụ: /mon Toán."
 )
 
+def build_capability_message(grade: int, subjects: list[str]) -> str:
+    """Answer a meta-question about which subjects the bot covers for ``grade``.
+
+    Used for messages that are not about any subject's content (e.g. "bạn hỗ
+    trợ những môn nào") -- answered directly from the indexed catalogue,
+    without touching retrieval or the LLM, so the reply is never grounded in
+    an unrelated textbook passage.
+
+    Args:
+        grade: The student's grade.
+        subjects: Subjects indexed for ``grade``, as returned by
+            :meth:`~dora_edu.rag_engine.retriever.Retriever.list_subjects`.
+
+    Returns:
+        The reply, in Vietnamese.
+    """
+    if not subjects:
+        return f"Hiện mình chưa có sách cho lớp {grade} bạn nhé. Bạn thử đổi lớp bằng /lop xem sao! 😅"
+    listed = "\n".join(f"• {subject}" for subject in subjects)
+    return (
+        f"Với lớp {grade}, hiện mình hỗ trợ các môn sau (theo sách giáo khoa của Bộ):\n\n"
+        f"{listed}\n\n"
+        "Bạn cứ hỏi mình bất kỳ câu nào trong các môn này, mình sẽ tự nhận diện đúng môn nhé! 😊"
+    )
+
+
 WELCOME_MESSAGE = (
     "Chào bạn! Mình là DoraEdu 🎒 — gia sư đồng hành cùng bạn 24/7.\n\n"
     "Mình chỉ trả lời dựa trên sách giáo khoa chính thức của Bộ Giáo dục và Đào tạo, "

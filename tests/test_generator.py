@@ -9,7 +9,7 @@ import pytest
 from openai import APIConnectionError, APITimeoutError, RateLimitError
 
 from dora_edu.llm import prompts
-from dora_edu.llm.generator import OpenAIAnswerGenerator, _match_subject
+from dora_edu.llm.generator import NOT_SUBJECT_SPECIFIC, OpenAIAnswerGenerator, _match_subject
 from dora_edu.models import RetrievedChunk, StudentProfile
 
 PROFILE = StudentProfile(grade=6, subject="Toán")
@@ -157,3 +157,11 @@ def test_classify_subject_returns_none_when_the_provider_is_unreachable(generato
     _install(generator, _StubCompletions(error=APIConnectionError(request=_openai_request())))
 
     assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None
+
+
+def test_classify_subject_detects_a_non_curriculum_question(generator) -> None:
+    _install(generator, _StubCompletions("KHAC"))
+
+    result = generator.classify_subject("Ban co the ho tro nhung mon nao?", ["Toán", "Lịch sử"])
+
+    assert result == NOT_SUBJECT_SPECIFIC

@@ -13,7 +13,7 @@ from dora_edu.bot.adapter import IncomingMessage, OutgoingMessage
 from dora_edu.bot.session import Session, SessionStore
 from dora_edu.config import Settings, get_settings
 from dora_edu.llm import prompts
-from dora_edu.llm.generator import AnswerGenerator
+from dora_edu.llm.generator import NOT_SUBJECT_SPECIFIC, AnswerGenerator
 from dora_edu.models import StudentProfile, normalize_subject, validate_grade
 from dora_edu.rag_engine.retriever import Retriever
 
@@ -195,6 +195,11 @@ class TutorService:
                 subject = session.subject
             else:
                 subject = self._detect_subject(question, session.grade)
+                if subject == NOT_SUBJECT_SPECIFIC:
+                    subjects = self._retriever.list_subjects(session.grade)
+                    return OutgoingMessage(
+                        text=prompts.build_capability_message(session.grade, subjects)
+                    )
                 if subject is None:
                     return OutgoingMessage(text=prompts.SUBJECT_NOT_DETECTED_MESSAGE)
             profile = StudentProfile(grade=session.grade, subject=subject)
@@ -218,9 +223,16 @@ class TutorService:
         first. If the LLM is unreachable, it falls back to the nearest-match
         heuristic rather than failing the question outright.
 
+        A question that is not about any subject's content at all (e.g. "bạn
+        hỗ trợ những môn nào") is reported as :data:`NOT_SUBJECT_SPECIFIC`
+        rather than falling back to nearest-distance matching -- that
+        fallback is only meant for genuinely ambiguous subject-content
+        questions, and would otherwise anchor a non-content question to
+        whichever textbook's wording happens to embed closest to it.
+
         Returns:
-            One of the grade's indexed subjects, or ``None`` when neither
-            approach finds a plausible match.
+            One of the grade's indexed subjects, :data:`NOT_SUBJECT_SPECIFIC`,
+            or ``None`` when neither approach finds a plausible match.
         """
         subjects = self._retriever.list_subjects(grade)
         detected = self._generator.classify_subject(question, subjects)
