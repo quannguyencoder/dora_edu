@@ -30,7 +30,7 @@ from typing import Any
 import chromadb
 
 from dora_edu.config import Settings, get_settings
-from dora_edu.models import RetrievedChunk, StudentProfile
+from dora_edu.models import MIN_GRADE, RetrievedChunk, StudentProfile
 from dora_edu.rag_engine.store import get_collection
 
 logger = logging.getLogger(__name__)
@@ -89,11 +89,24 @@ class Retriever:
             RuntimeError: If the ChromaDB lookup fails.
         """
         if grade not in self._subjects_by_grade:
-            try:
-                result = self._collection.get(where={"grade": {"$lte": grade}}, include=["metadatas"])
-            except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
-                raise RuntimeError(f"ChromaDB metadata lookup failed: {exc}") from exc
-            subjects = {m["subject"] for m in result.get("metadatas") or [] if m.get("subject")}
+            subjects: set[str] = set()
+            # One query per grade (each `$eq`, not one big `$lte`) rather than
+            # a single query spanning every grade at or below `grade`: at
+            # grade 12 a $lte query has to enumerate metadata for nearly the
+            # whole corpus (~40k chunks), which blows past SQLite's bound
+            # parameter limit ("too many SQL variables") -- confirmed live.
+            # Every individual grade's chunk count stays well within that
+            # limit, and the result is cached per grade anyway.
+            for g in range(MIN_GRADE, grade + 1):
+                try:
+                    result = self._collection.get(
+                        where={"grade": {"$eq": g}}, include=["metadatas"]
+                    )
+                except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
+                    raise RuntimeError(f"ChromaDB metadata lookup failed: {exc}") from exc
+                subjects.update(
+                    m["subject"] for m in result.get("metadatas") or [] if m.get("subject")
+                )
             self._subjects_by_grade[grade] = sorted(subjects)
         return self._subjects_by_grade[grade]
 

@@ -132,9 +132,25 @@ def test_list_subjects_includes_subjects_only_taught_in_lower_grades(monkeypatch
 
 def test_list_subjects_is_cached_after_the_first_call(retriever, collection) -> None:
     retriever.list_subjects(6)
+    calls_after_first = len(collection.get_calls)
+
     retriever.list_subjects(6)
 
-    assert len(collection.get_calls) == 1
+    assert len(collection.get_calls) == calls_after_first
+
+
+def test_list_subjects_queries_one_grade_at_a_time_not_one_big_lte_query(
+    retriever, collection
+) -> None:
+    # A single $lte query has to enumerate metadata for every chunk at or
+    # below the grade, which blows past SQLite's bound-parameter limit for a
+    # large corpus (confirmed live at grade 12, ~40k chunks) -- list_subjects
+    # must query one grade at a time instead.
+    retriever.list_subjects(6)
+
+    assert len(collection.get_calls) == 6
+    for call in collection.get_calls:
+        assert "$eq" in call["where"]["grade"]
 
 
 def test_retrieve_best_subject_picks_the_closest_matching_subject(retriever) -> None:
