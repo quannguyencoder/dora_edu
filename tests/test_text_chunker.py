@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from dora_edu.data_pipeline.text_chunker import chunk_pages, split_sentences
+from dora_edu.data_pipeline.text_chunker import chunk_pages, split_into_sections, split_sentences
 from dora_edu.models import ParsedPage
 
 
@@ -76,3 +76,76 @@ def test_empty_input_produces_no_chunks() -> None:
 def test_overlap_must_be_smaller_than_chunk_size() -> None:
     with pytest.raises(ValueError):
         chunk_pages([_page(1, 5)], chunk_size=100, chunk_overlap=100)
+
+
+# --- Heading-aware section boundaries ---------------------------------------
+
+
+def test_split_into_sections_starts_a_new_section_at_a_lettered_heading() -> None:
+    text = "b. Tim y\nNoi dung cua muc b.\nc. Lap dan y\nNoi dung cua muc c."
+
+    assert split_into_sections(text) == [
+        "b. Tim y\nNoi dung cua muc b.",
+        "c. Lap dan y\nNoi dung cua muc c.",
+    ]
+
+
+def test_split_into_sections_starts_a_new_section_at_a_numbered_heading() -> None:
+    text = "1. TRUOC KHI VIET\nNoi dung a.\n2. VIET BAI\nNoi dung b."
+
+    assert split_into_sections(text) == [
+        "1. TRUOC KHI VIET\nNoi dung a.",
+        "2. VIET BAI\nNoi dung b.",
+    ]
+
+
+def test_split_into_sections_recognises_an_all_caps_bai_heading() -> None:
+    text = "Truoc do.\nBÀI 1\nNoi dung bai 1."
+
+    assert split_into_sections(text) == ["Truoc do.", "BÀI 1\nNoi dung bai 1."]
+
+
+def test_split_into_sections_is_a_single_section_when_there_is_no_heading() -> None:
+    text = "Cau mot khong co tieu de.\nCau hai cung vay."
+
+    assert split_into_sections(text) == [text]
+
+
+def test_split_into_sections_ignores_a_long_line_that_merely_starts_with_a_number() -> None:
+    long_line = "1. " + "Mot cau dai khong phai tieu de " * 5
+
+    assert split_into_sections(long_line + "\nCau tiep theo.") == [
+        long_line + "\nCau tiep theo."
+    ]
+
+
+def test_a_labelled_subsection_never_shares_a_chunk_with_the_one_before_it() -> None:
+    # Reproduces the real bug: "c. Lap dan y" (short) used to get merged with
+    # unrelated "b. Tim y" filler text ahead of it because chunking ignored
+    # section headings and only cut on a raw character budget.
+    page_text = (
+        "b. Tim y\n"
+        + "Cau tim y so mot. " * 30
+        + "\nc. Lap dan y\n"
+        "Mo bai: Gioi thieu cau chuyen.\n"
+        "Than bai: Ke lai dien bien cua cau chuyen."
+    )
+    chunks = chunk_pages(
+        [ParsedPage(page_number=81, text=page_text)], chunk_size=450, chunk_overlap=80
+    )
+
+    dan_y_chunks = [c for c in chunks if "Lap dan y" in c.text]
+    assert len(dan_y_chunks) == 1
+    assert "Mo bai" in dan_y_chunks[0].text
+    assert "Than bai" in dan_y_chunks[0].text
+    assert "Cau tim y so mot" not in dan_y_chunks[0].text
+
+
+def test_an_oversized_section_still_gets_split_by_the_size_budget() -> None:
+    page_text = "c. Lap dan y\n" + "Cau dai. " * 100
+    chunks = chunk_pages(
+        [ParsedPage(page_number=1, text=page_text)], chunk_size=200, chunk_overlap=40
+    )
+
+    assert len(chunks) > 1
+    assert all(len(chunk.text) <= 200 for chunk in chunks)

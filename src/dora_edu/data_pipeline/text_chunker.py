@@ -19,6 +19,47 @@ _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…:;])\s+")
 #: Paragraph boundary produced by the PDF cleaner.
 _PARAGRAPH_BOUNDARY = re.compile(r"\n\s*\n")
 
+#: Heading-like lines that mark the start of a new labelled subsection in a
+#: MOET textbook page (e.g. "1. TRƯỚC KHI VIẾT", "a. Lựa chọn đề tài",
+#: "BÀI 1"). Matched against a single stripped line, not mid-sentence, so
+#: ordinary prose that happens to start with a number or "bài" is not
+#: mistaken for one.
+_HEADING_LINE = re.compile(r"^(?:\d{1,2}\.\s+\S|[a-zđ]\.\s+\S|BÀI\s+\d)")
+
+#: Heading lines are short by construction; a long line matching the pattern
+#: by coincidence (e.g. a numbered sentence) is content, not a heading.
+_MAX_HEADING_LINE_LENGTH = 80
+
+
+def _is_heading_line(line: str) -> bool:
+    """Return whether ``line`` looks like a subsection heading on its own line."""
+    stripped = line.strip()
+    if not stripped or len(stripped) > _MAX_HEADING_LINE_LENGTH:
+        return False
+    return bool(_HEADING_LINE.match(stripped))
+
+
+def split_into_sections(text: str) -> list[str]:
+    """Split page text into structural sections at heading-like lines.
+
+    Text with no heading lines at all comes back as a single section (the
+    whole input), so callers that never see a heading behave exactly as if
+    sections did not exist.
+
+    Args:
+        text: Raw page text, with its original line breaks intact.
+
+    Returns:
+        Non-empty sections in reading order, each starting either at the
+        top of ``text`` or at a detected heading line.
+    """
+    sections: list[list[str]] = [[]]
+    for line in text.splitlines():
+        if _is_heading_line(line) and sections[-1]:
+            sections.append([])
+        sections[-1].append(line)
+    return ["\n".join(section) for section in sections if "".join(section).strip()]
+
 
 def split_sentences(text: str) -> list[str]:
     """Split one block of Vietnamese text into sentence-like units.
@@ -95,20 +136,33 @@ def chunk_pages(
     if chunk_overlap >= chunk_size:
         raise ValueError("chunk_overlap must be smaller than chunk_size")
 
-    # Flatten to (sentence, page_number) so a chunk can span a page break while
-    # still reporting the exact pages it covers.
-    flat: list[tuple[str, int]] = []
+    # Flatten to (sentence, page_number, starts_section) so a chunk can still
+    # span a page break when nothing marks one -- only a real heading line
+    # forces a new chunk, not merely reaching the top of the next page (a
+    # page's first section is a continuation, not a heading, so it never
+    # forces a boundary; later sections on the same page always do).
+    flat: list[tuple[str, int, bool]] = []
     for page in pages:
-        for sentence in split_sentences(page.text):
-            flat.append((sentence, page.page_number))
+        for section_index, section in enumerate(split_into_sections(page.text)):
+            for sentence_index, sentence in enumerate(split_sentences(section)):
+                starts_section = section_index > 0 and sentence_index == 0
+                flat.append((sentence, page.page_number, starts_section))
 
     chunks: list[TextChunk] = []
     buffer: list[str] = []
     buffer_pages: list[int] = []
     buffer_length = 0
 
-    def flush() -> None:
-        """Emit the buffered sentences as a chunk."""
+    def flush(*, carry_overlap: bool = True) -> None:
+        """Emit the buffered sentences as a chunk.
+
+        Args:
+            carry_overlap: Seed the next chunk with trailing context from
+                this one. Only meaningful when the flush was triggered by
+                the size budget -- a flush at a real section boundary never
+                carries overlap, so a labelled subsection's chunk never
+                opens with a trailing fragment of the previous one.
+        """
         nonlocal buffer, buffer_pages, buffer_length
         if not buffer:
             return
@@ -120,13 +174,15 @@ def chunk_pages(
                 page_end=max(buffer_pages),
             )
         )
-        tail, tail_length = _tail_for_overlap(buffer, chunk_overlap)
+        tail, tail_length = _tail_for_overlap(buffer, chunk_overlap) if carry_overlap else ([], 0)
         # Carry the page numbers belonging to the retained tail sentences.
         buffer_pages = buffer_pages[len(buffer) - len(tail):] if tail else []
         buffer = tail
         buffer_length = tail_length
 
-    for sentence, page_number in flat:
+    for sentence, page_number, starts_section in flat:
+        if buffer and starts_section:
+            flush(carry_overlap=False)
         # A single oversized sentence becomes its own chunk rather than being cut.
         if buffer and buffer_length + len(sentence) + 1 > chunk_size:
             flush()

@@ -53,8 +53,12 @@ class Settings(BaseSettings):
     # --- Retrieval tuning ---------------------------------------------------
     retrieval_top_k: int = Field(default=10, ge=1, le=20)
     max_retrieval_distance: float = Field(default=1.1, gt=0.0)
-    chunk_size: int = Field(default=450, ge=200)
-    chunk_overlap: int = Field(default=80, ge=0)
+    # Acts as a safety cap, not a target: the chunker now cuts primarily at
+    # heading-like lines ("a. Lựa chọn đề tài", "1. TRƯỚC KHI VIẾT", "BÀI 1")
+    # so a labelled subsection stays in one chunk, and only falls back to
+    # this character budget when a single subsection is still too long.
+    chunk_size: int = Field(default=700, ge=200)
+    chunk_overlap: int = Field(default=100, ge=0)
 
     # --- Session ------------------------------------------------------------
     session_max_turns: int = Field(default=6, ge=1)
