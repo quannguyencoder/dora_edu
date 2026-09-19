@@ -65,6 +65,33 @@ def test_question_without_a_profile_never_reaches_the_retriever(tutor, collectio
     assert collection.queries == []
 
 
+def test_setting_grade_persists_it_across_a_bot_restart(
+    monkeypatch, collection, generator, settings, tmp_path
+) -> None:
+    # Restarting the bot process (routine during development/deploys) must
+    # not force every student to redo /lop -- that was the actual complaint
+    # this test guards against.
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+    db_path = tmp_path / "sessions.db"
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=SessionStore(max_turns=2, db_path=db_path),
+        settings=settings,
+    )
+    tutor.handle(_say("/lop 8", user_id="7", channel="discord"))
+
+    restarted_tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=SessionStore(max_turns=2, db_path=db_path),
+        settings=settings,
+    )
+    reply = restarted_tutor.handle(_say("/toi", user_id="7", channel="discord"))
+
+    assert "lớp 8" in reply.text
+
+
 def test_setting_grade_then_subject_completes_the_profile(tutor, collection) -> None:
     tutor.handle(_say("/lop 6"))
     tutor.handle(_say("/mon toan"))
@@ -178,6 +205,29 @@ def test_retrieval_failure_is_reported_without_leaking_internals(tutor, collecti
 
 def test_tutor_service_is_callable_as_a_message_handler(tutor) -> None:
     assert tutor(_say("/start")).text == prompts.WELCOME_MESSAGE
+
+
+def test_a_freshly_constructed_empty_session_store_is_still_used(
+    monkeypatch, collection, generator, settings
+) -> None:
+    # `sessions or SessionStore(...)` looks right but is wrong: SessionStore
+    # defines __len__, so a caller-supplied store with no sessions in it yet
+    # (true of every store right after construction) is falsy, and `or`
+    # would silently swap in a brand-new default store instead of the one
+    # actually passed in.
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+    my_store = SessionStore(max_turns=2)
+    assert not my_store  # confirms the store is indeed falsy while empty
+
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=my_store,
+        settings=settings,
+    )
+    tutor.handle(_say("/lop 8"))
+
+    assert my_store.get(("telegram", "1")).grade == 8
 
 
 # --- Subject auto-detection (no /mon set) ----------------------------------

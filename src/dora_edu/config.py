@@ -69,6 +69,9 @@ class Settings(BaseSettings):
 
     # --- Session ------------------------------------------------------------
     session_max_turns: int = Field(default=6, ge=1)
+    #: Persists each student's grade/subject across bot restarts (conversation
+    #: history is not persisted -- it is cheap to rebuild and not worth it).
+    session_db_path: Path = Path("./data/sessions.db")
     log_level: str = "INFO"
 
     @field_validator("chunk_overlap")
@@ -80,7 +83,7 @@ class Settings(BaseSettings):
             raise ValueError("chunk_overlap must be smaller than chunk_size")
         return value
 
-    @field_validator("chroma_db_path")
+    @field_validator("chroma_db_path", "session_db_path")
     @classmethod
     def _expand_path(cls, value: Path) -> Path:
         """Expand ``~`` and resolve the persistence directory to an absolute path."""

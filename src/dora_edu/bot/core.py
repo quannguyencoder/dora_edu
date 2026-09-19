@@ -63,7 +63,14 @@ class TutorService:
         self._settings = settings or get_settings()
         self._retriever = retriever
         self._generator = generator
-        self._sessions = sessions or SessionStore(max_turns=self._settings.session_max_turns)
+        # `sessions or SessionStore(...)` would look right but is wrong: SessionStore
+        # defines __len__, and a freshly-constructed (or currently empty) store has
+        # len() == 0, which Python treats as falsy in the absence of __bool__ -- so
+        # `or` would silently discard a real, caller-supplied empty store and build
+        # a fresh default one instead, dropping any configured `db_path` with it.
+        self._sessions = sessions if sessions is not None else SessionStore(
+            max_turns=self._settings.session_max_turns
+        )
 
     def __call__(self, message: IncomingMessage) -> OutgoingMessage:
         """Satisfy the :class:`~dora_edu.bot.adapter.MessageHandler` protocol."""
@@ -100,9 +107,13 @@ class TutorService:
         if name in {"help", "trogiup"}:
             return OutgoingMessage(text=prompts.HELP_MESSAGE)
         if name in {"lop", "grade"}:
-            return self._set_grade(argument, session)
+            reply = self._set_grade(argument, session)
+            self._sessions.save_profile(message.session_key)
+            return reply
         if name in {"mon", "subject"}:
-            return self._set_subject(argument, session)
+            reply = self._set_subject(argument, session)
+            self._sessions.save_profile(message.session_key)
+            return reply
         if name in {"toi", "me"}:
             return self._describe_profile(session)
         if name in {"xoa", "reset"}:

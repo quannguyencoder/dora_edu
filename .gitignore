@@ -17,6 +17,7 @@ dist/
 data/raw_pdfs/*
 data/processed/*
 vector_db/
+data/sessions.db
 
 # OS Files
 .DS_Store

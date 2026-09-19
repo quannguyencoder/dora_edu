@@ -33,7 +33,9 @@ def main() -> int:
         tutor = TutorService(
             retriever=retriever,
             generator=generator,
-            sessions=SessionStore(max_turns=settings.session_max_turns),
+            sessions=SessionStore(
+                max_turns=settings.session_max_turns, db_path=settings.session_db_path
+            ),
             settings=settings,
         )
         adapter = TelegramAdapter(tutor, token=settings.telegram_bot_token or "")
