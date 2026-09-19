@@ -252,6 +252,32 @@ def test_a_freshly_constructed_empty_session_store_is_still_used(
 # --- Subject auto-detection (no /mon set) ----------------------------------
 
 
+def test_a_question_is_diacritic_restored_before_retrieval_and_generation(
+    monkeypatch, collection, settings
+) -> None:
+    # Reproduces a real bug: "dda thuc la gi" (dropped accent, common when a
+    # student types fast) shifted embedding search far enough that the real
+    # content dropped out of the top results entirely, even though the LLM
+    # itself understood the question fine.
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+    generator = FakeGenerator(restore_diacritics_response=lambda text: "Phan so la gi?")
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=generator,
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+    )
+    tutor.handle(_say("/lop 6"))
+    tutor.handle(_say("/mon toan"))
+
+    tutor.handle(_say("Phan so la gi (khong dau)"))
+
+    assert generator.restore_diacritics_calls == ["Phan so la gi (khong dau)"]
+    # Both subject-classification (N/A here, subject is pinned) and the
+    # retrieval query/citation must use the corrected text, not the original.
+    assert generator.calls[0]["question"] == "Phan so la gi?"
+
+
 def test_a_question_with_only_grade_set_still_gets_answered(tutor, generator) -> None:
     tutor.handle(_say("/lop 6"))
     reply = tutor.handle(_say("Phan so la gi?"))

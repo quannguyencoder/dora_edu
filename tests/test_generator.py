@@ -165,3 +165,34 @@ def test_classify_subject_detects_a_non_curriculum_question(generator) -> None:
     result = generator.classify_subject("Ban co the ho tro nhung mon nao?", ["Toán", "Lịch sử"])
 
     assert result == NOT_SUBJECT_SPECIFIC
+
+
+# --- Diacritic restoration ---------------------------------------------------
+
+
+def test_restore_diacritics_returns_the_models_correction(generator) -> None:
+    _install(generator, _StubCompletions("đa thức là gì"))
+
+    assert generator.restore_diacritics("da thuc la gi") == "đa thức là gì"
+
+
+def test_restore_diacritics_returns_the_original_on_an_empty_completion(generator) -> None:
+    _install(generator, _StubCompletions(""))
+
+    assert generator.restore_diacritics("da thuc la gi") == "da thuc la gi"
+
+
+def test_restore_diacritics_returns_the_original_when_the_provider_is_unreachable(
+    generator,
+) -> None:
+    _install(generator, _StubCompletions(error=APIConnectionError(request=_openai_request())))
+
+    assert generator.restore_diacritics("da thuc la gi") == "da thuc la gi"
+
+
+def test_restore_diacritics_of_an_empty_string_skips_the_api_call(generator) -> None:
+    completions = _StubCompletions()
+    _install(generator, completions)
+
+    assert generator.restore_diacritics("   ") == "   "
+    assert completions.calls == []

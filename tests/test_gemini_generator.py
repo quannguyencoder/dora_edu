@@ -344,3 +344,44 @@ def test_classify_subject_returns_none_when_the_provider_is_unreachable(generato
     _install(generator, _StubModels(error=error))
 
     assert generator.classify_subject("abc", ["Toán", "Lịch sử"]) is None
+
+
+# --- Diacritic restoration ---------------------------------------------------
+
+
+def test_restore_diacritics_returns_the_models_correction(generator) -> None:
+    _install(generator, _StubModels("đa thức là gì"))
+
+    assert generator.restore_diacritics("da thuc la gi") == "đa thức là gì"
+
+
+def test_restore_diacritics_returns_the_original_when_every_model_is_unreachable(
+    generator,
+) -> None:
+    error = ServerError(503, {"message": "unavailable"})
+    _install(generator, _StubModels(error=error))
+
+    assert generator.restore_diacritics("da thuc la gi") == "da thuc la gi"
+
+
+def test_restore_diacritics_falls_back_to_the_next_model_when_rate_limited(
+    generator, settings
+) -> None:
+    first_fallback = parse_model_list(settings.gemini_fallback_models)[0]
+    models = _PerModelStub(
+        {
+            settings.llm_model: ClientError(429, {"message": "slow down"}),
+            first_fallback: "đa thức là gì",
+        }
+    )
+    _install(generator, models)
+
+    assert generator.restore_diacritics("da thuc la gi") == "đa thức là gì"
+
+
+def test_restore_diacritics_of_an_empty_string_skips_the_api_call(generator) -> None:
+    models = _StubModels()
+    _install(generator, models)
+
+    assert generator.restore_diacritics("   ") == "   "
+    assert models.calls == []

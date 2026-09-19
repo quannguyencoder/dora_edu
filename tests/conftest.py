@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
@@ -88,14 +88,23 @@ def _matches(metadata: dict[str, Any], where: dict[str, Any] | None) -> bool:
 class FakeGenerator(AnswerGenerator):
     """Records what it was asked to generate and returns a canned answer."""
 
-    def __init__(self, answer: str = "Cau tra loi mau", classify_subject_response: str | None = None) -> None:
+    def __init__(
+        self,
+        answer: str = "Cau tra loi mau",
+        classify_subject_response: str | None = None,
+        restore_diacritics_response: Callable[[str], str] | None = None,
+    ) -> None:
         self.answer = answer
         self.calls: list[dict[str, Any]] = []
         self.classify_calls: list[dict[str, Any]] = []
+        self.restore_diacritics_calls: list[str] = []
         #: `None` by default: mirrors a real classifier being inconclusive, so
         #: callers fall back to Retriever.retrieve_best_subject the same way
         #: they would if the LLM were briefly unreachable.
         self._classify_subject_response = classify_subject_response
+        #: Identity by default -- matches a real, well-typed question that
+        #: needs no correction, which is what every existing test fixture is.
+        self._restore_diacritics_response = restore_diacritics_response
 
     def generate(
         self,
@@ -117,6 +126,12 @@ class FakeGenerator(AnswerGenerator):
     def classify_subject(self, question: str, subjects: list[str]) -> str | None:
         self.classify_calls.append({"question": question, "subjects": list(subjects)})
         return self._classify_subject_response
+
+    def restore_diacritics(self, text: str) -> str:
+        self.restore_diacritics_calls.append(text)
+        if self._restore_diacritics_response is not None:
+            return self._restore_diacritics_response(text)
+        return text
 
 
 @pytest.fixture

@@ -225,6 +225,14 @@ class TutorService:
         if session.grade is None:
             return OutgoingMessage(text=prompts.PROFILE_REQUIRED_MESSAGE)
 
+        # A student casually dropping Vietnamese diacritics while typing fast
+        # ("la gi" instead of "là gì") can shift the retrieval embedding far
+        # enough to miss real content entirely, even though a person -- or
+        # the LLM itself -- reads both the same way. Restoring diacritics
+        # here only changes what gets searched, never the retrieved
+        # textbook content, so it carries no hallucination risk.
+        question = self._generator.restore_diacritics(question)
+
         try:
             if session.subject is not None:
                 subject = session.subject

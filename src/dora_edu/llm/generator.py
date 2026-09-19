@@ -64,6 +64,14 @@ _CLASSIFY_SUBJECT_PROMPT_TEMPLATE = (
     f"{_NOT_SUBJECT_SPECIFIC_REPLY} như trên, không giải thích gì thêm."
 )
 
+_RESTORE_DIACRITICS_PROMPT_TEMPLATE = (
+    'Học sinh gõ: "{text}"\n\n'
+    "Nếu câu này thiếu dấu tiếng Việt hoặc gõ tắt (ví dụ gõ nhanh không dấu), hãy viết "
+    "lại ĐÚNG CHÍNH TẢ có đầy đủ dấu, giữ nguyên số từ và ý nghĩa, không thêm bớt hay "
+    "diễn giải gì khác. Nếu câu đã đúng chính tả rồi, hoặc không phải tiếng Việt, hãy "
+    "trả lời NGUYÊN VĂN y hệt câu gốc. Chỉ trả lời đúng câu kết quả, không giải thích."
+)
+
 
 def _parse_classification(raw: str, subjects: list[str]) -> str | None:
     """Turn a classification reply into a subject, the meta sentinel, or ``None``.
@@ -151,6 +159,29 @@ class AnswerGenerator(ABC):
             the message is not a subject-content question at all (e.g. it
             asks about the bot itself); or ``None`` when the classifier is
             inconclusive or the provider is unreachable.
+        """
+
+    @abstractmethod
+    def restore_diacritics(self, text: str) -> str:
+        """Best-effort restore missing/wrong Vietnamese diacritics in ``text``.
+
+        Embedding-based retrieval is noticeably more sensitive to missing
+        diacritics than the LLM itself is: "đa thức là gì" (correct) and
+        "đa thức là gi" (a student casually dropping the accent, common when
+        typing fast) can embed far enough apart that the same real content
+        ranks at the top for one and outside the top 30 for the other, even
+        though a person -- or an LLM -- reads them as the same question.
+        Restoring diacritics before retrieval fixes that at the query text
+        level, without touching any retrieved textbook content, so it never
+        affects the zero-hallucination guarantee -- only what gets searched.
+
+        Args:
+            text: The student's raw message text.
+
+        Returns:
+            ``text`` with diacritics restored, or ``text`` unchanged if it
+            already looks correct, isn't Vietnamese, or the provider is
+            unreachable (never worse than not calling this at all).
         """
 
 
@@ -262,6 +293,27 @@ class OpenAIAnswerGenerator(AnswerGenerator):
 
         content = (response.choices[0].message.content or "").strip() if response.choices else ""
         return _parse_classification(content, subjects)
+
+    def restore_diacritics(self, text: str) -> str:
+        """Ask the model to restore missing/wrong Vietnamese diacritics in ``text``."""
+        stripped = text.strip()
+        if not stripped:
+            return text
+
+        prompt = _RESTORE_DIACRITICS_PROMPT_TEMPLATE.format(text=stripped)
+        try:
+            response = self._client.chat.completions.create(
+                model=self._settings.llm_model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                max_tokens=self._settings.llm_max_tokens,
+            )
+        except (APITimeoutError, APIConnectionError, RateLimitError, APIStatusError) as exc:
+            logger.warning("Diacritic restoration unreachable: %s", exc)
+            return text
+
+        content = (response.choices[0].message.content or "").strip() if response.choices else ""
+        return content or text
 
 
 #: OpenAI's chat-message role for an LLM reply; Gemini calls the same turn "model".
@@ -471,6 +523,28 @@ class GeminiAnswerGenerator(AnswerGenerator):
                 return _parse_classification(content, subjects)
             break
         return None
+
+    def restore_diacritics(self, text: str) -> str:
+        """Ask the model to restore missing/wrong Vietnamese diacritics in ``text``."""
+        stripped = text.strip()
+        if not stripped:
+            return text
+
+        prompt = _RESTORE_DIACRITICS_PROMPT_TEMPLATE.format(text=stripped)
+        contents = [genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
+        config = genai_types.GenerateContentConfig(
+            temperature=0,
+            max_output_tokens=self._settings.llm_max_tokens,
+            thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
+        )
+
+        for model in self._models_in_order():
+            content, rate_limited = self._generate_with_one_model(model, contents, config)
+            if rate_limited:
+                logger.warning("%s is rate-limited; trying the next fallback model", model)
+                continue
+            return content or text
+        return text
 
 
 def build_generator(settings: Settings | None = None) -> AnswerGenerator:
