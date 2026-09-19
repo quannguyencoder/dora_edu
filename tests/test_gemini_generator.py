@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 from google.genai.errors import ClientError, ServerError
 
+from dora_edu.config import parse_model_list
 from dora_edu.llm import prompts
 from dora_edu.llm.generator import (
     GeminiAnswerGenerator,
@@ -53,6 +54,27 @@ class _FlakyThenGoodModels:
         self.calls.append(kwargs)
         content = "" if len(self.calls) == 1 else self.text
         return type("Response", (), {"text": content})()
+
+
+class _PerModelStub:
+    """Routes ``generate_content`` by the requested model name.
+
+    ``responses`` maps a model id to either the text it should return or an
+    exception it should raise, so a test can simulate one model being
+    rate-limited while another still has quota.
+    """
+
+    def __init__(self, responses: dict[str, str | Exception]) -> None:
+        self.responses = responses
+        self.calls: list[str] = []
+
+    def generate_content(self, **kwargs: Any) -> Any:
+        model = kwargs["model"]
+        self.calls.append(model)
+        outcome = self.responses.get(model, "")
+        if isinstance(outcome, Exception):
+            raise outcome
+        return type("Response", (), {"text": outcome})()
 
 
 @pytest.fixture
@@ -154,6 +176,97 @@ def test_a_generic_client_error_becomes_a_friendly_message(generator) -> None:
 
     assert result.grounded is False
     assert "Traceback" not in result.answer
+
+
+# --- Model fallback on rate limit -------------------------------------------
+
+
+def test_generate_falls_back_to_the_next_model_when_the_primary_is_rate_limited(
+    generator, settings
+) -> None:
+    first_fallback = parse_model_list(settings.gemini_fallback_models)[0]
+    models = _PerModelStub(
+        {
+            settings.llm_model: ClientError(429, {"message": "slow down"}),
+            first_fallback: "Cau tra loi tu model du phong",
+        }
+    )
+    _install(generator, models)
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.answer == "Cau tra loi tu model du phong"
+    assert result.grounded is True
+    assert models.calls == [settings.llm_model, first_fallback]
+
+
+def test_generate_tries_every_fallback_before_giving_up(generator, settings) -> None:
+    error = ClientError(429, {"message": "slow down"})
+    models = _PerModelStub({model: error for model in generator._models_in_order()})
+    _install(generator, models)
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.grounded is False
+    assert models.calls == generator._models_in_order()
+
+
+def test_generate_does_not_try_fallback_models_after_a_non_rate_limit_error(
+    generator, settings
+) -> None:
+    error = ServerError(503, {"message": "down"})
+    models = _PerModelStub({settings.llm_model: error})
+    _install(generator, models)
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.grounded is False
+    assert models.calls == [settings.llm_model]
+
+
+def test_generate_does_not_cascade_models_on_a_merely_empty_completion(
+    generator, settings
+) -> None:
+    models = _StubModels("")
+    _install(generator, models)
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.answer == prompts.NO_CONTEXT_ANSWER
+    # Only the primary model is retried (twice) -- an empty completion is not
+    # a rate limit, so it must not cascade through every fallback model too.
+    assert len(models.calls) == 2
+
+
+def test_models_in_order_drops_a_fallback_that_duplicates_the_primary(settings) -> None:
+    settings = settings.model_copy(
+        update={
+            "gemini_api_key": "test-key",
+            "llm_model": "gemini-3.5-flash-lite",
+            "gemini_fallback_models": "gemini-3.5-flash-lite,gemini-3.1-flash-lite",
+        }
+    )
+    generator = GeminiAnswerGenerator(settings)
+
+    assert generator._models_in_order() == ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
+
+
+def test_classify_subject_falls_back_to_the_next_model_when_the_primary_is_rate_limited(
+    generator, settings
+) -> None:
+    first_fallback = parse_model_list(settings.gemini_fallback_models)[0]
+    models = _PerModelStub(
+        {
+            settings.llm_model: ClientError(429, {"message": "slow down"}),
+            first_fallback: "Toán",
+        }
+    )
+    _install(generator, models)
+
+    result = generator.classify_subject("Phan so la gi?", ["Toán", "Lịch sử"])
+
+    assert result == "Toán"
+    assert models.calls == [settings.llm_model, first_fallback]
 
 
 def test_build_generator_defaults_to_openai(settings) -> None:

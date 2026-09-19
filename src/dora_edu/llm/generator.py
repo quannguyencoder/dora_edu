@@ -22,7 +22,7 @@ from openai import (
 )
 from pydantic import BaseModel, ConfigDict, Field
 
-from dora_edu.config import Settings, get_settings
+from dora_edu.config import Settings, get_settings, parse_model_list
 from dora_edu.llm import prompts
 from dora_edu.models import RetrievedChunk, StudentProfile, strip_diacritics
 
@@ -286,6 +286,68 @@ class GeminiAnswerGenerator(AnswerGenerator):
             raise ValueError("GEMINI_API_KEY is not set; cannot start the answer generator")
         self._client = genai.Client(api_key=self._settings.gemini_api_key)
 
+    def _models_in_order(self) -> list[str]:
+        """The configured model first, then each distinct fallback model.
+
+        A fallback that duplicates the primary model (or an earlier
+        fallback) is dropped -- retrying the very model that was just
+        rate-limited would not help, and would burn an extra call for no
+        benefit.
+        """
+        seen = {self._settings.llm_model}
+        ordered = [self._settings.llm_model]
+        for model in parse_model_list(self._settings.gemini_fallback_models):
+            if model not in seen:
+                ordered.append(model)
+                seen.add(model)
+        return ordered
+
+    def _generate_with_one_model(
+        self,
+        model: str,
+        contents: list[genai_types.Content],
+        config: genai_types.GenerateContentConfig,
+    ) -> tuple[str | None, bool]:
+        """Call a single Gemini model, retrying once on an empty completion.
+
+        Args:
+            model: The Gemini model id to call.
+            contents: The conversation turns already built for this request.
+            config: The generation config shared across every model tried.
+
+        Returns:
+            A ``(content, rate_limited)`` pair. ``content`` is ``None`` for a
+            non-rate-limit provider error (the caller should stop trying
+            models altogether), an empty string when every attempt on this
+            model came back empty, or the generated text. ``rate_limited``
+            is ``True`` only for an HTTP 429 from this specific model.
+        """
+        content = ""
+        for attempt in range(2):
+            try:
+                response = self._client.models.generate_content(
+                    model=model, contents=contents, config=config
+                )
+            except ClientError as exc:
+                if exc.code == 429:
+                    return "", True
+                logger.error("LLM provider returned %s: %s", exc.code, exc)
+                return None, False
+            except ServerError as exc:
+                logger.error("LLM provider unreachable: %s", exc)
+                return None, False
+
+            content = (getattr(response, "text", None) or "").strip()
+            if content:
+                break
+            # Sampling occasionally comes back with an empty candidate for no
+            # discernible reason (confirmed by hand: the identical request
+            # often succeeds on a plain retry) -- one retry on the same model
+            # is far cheaper than telling a student who asked a perfectly
+            # answerable question "not found".
+            logger.warning("%s returned an empty completion (attempt %d/2)", model, attempt + 1)
+        return content, False
+
     def generate(
         self,
         question: str,
@@ -336,32 +398,29 @@ class GeminiAnswerGenerator(AnswerGenerator):
             thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
         )
 
-        # Sampling occasionally comes back with an empty candidate for no
-        # discernible reason (confirmed by hand: the identical request often
-        # succeeds on a plain retry) -- one retry is far cheaper than telling
-        # a student who asked a perfectly answerable question "not found".
         content = ""
-        for attempt in range(2):
-            try:
-                response = self._client.models.generate_content(
-                    model=self._settings.llm_model, contents=contents, config=config
-                )
-            except ClientError as exc:
-                if exc.code == 429:
-                    logger.error("LLM rate limit hit: %s", exc)
-                    return GeneratedAnswer(answer=_RATE_LIMIT_ANSWER, grounded=False)
-                logger.error("LLM provider returned %s: %s", exc.code, exc)
+        any_rate_limited = False
+        for model in self._models_in_order():
+            content, rate_limited = self._generate_with_one_model(model, contents, config)
+            if rate_limited:
+                # This model's own daily/per-minute quota is exhausted --
+                # the free tier quotas each model separately, so the next
+                # model in the list still has its own budget.
+                any_rate_limited = True
+                logger.warning("%s is rate-limited; trying the next fallback model", model)
+                continue
+            if content is None:
+                # A non-rate-limit provider error: retrying with a different
+                # model would not fix a request/connection problem.
                 return GeneratedAnswer(answer=_SERVICE_ERROR_ANSWER, grounded=False)
-            except ServerError as exc:
-                logger.error("LLM provider unreachable: %s", exc)
-                return GeneratedAnswer(answer=_SERVICE_ERROR_ANSWER, grounded=False)
-
-            content = (getattr(response, "text", None) or "").strip()
-            if content:
-                break
-            logger.warning("LLM returned an empty completion (attempt %d/2)", attempt + 1)
+            # Real content, or a definitive empty completion (already retried
+            # once on this same model) -- either way, stop here rather than
+            # cascading through every fallback model too.
+            break
 
         if not content:
+            if any_rate_limited:
+                return GeneratedAnswer(answer=_RATE_LIMIT_ANSWER, grounded=False)
             return GeneratedAnswer(answer=prompts.NO_CONTEXT_ANSWER, grounded=False)
 
         return GeneratedAnswer(
@@ -382,22 +441,25 @@ class GeminiAnswerGenerator(AnswerGenerator):
         prompt = _CLASSIFY_SUBJECT_PROMPT_TEMPLATE.format(
             question=question, subjects=", ".join(subjects)
         )
-        try:
-            response = self._client.models.generate_content(
-                model=self._settings.llm_model,
-                contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])],
-                config=genai_types.GenerateContentConfig(
-                    temperature=0,
-                    max_output_tokens=200,
-                    thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
-                ),
-            )
-        except (ClientError, ServerError) as exc:
-            logger.warning("Subject classification unreachable: %s", exc)
-            return None
+        contents = [genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
+        config = genai_types.GenerateContentConfig(
+            temperature=0,
+            max_output_tokens=200,
+            thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
+        )
 
-        content = (getattr(response, "text", None) or "").strip()
-        return _parse_classification(content, subjects)
+        # Also falls back across models on a 429: an auto-detect question
+        # costs a classification call on top of the answer call, so this can
+        # exhaust the primary model's quota faster than generate() alone.
+        for model in self._models_in_order():
+            content, rate_limited = self._generate_with_one_model(model, contents, config)
+            if rate_limited:
+                logger.warning("%s is rate-limited; trying the next fallback model", model)
+                continue
+            if content:
+                return _parse_classification(content, subjects)
+            break
+        return None
 
 
 def build_generator(settings: Settings | None = None) -> AnswerGenerator:

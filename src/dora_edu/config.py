@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     openai_base_url: str | None = None
     gemini_api_key: str | None = None
     llm_model: str = "gpt-4o-mini"
+    #: Comma-separated, tried in order after ``llm_model`` is rate-limited
+    #: (HTTP 429). The Gemini free tier quotas each model separately, so a
+    #: lightweight model with a much higher daily quota keeps the bot
+    #: answering once the primary model's quota is exhausted, instead of
+    #: refusing every question until the quota resets. Only used by the
+    #: Gemini backend; parsed with :func:`parse_model_list`.
+    gemini_fallback_models: str = "gemini-3.5-flash-lite,gemini-3.1-flash-lite"
     llm_temperature: float = 0.3
     #: Generous headroom for "thinking" models (e.g. Gemini), which spend a
     #: chunk of this budget on internal reasoning before the visible answer.
@@ -78,6 +85,22 @@ class Settings(BaseSettings):
     def _expand_path(cls, value: Path) -> Path:
         """Expand ``~`` and resolve the persistence directory to an absolute path."""
         return value.expanduser().resolve()
+
+
+def parse_model_list(raw: str) -> list[str]:
+    """Split a comma-separated setting like ``gemini_fallback_models`` into model ids.
+
+    A plain string field (rather than ``list[str]``) is used for this kind of
+    setting because pydantic-settings parses a ``list[str]`` env value as
+    JSON, which rejects an ordinary comma-separated ``.env`` value outright.
+
+    Args:
+        raw: The raw comma-separated setting value.
+
+    Returns:
+        Non-empty, whitespace-trimmed model ids, in order.
+    """
+    return [model.strip() for model in raw.split(",") if model.strip()]
 
 
 @lru_cache(maxsize=1)
