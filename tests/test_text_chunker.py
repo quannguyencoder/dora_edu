@@ -80,29 +80,62 @@ def test_overlap_must_be_smaller_than_chunk_size() -> None:
 
 # --- Heading-aware section boundaries ---------------------------------------
 
+#: Well over _MIN_SECTION_LENGTH, so a section built from it is never merged
+#: into the next one -- these tests are about boundary detection, not merging.
+_FILLER = "Day la mot cau noi dung du dai de vuot qua nguong hop nhat cac muc ngan. "
+
 
 def test_split_into_sections_starts_a_new_section_at_a_lettered_heading() -> None:
-    text = "b. Tim y\nNoi dung cua muc b.\nc. Lap dan y\nNoi dung cua muc c."
+    text = f"b. Tim y\n{_FILLER * 2}\nc. Lap dan y\n{_FILLER * 2}"
 
-    assert split_into_sections(text) == [
-        "b. Tim y\nNoi dung cua muc b.",
-        "c. Lap dan y\nNoi dung cua muc c.",
-    ]
+    sections = split_into_sections(text)
+
+    assert len(sections) == 2
+    assert sections[0].startswith("b. Tim y")
+    assert sections[1].startswith("c. Lap dan y")
 
 
 def test_split_into_sections_starts_a_new_section_at_a_numbered_heading() -> None:
-    text = "1. TRUOC KHI VIET\nNoi dung a.\n2. VIET BAI\nNoi dung b."
+    text = f"1. TRUOC KHI VIET\n{_FILLER * 2}\n2. VIET BAI\n{_FILLER * 2}"
 
-    assert split_into_sections(text) == [
-        "1. TRUOC KHI VIET\nNoi dung a.",
-        "2. VIET BAI\nNoi dung b.",
-    ]
+    sections = split_into_sections(text)
+
+    assert len(sections) == 2
+    assert sections[0].startswith("1. TRUOC KHI VIET")
+    assert sections[1].startswith("2. VIET BAI")
 
 
 def test_split_into_sections_recognises_an_all_caps_bai_heading() -> None:
-    text = "Truoc do.\nBÀI 1\nNoi dung bai 1."
+    text = f"{_FILLER * 2}\nBÀI 1\n{_FILLER * 2}"
 
-    assert split_into_sections(text) == ["Truoc do.", "BÀI 1\nNoi dung bai 1."]
+    sections = split_into_sections(text)
+
+    assert len(sections) == 2
+    assert sections[1].startswith("BÀI 1")
+
+
+def test_split_into_sections_merges_a_run_of_short_list_style_headings() -> None:
+    # Reproduces a real corpus pattern: a book-set back-cover listing where
+    # every line is its own short numbered "heading" with no body text --
+    # must not each become its own noise-like chunk (short, low-information
+    # text embeds deceptively close to many unrelated queries).
+    lines = [
+        "1. Tieng Viet 1, tap mot",
+        "2. Tieng Viet 1, tap hai",
+        "3. Toan 1, tap mot",
+        "4. Toan 1, tap hai",
+        "5. Tu nhien va Xa hoi 1",
+        "6. Dao duc 1",
+        "7. Am nhac 1",
+        "8. Mi thuat 1",
+        "9. Hoat dong trai nghiem 1",
+        "10. Giao duc the chat 1",
+    ]
+
+    sections = split_into_sections("\n".join(lines))
+
+    assert len(sections) < len(lines)
+    assert all("\n" in section for section in sections)
 
 
 def test_split_into_sections_is_a_single_section_when_there_is_no_heading() -> None:

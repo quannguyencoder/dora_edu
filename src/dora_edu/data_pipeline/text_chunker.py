@@ -30,6 +30,14 @@ _HEADING_LINE = re.compile(r"^(?:\d{1,2}\.\s+\S|[a-zđ]\.\s+\S|BÀI\s+\d)")
 #: by coincidence (e.g. a numbered sentence) is content, not a heading.
 _MAX_HEADING_LINE_LENGTH = 80
 
+#: A section shorter than this is a heading with no real body -- most often a
+#: run of numbered list items (a book-set back-cover listing, a festival-day
+#: programme) rather than an actual labelled subsection. Embedding models
+#: rank such short, low-information text deceptively close to many unrelated
+#: queries, so instead of becoming its own chunk it merges into the next
+#: section, the same way a page with no headings at all behaves.
+_MIN_SECTION_LENGTH = 120
+
 
 def _is_heading_line(line: str) -> bool:
     """Return whether ``line`` looks like a subsection heading on its own line."""
@@ -44,7 +52,9 @@ def split_into_sections(text: str) -> list[str]:
 
     Text with no heading lines at all comes back as a single section (the
     whole input), so callers that never see a heading behave exactly as if
-    sections did not exist.
+    sections did not exist. A heading that starts a section shorter than
+    :data:`_MIN_SECTION_LENGTH` is treated as if it were not a heading at
+    all -- it merges into the section that follows instead of standing alone.
 
     Args:
         text: Raw page text, with its original line breaks intact.
@@ -55,7 +65,8 @@ def split_into_sections(text: str) -> list[str]:
     """
     sections: list[list[str]] = [[]]
     for line in text.splitlines():
-        if _is_heading_line(line) and sections[-1]:
+        current = "\n".join(sections[-1]).strip()
+        if _is_heading_line(line) and sections[-1] and len(current) >= _MIN_SECTION_LENGTH:
             sections.append([])
         sections[-1].append(line)
     return ["\n".join(section) for section in sections if "".join(section).strip()]
