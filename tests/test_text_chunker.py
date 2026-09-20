@@ -69,6 +69,30 @@ def test_zero_overlap_produces_disjoint_chunks() -> None:
     assert not set(split_sentences(chunks[0].text)) & set(split_sentences(chunks[1].text))
 
 
+def test_table_of_contents_pages_are_dropped_before_chunking() -> None:
+    # Reproduces a real bug: "CHƯƠNG IX. ĐẠO HÀM" on a table-of-contents page
+    # matched a "đạo hàm là gì" query as closely as the real definition many
+    # pages later, and (being short and near-identical in shape across most
+    # of the corpus) out-ranked it.
+    toc_page = ParsedPage(
+        page_number=4,
+        text="MỤC LỤC\n\nCHƯƠNG IX. ĐẠO HÀM 82\nCHƯƠNG X. TÍCH PHÂN 120",
+    )
+    real_page = ParsedPage(
+        page_number=83,
+        text=(
+            "Cho hàm số y = f(x) xác định trên khoảng (a; b) và điểm x0. Nếu tồn tại "
+            "giới hạn hữu hạn thì giới hạn đó được gọi là đạo hàm của hàm số y = f(x) "
+            "tại điểm x0."
+        ),
+    )
+
+    chunks = chunk_pages([toc_page, real_page], chunk_size=450, chunk_overlap=80)
+
+    assert all(chunk.page_start != 4 for chunk in chunks)
+    assert any("giới hạn hữu hạn" in chunk.text for chunk in chunks)
+
+
 def test_empty_input_produces_no_chunks() -> None:
     assert chunk_pages([], chunk_size=200, chunk_overlap=50) == []
 

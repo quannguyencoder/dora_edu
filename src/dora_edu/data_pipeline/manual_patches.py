@@ -81,6 +81,20 @@ PATCHES: list[_Patch] = [
             "trọng của trải nghiệm đối với bản thân."
         ),
     },
+    {
+        "grade": 11,
+        "subject": "Toán",
+        "book_title": "Toán 11 - tập 2",
+        "source_file": "SGKToan11taphai.pdf",
+        "page": 83,
+        "chunk_index": 900083,
+        "text": (
+            "Định nghĩa: Đạo hàm là gì? Đạo hàm của một hàm số tại một điểm cho "
+            "biết tốc độ thay đổi tức thời của hàm số tại điểm đó. Nếu hàm số có "
+            "đạo hàm tại mọi điểm trong một khoảng, ta nói hàm số có đạo hàm "
+            "trên khoảng đó."
+        ),
+    },
 ]
 
 

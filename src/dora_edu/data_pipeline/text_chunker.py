@@ -125,6 +125,22 @@ def _tail_for_overlap(sentences: list[str], overlap: int) -> tuple[list[str], in
     return tail, length
 
 
+#: Every MOET textbook's table-of-contents page carries this literal marker.
+#: A mục lục page is a list of chapter/lesson titles -- e.g. "CHƯƠNG IX. ĐẠO
+#: HÀM" -- so a query like "đạo hàm là gì" can match the title line on this
+#: page as closely as the real definition dozens of pages later, and being
+#: short and near-identical in shape across most of the corpus, it tends to
+#: win. There is never a legitimate reason to answer a student from a table
+#: of contents, so these pages are dropped before chunking rather than
+#: merely down-ranked.
+_TABLE_OF_CONTENTS_MARKER = "MỤC LỤC"
+
+
+def _is_table_of_contents_page(text: str) -> bool:
+    """Return whether ``text`` is a table-of-contents page."""
+    return _TABLE_OF_CONTENTS_MARKER in text
+
+
 def chunk_pages(
     pages: list[ParsedPage],
     *,
@@ -132,6 +148,12 @@ def chunk_pages(
     chunk_overlap: int,
 ) -> list[TextChunk]:
     """Group cleaned pages into overlapping, sentence-aligned chunks.
+
+    Table-of-contents pages (see :func:`_is_table_of_contents_page`) are
+    dropped before chunking: they are never useful to answer a student from,
+    and their short, repetitive chapter/lesson-title listing otherwise
+    tends to out-rank real content that happens to share a keyword with a
+    title (e.g. a chapter literally named after the term being asked about).
 
     Args:
         pages: Cleaned pages in reading order.
@@ -146,6 +168,8 @@ def chunk_pages(
     """
     if chunk_overlap >= chunk_size:
         raise ValueError("chunk_overlap must be smaller than chunk_size")
+
+    pages = [page for page in pages if not _is_table_of_contents_page(page.text)]
 
     # Flatten to (sentence, page_number, starts_section) so a chunk can still
     # span a page break when nothing marks one -- only a real heading line
