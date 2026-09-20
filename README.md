@@ -8,8 +8,8 @@ It acts as a 24/7 intelligent tutor that relies **100% on official textbooks** f
 
 Unlike standard ChatGPT or generic AI assistants that might hallucinate answers or pull information from unregulated internet sources, DoraEdu is built with **strict pedagogical guardrails**:
 
-1. **Metadata Isolation:** A 6th-grade student asking about Math will ONLY receive answers from 6th-grade Math textbooks. `Retriever.retrieve()` only accepts a `StudentProfile`, whose `grade` and `subject` are both mandatory — so no query can reach ChromaDB unfiltered.
-2. **Context-bound Generation:** The system prompt forces the LLM to reply with *"Cô chưa tìm thấy thông tin này trong sách giáo khoa của em"* if the answer cannot be found in the retrieved documents. When retrieval returns nothing, that answer is returned **without calling the LLM at all**.
+1. **Metadata Isolation:** A 6th-grade student asking about Math will only receive answers from Math textbooks of grade 6 or below (never grade 7+) — the grade filter is a ceiling, not an exact match, so reviewing earlier material is allowed but reaching ahead is not. `Retriever.retrieve()` only accepts a `StudentProfile`, whose `grade` and `subject` are both mandatory — so no query can reach ChromaDB unfiltered.
+2. **Context-bound Generation:** The system prompt forces the LLM to reply with *"Mình chưa tìm thấy thông tin này trong sách giáo khoa của bạn"* if the answer cannot be found in the retrieved documents. When retrieval returns nothing, that answer is returned **without calling the LLM at all**.
 3. **Socratic Tutoring:** The bot guides students toward the answer with hints and questions instead of handing over the finished solution, preventing rote copying.
 
 ## 🏗️ System Architecture
@@ -39,8 +39,8 @@ This project uses modern Python packaging via `pyproject.toml` (PEP 621).
 
 * Python >= 3.12
 * [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) with the Vietnamese language pack — most real MOET textbook PDFs are scans with no text layer, so `dora-ingest`/`dora-bulk-ingest` OCR them locally. On macOS: `brew install tesseract tesseract-lang`. On Debian/Ubuntu: `apt install tesseract-ocr tesseract-ocr-vie`.
-* A Discord Bot Token (from the [Discord Developer Portal](https://discord.com/developers/applications)) and/or a Telegram Bot Token (from BotFather) and/or a Zalo Official Account access token + secret key, depending on which channel(s) you run
-* OpenAI API Key — or any OpenAI-compatible endpoint via `OPENAI_BASE_URL`, including a local model
+* A Discord Bot Token (from the [Discord Developer Portal](https://discord.com/developers/applications)) — the primary channel today; a Telegram Bot Token (from BotFather) and/or a Zalo Official Account access token + secret key also work, since the bot layer is channel-agnostic
+* A Gemini API key (`LLM_PROVIDER=gemini`, get one free at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) — or an OpenAI API key / any OpenAI-compatible endpoint via `OPENAI_BASE_URL`, including a local model
 
 ### 2. Installation
 
@@ -115,13 +115,13 @@ dora-run-zalo-bot       # Zalo OA, webhook server (put a reverse proxy + TLS in 
 | Command | Purpose |
 |---|---|
 | `/start` | Welcome message and onboarding |
-| `/lop <1-12>` | Set the student's grade |
-| `/mon <tên môn>` | Set the subject, e.g. `/mon Toán` |
+| `/lop <1-12>` | Set the student's grade (required) |
+| `/mon <tên môn>` | Pin the subject, e.g. `/mon Toán` (optional — the subject is auto-detected per question otherwise) |
 | `/toi` | Show the current grade and subject |
 | `/xoa` | Clear the conversation history |
 | `/trogiup` | Show help |
 
-The bot refuses to search the textbooks until both a grade and a subject are set.
+The bot refuses to search the textbooks until a grade is set. The subject is auto-detected from each question unless pinned with `/mon`; the grade filter is a ceiling, not an exact match, so a student can also be shown content from any grade at or below their own (e.g. reviewing earlier material) but never from a grade above it.
 
 ## 🧪 Tests
 
