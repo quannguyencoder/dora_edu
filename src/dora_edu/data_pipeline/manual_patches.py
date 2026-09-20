@@ -95,6 +95,24 @@ PATCHES: list[_Patch] = [
             "trên khoảng đó."
         ),
     },
+    {
+        # Re-adds a patch that existed before this file did (a plain, ad-hoc
+        # DB write from an earlier session) -- lost to today's full
+        # re-ingests exactly like đa thức and Lập dàn ý were, which is the
+        # whole reason this file exists now: every known case belongs here
+        # so a future re-ingest restores it instead of silently dropping it.
+        "grade": 8,
+        "subject": "Toán",
+        "book_title": "Toán 8 - tập 1",
+        "source_file": "SGKToan8tapmot.pdf",
+        "page": 79,
+        "chunk_index": 900079,
+        "text": (
+            "Định lí Thalès là gì? Nếu một đường thẳng song song với một cạnh "
+            "của tam giác và cắt hai cạnh còn lại thì nó định ra trên hai cạnh "
+            "đó những đoạn thẳng tương ứng tỉ lệ."
+        ),
+    },
 ]
 
 
