@@ -113,6 +113,24 @@ PATCHES: list[_Patch] = [
             "đó những đoạn thẳng tương ứng tỉ lệ."
         ),
     },
+    {
+        # OCR misread the fraction notation "a/b" in this definition as a
+        # bare "=" sign ("ta gợi = là một phân s6" instead of "ta gọi a/b là
+        # một phân số"), so the one sentence that actually answers "Phân số
+        # là gì?" doesn't read as Vietnamese at all -- found live, testing
+        # the exact question planned for the grade-6 team member's demo.
+        "grade": 6,
+        "subject": "Toán",
+        "book_title": "Toán 6 - tập 2",
+        "source_file": "SGKToan6taphai.pdf",
+        "page": 6,
+        "chunk_index": 900006,
+        "text": (
+            "Phân số là gì? Với a, b là các số nguyên và b khác 0, ta gọi "
+            "a/b là một phân số, trong đó a là tử số và b là mẫu số của "
+            "phân số đó."
+        ),
+    },
 ]
 
 
