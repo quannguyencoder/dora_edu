@@ -96,15 +96,18 @@ class RepairedPage:
         return REPAIR_CHUNK_OFFSET + self.page
 
 
-def load_repairs(path: Path = REPAIRS_PATH) -> list[RepairedPage]:
+def load_repairs(path: Path | None = None) -> list[RepairedPage]:
     """Read previously repaired pages.
 
     Args:
-        path: The JSON file to read.
+        path: The JSON file to read; :data:`REPAIRS_PATH` when omitted.
+            Resolved on each call rather than bound as a default, so a test
+            can point it elsewhere.
 
     Returns:
         Every saved page; empty when the file is missing or unreadable.
     """
+    path = path or REPAIRS_PATH
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -126,13 +129,14 @@ def load_repairs(path: Path = REPAIRS_PATH) -> list[RepairedPage]:
     ]
 
 
-def save_repairs(pages: list[RepairedPage], path: Path = REPAIRS_PATH) -> None:
+def save_repairs(pages: list[RepairedPage], path: Path | None = None) -> None:
     """Write repaired pages, newest state wins per (book, page).
 
     Args:
         pages: Pages to save.
-        path: Destination JSON file.
+        path: Destination JSON file; :data:`REPAIRS_PATH` when omitted.
     """
+    path = path or REPAIRS_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     unique: dict[tuple[str, int], RepairedPage] = {}
     for page in pages:
@@ -154,7 +158,7 @@ def _sort_key(page: RepairedPage) -> tuple[int, str, int]:
     return (page.grade, page.source_file, page.page)
 
 
-def apply_repairs(indexer: TextbookIndexer, path: Path = REPAIRS_PATH) -> int:
+def apply_repairs(indexer: TextbookIndexer, path: Path | None = None) -> int:
     """Index every saved repaired page.
 
     Safe to re-run: each page upserts under the same stable id, so this
@@ -162,7 +166,8 @@ def apply_repairs(indexer: TextbookIndexer, path: Path = REPAIRS_PATH) -> int:
 
     Args:
         indexer: Destination index.
-        path: The JSON file holding the repairs.
+        path: The JSON file holding the repairs; :data:`REPAIRS_PATH` when
+            omitted.
 
     Returns:
         The number of chunks written.

@@ -54,7 +54,9 @@ def data_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def _patch_common(monkeypatch, settings, already_indexed: set[str]) -> list[Any]:
+def _patch_common(
+    monkeypatch, settings, already_indexed: set[str], repairs_path: Any = None
+) -> list[Any]:
     ingested: list[Any] = []
 
     def fake_ingest_file(
@@ -71,6 +73,15 @@ def _patch_common(monkeypatch, settings, already_indexed: set[str]) -> list[Any]
         lambda s: FakeIndexer(s, already_indexed),
     )
     monkeypatch.setattr(bulk_ingest_module, "ingest_file", fake_ingest_file)
+    # Re-read pages are read from a JSON file on disk. Point it at a path
+    # that does not exist unless a test supplies one, so these tests measure
+    # the run rather than whatever the project's own repair file happens to
+    # hold today.
+    from dora_edu.data_pipeline import ocr_repair as ocr_repair_module
+
+    monkeypatch.setattr(
+        ocr_repair_module, "REPAIRS_PATH", repairs_path or Path("/nonexistent/repairs.json")
+    )
     return ingested
 
 
