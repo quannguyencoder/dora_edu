@@ -263,6 +263,45 @@ def flagged_pages(
     return sorted(wanted, key=lambda a: len(a.issues), reverse=True)
 
 
+def parse_page_specs(raw: str) -> list[PageAudit]:
+    """Turn ``"6/SGKKhoahoctunhien6:57"`` specs into pages to re-read.
+
+    The audit only flags damage it has a pattern for, and some of the worst
+    damage leaves no trace: a definition printed in a coloured box is simply
+    absent from the OCR text, with nothing odd-looking left behind. When the
+    benchmark turns up a wrong refusal like that, this is how the page gets
+    re-read without waiting for a new heuristic.
+
+    Args:
+        raw: Comma-separated ``<grade>/<book stem>:<page>`` specs.
+
+    Returns:
+        One synthetic :class:`PageAudit` per spec.
+
+    Raises:
+        ValueError: If a spec is not in that form.
+    """
+    pages: list[PageAudit] = []
+    for spec in (s.strip() for s in raw.split(",") if s.strip()):
+        try:
+            location, page = spec.rsplit(":", 1)
+            grade, book = location.split("/", 1)
+            audit = PageAudit(
+                grade=int(grade),
+                book=book,
+                page=int(page),
+                issues=(),
+                has_formula=False,
+            )
+        except ValueError as exc:
+            raise ValueError(
+                f"{spec!r} không đúng dạng <lớp>/<tên sách>:<trang>, "
+                "ví dụ: 6/SGKKhoahoctunhien6:57"
+            ) from exc
+        pages.append(audit)
+    return pages
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point for ``dora-ocr-repair``.
 
@@ -292,6 +331,15 @@ def main(argv: list[str] | None = None) -> int:
         "--pdf-root", type=Path, default=Path("./data/raw_pdfs"), help="Thư mục chứa PDF"
     )
     parser.add_argument(
+        "--pages",
+        default="",
+        help=(
+            "Đọc lại đúng những trang này thay vì chạy soát, dạng "
+            "<lớp>/<tên sách>:<trang>, ví dụ: 6/SGKKhoahoctunhien6:57,"
+            "6/SGKKhoahoctunhien6:58"
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Chỉ liệt kê các trang sẽ đọc lại, không gọi API",
@@ -309,18 +357,25 @@ def main(argv: list[str] | None = None) -> int:
     kinds = frozenset(k.strip() for k in args.kinds.split(",") if k.strip())
 
     try:
-        candidates = flagged_pages(grades=grades, kinds=kinds)
-    except RuntimeError as exc:
+        if args.pages:
+            candidates = parse_page_specs(args.pages)
+        else:
+            candidates = flagged_pages(grades=grades, kinds=kinds)
+    except (RuntimeError, ValueError) as exc:
         logger.error("%s", exc)
         return 1
 
     done = load_repairs()
     already = {(page.source_file, page.page) for page in done}
-    todo = [
-        audit
-        for audit in candidates
-        if (f"{audit.book}.pdf", audit.page) not in already
-    ]
+    todo = (
+        candidates
+        if args.pages
+        else [
+            audit
+            for audit in candidates
+            if (f"{audit.book}.pdf", audit.page) not in already
+        ]
+    )
 
     logger.info(
         "Có %d trang cần sửa, đã sửa trước đó %d, còn lại %d. Lần này đọc lại %d trang.",

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from dora_edu.data_pipeline import manual_patches
 from dora_edu.data_pipeline.manual_patches import PATCHES, apply_patches
 from dora_edu.models import TextbookMetadata, TextChunk
@@ -227,3 +229,26 @@ def test_an_unreadable_pdf_is_skipped_not_crashed_on(monkeypatch, settings, tmp_
 
     # The PDF does not exist under tmp_path; one bad book must not stop a run.
     assert ocr_repair_module.reread_page(audit, tmp_path, settings=settings) is None
+
+
+def test_pages_can_be_named_directly_when_the_audit_cannot_see_the_damage() -> None:
+    # A definition printed in a coloured box leaves no trace in the OCR text
+    # -- there is nothing odd-looking to pattern-match, the sentence is just
+    # absent. When the benchmark turns up that kind of wrong refusal, the
+    # page is named directly instead of waiting for a new heuristic.
+    from dora_edu.data_pipeline.ocr_repair import parse_page_specs
+
+    pages = parse_page_specs("6/SGKKhoahoctunhien6:57, 8/SGKToan8taphai:6")
+
+    assert [(p.grade, p.book, p.page) for p in pages] == [
+        (6, "SGKKhoahoctunhien6", 57),
+        (8, "SGKToan8taphai", 6),
+    ]
+
+
+@pytest.mark.parametrize("spec", ["SGKToan6tapmot:12", "6/SGKToan6tapmot", "6/sach:abc"])
+def test_a_malformed_page_spec_is_rejected_with_an_example(spec) -> None:
+    from dora_edu.data_pipeline.ocr_repair import parse_page_specs
+
+    with pytest.raises(ValueError, match="SGKKhoahoctunhien6:57"):
+        parse_page_specs(spec)
