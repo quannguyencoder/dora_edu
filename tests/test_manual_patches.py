@@ -178,3 +178,52 @@ def test_only_formula_damaging_flags_justify_a_vision_call() -> None:
     assert "mat-so-mu" in DEFAULT_KINDS
     assert "phan-so-mat-gach-ngang" in DEFAULT_KINDS
     assert "so-lan-vao-chu" not in DEFAULT_KINDS
+
+
+def test_a_short_transcription_is_rejected_rather_than_indexed(monkeypatch, settings, tmp_path) -> None:
+    # A refusal or a near-blank reply from the vision model must not shadow
+    # the real page with a clean-looking empty chunk.
+    from dora_edu.data_pipeline import ocr_repair as ocr_repair_module
+    from dora_edu.evaluation.ocr_audit import OcrIssue, PageAudit
+
+    monkeypatch.setattr(ocr_repair_module, "ocr_page_with_gemini", lambda *a, **k: "Ngắn quá.")
+
+    class FakeImage:
+        image = object()
+
+    class FakePage:
+        images = [FakeImage()]
+
+    monkeypatch.setattr(
+        ocr_repair_module, "PdfReader", lambda path: type("R", (), {"pages": [FakePage()]})()
+    )
+    monkeypatch.setattr(
+        ocr_repair_module,
+        "infer_book_info",
+        lambda path: type("B", (), {"grade": 6, "subject": "Toán", "book_title": "Toán 6 - tập 1"})(),
+    )
+    audit = PageAudit(
+        grade=6,
+        book="SGKToan6tapmot",
+        page=1,
+        issues=(OcrIssue(kind="mat-so-mu", explanation="x", snippet="y"),),
+        has_formula=True,
+    )
+
+    assert ocr_repair_module.reread_page(audit, tmp_path, settings=settings) is None
+
+
+def test_an_unreadable_pdf_is_skipped_not_crashed_on(monkeypatch, settings, tmp_path) -> None:
+    from dora_edu.data_pipeline import ocr_repair as ocr_repair_module
+    from dora_edu.evaluation.ocr_audit import OcrIssue, PageAudit
+
+    audit = PageAudit(
+        grade=6,
+        book="KhongTonTai",
+        page=1,
+        issues=(OcrIssue(kind="mat-so-mu", explanation="x", snippet="y"),),
+        has_formula=True,
+    )
+
+    # The PDF does not exist under tmp_path; one bad book must not stop a run.
+    assert ocr_repair_module.reread_page(audit, tmp_path, settings=settings) is None
