@@ -96,8 +96,10 @@ def _format_report(report: ReportRecord) -> list[str]:
     answer = report.answer
     pages = "; ".join(answer.citations) if answer.citations else "(không trích trang nào)"
     return [
-        f"### Báo sai #{report.report_id} — lớp {answer.grade}, môn {answer.subject}",
+        f"### Báo sai #{report.report_id} — {report.reporter} "
+        f"(lớp {answer.grade}, môn {answer.subject})",
         "",
+        f"- **Người báo:** {report.reporter}",
         f"- **Thời điểm:** {report.created_at}",
         f"- **Câu hỏi:** {answer.question}",
         f"- **Học sinh nói sai ở đâu:** {report.note or '(bạn ấy không ghi lý do)'}",
@@ -126,6 +128,7 @@ def write_csv(store: FeedbackStore, path: Path, *, limit: int = 500) -> None:
             [
                 "bao_sai_id",
                 "thoi_diem",
+                "nguoi_bao",
                 "lop",
                 "mon",
                 "cau_hoi",
@@ -143,6 +146,7 @@ def write_csv(store: FeedbackStore, path: Path, *, limit: int = 500) -> None:
                 [
                     report.report_id,
                     report.created_at,
+                    report.reporter,
                     answer.grade,
                     answer.subject,
                     answer.question,

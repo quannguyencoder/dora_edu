@@ -297,6 +297,15 @@ nút, các nút vẫn hoạt động sau khi bot khởi động lại.
 
 **Biến phản hồi thành cải tiến.**
 
+Có hai cách xem phản hồi:
+
+**1. Ngay trong Discord** — gõ `/phanhoi`. Bot trả lời riêng (chỉ người gõ thấy)
+với số liệu tổng hợp và 5 lượt báo sai gần nhất, kèm **tên bạn đã báo** và lý do
+bạn ấy ghi. Lệnh này chỉ chạy cho các ID khai trong `ADMIN_USER_IDS`, vì báo cáo
+có tên của học sinh khác.
+
+**2. Xuất phiếu đầy đủ cho thầy cô:**
+
 ```bash
 dora-feedback    # → data/feedback/phieu-ra-soat-<ngày>.md và .csv
 ```
@@ -409,6 +418,7 @@ dora-run-zalo-bot      # Zalo OA webhook (cần TLS phía trước và đăng k�
 | `/chamdiem <dễ hiểu> <gợi mở>` | Chấm 1–5, ví dụ: `/chamdiem 5 4` |
 | `/xoa` | Xoá lịch sử trò chuyện |
 | `/trogiup` | Xem hướng dẫn |
+| `/phanhoi` | *(chỉ quản trị)* Xem phản hồi đã thu được, kèm tên người báo |
 
 ---
 
@@ -740,6 +750,15 @@ reaches the same code — and because the press is dispatched from the button's
 
 **How it turns into improvement.**
 
+Two ways to read it:
+
+**1. In Discord** — `/phanhoi` replies privately with the totals and the five
+most recent reports, each naming **who reported it** and what they said.
+Restricted to the ids in `ADMIN_USER_IDS`, because the reports name other
+students.
+
+**2. The full sheet for a teacher:**
+
 ```bash
 dora-feedback    # → data/feedback/phieu-ra-soat-<date>.md and .csv
 ```
@@ -853,6 +872,7 @@ dora-run-zalo-bot      # Zalo OA webhook (put TLS in front, register the URL)
 | `/chamdiem <dễ hiểu> <gợi mở>` | Rate 1–5, e.g. `/chamdiem 5 4` |
 | `/xoa` | Clear conversation history |
 | `/trogiup` | Help |
+| `/phanhoi` | *(admins only)* Show collected feedback, with reporters' names |
 
 ---
 

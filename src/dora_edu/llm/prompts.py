@@ -280,6 +280,60 @@ ADMIN_ONLY_MESSAGE = (
 )
 
 
+def build_feedback_summary_message(summary, reports) -> str:
+    """Render the collected feedback for whoever runs the bot.
+
+    Written for a phone screen: the numbers first, then the most recent
+    reports with who sent them and what they said, so the team can act on a
+    report the day it arrives instead of waiting to run the CLI report.
+
+    Args:
+        summary: A :class:`~dora_edu.bot.feedback.FeedbackSummary`.
+        reports: The most recent
+            :class:`~dora_edu.bot.feedback.ReportRecord` objects, newest first.
+
+    Returns:
+        The message, in Vietnamese.
+    """
+
+    def score(value: float | None) -> str:
+        return f"{value:.2f}/5" if value is not None else "chưa có"
+
+    lines = [
+        "📊 **Phản hồi của học sinh**",
+        "",
+        f"• Câu trả lời đã gửi: **{summary.answers}** "
+        f"(dẫn được sách: {summary.grounded_answers}, chưa tìm thấy: {summary.refusals})",
+        f"• Báo sai: **{summary.reports}** lượt, từ {summary.reporters} bạn",
+        f"• Chấm điểm: **{summary.ratings}** lượt, từ {summary.raters} bạn",
+        f"• Điểm “dễ hiểu”: **{score(summary.average_clarity)}**",
+        f"• Điểm “gợi mở giúp tự nghĩ ra”: **{score(summary.average_guidance)}**",
+    ]
+
+    if not reports:
+        lines += ["", "Chưa có bạn nào báo sai câu nào."]
+        return "\n".join(lines)
+
+    lines += ["", f"🚩 **{min(len(reports), 5)} lượt báo sai gần nhất:**"]
+    for report in reports[:5]:
+        answer = report.answer
+        pages = "; ".join(answer.citations) if answer.citations else "không trích trang nào"
+        lines += [
+            "",
+            f"**#{report.report_id} — {report.reporter}** "
+            f"(lớp {answer.grade}, {answer.subject})",
+            f"Hỏi: {answer.question}",
+            f"Lý do: {report.note or '_bạn ấy không ghi lý do_'}",
+            f"Trang sách: {pages}",
+        ]
+
+    lines += [
+        "",
+        "_Xem đầy đủ kèm nguyên văn câu trả lời: chạy lệnh `dora-feedback`._",
+    ]
+    return "\n".join(lines)
+
+
 WELCOME_MESSAGE = (
     "Chào bạn! Mình là DoraEdu 🎒 — gia sư đồng hành cùng bạn 24/7.\n\n"
     "Mình chỉ trả lời dựa trên sách giáo khoa chính thức của Bộ Giáo dục và Đào tạo, "

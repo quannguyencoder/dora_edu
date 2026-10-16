@@ -76,6 +76,13 @@ class Settings(BaseSettings):
     #: Answers students flagged with "Báo sai", for teacher review. Only
     #: flagged answers are written here -- never the whole conversation.
     feedback_db_path: Path = Path("./data/feedback.db")
+
+    #: Comma-separated channel user ids allowed to run /phanhoi, which shows
+    #: the collected feedback -- including other students' names -- in the
+    #: chat app. Empty (the default) means nobody can, so an unconfigured
+    #: deployment never leaks one student's report to another.
+    #: Parsed with :func:`parse_model_list`.
+    admin_user_ids: str = ""
     log_level: str = "INFO"
 
     @field_validator("chunk_overlap")

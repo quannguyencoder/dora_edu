@@ -216,3 +216,54 @@ def test_a_database_created_before_the_note_column_is_migrated(tmp_path) -> None
     answer_id = _log_one(store)
     store.record_report(answer_id, "8", "lý do mới")
     assert store.recent_reports()[0].note == "lý do mới"
+
+
+# --- who gave the feedback -------------------------------------------------
+
+
+def test_a_report_records_who_sent_it_by_name(store) -> None:
+    # Without a name the review sheet only shows a channel id number, which
+    # tells a teacher nothing about which student to go and ask.
+    answer_id = store.record_answer(
+        channel="discord", user_id="7", display_name="Hoàng Khang", grade=6,
+        subject="Toán", question="Phân số là gì?", answer="...",
+        citations=["SGK Toán 6, trang 12"], grounded=True,
+    )
+
+    store.record_report(answer_id, "7", "công thức sai dấu", "Hoàng Khang")
+
+    report = store.recent_reports()[0]
+    assert report.reporter_name == "Hoàng Khang"
+    assert report.reporter == "Hoàng Khang"
+    assert report.answer.display_name == "Hoàng Khang"
+
+
+def test_a_rating_records_who_gave_it(store) -> None:
+    answer_id = _log_one(store)
+
+    store.record_rating(answer_id, "7", clarity=5, guidance=4, user_name="Hoàng Quân")
+
+    assert store.ratings_for(answer_id)[0].rater == "Hoàng Quân"
+
+
+def test_feedback_without_a_name_falls_back_to_the_id(store) -> None:
+    # Telegram and Zalo do not always expose a display name, and an older
+    # row predates the column entirely -- neither may crash the report.
+    answer_id = _log_one(store)
+    store.record_report(answer_id, "7")
+
+    report = store.recent_reports()[0]
+    assert report.reporter_name is None
+    assert "7" in report.reporter
+
+
+def test_the_review_sheet_names_the_reporter(store) -> None:
+    from dora_edu.evaluation.feedback_report import format_markdown
+
+    answer_id = _log_one(store)
+    store.record_report(answer_id, "7", "sai công thức", "Hoàng Khang")
+
+    sheet = format_markdown(store)
+
+    assert "Hoàng Khang" in sheet
+    assert "Người báo" in sheet

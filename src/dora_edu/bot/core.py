@@ -13,7 +13,7 @@ import re
 from dora_edu.bot.adapter import IncomingMessage, OutgoingMessage
 from dora_edu.bot.feedback import FeedbackStore
 from dora_edu.bot.session import Session, SessionStore
-from dora_edu.config import Settings, get_settings
+from dora_edu.config import Settings, get_settings, parse_model_list
 from dora_edu.llm import prompts
 from dora_edu.llm.generator import NOT_SUBJECT_SPECIFIC, AnswerGenerator
 from dora_edu.models import KNOWN_SUBJECTS, StudentProfile, normalize_subject, validate_grade
@@ -218,6 +218,8 @@ class TutorService:
             return self._report_wrong_answer(argument, message, session)
         if name in {"chamdiem", "rate"}:
             return self._rate_answer(argument, message, session)
+        if name in {"phanhoi", "thongke"}:
+            return self._show_feedback(message)
         if name in {"xoa", "reset"}:
             session.clear_history()
             return OutgoingMessage(text="Mình đã xoá lịch sử trò chuyện rồi nhé! Bạn hỏi tiếp đi. 😊")
@@ -252,7 +254,9 @@ class TutorService:
         if answer_id is None:
             return OutgoingMessage(text=prompts.FEEDBACK_NOTHING_TO_REPORT_MESSAGE)
 
-        record = self._feedback.record_report(answer_id, message.user_id, note)
+        record = self._feedback.record_report(
+            answer_id, message.user_id, note, message.display_name
+        )
         if record is None:
             return OutgoingMessage(text=prompts.FEEDBACK_UNKNOWN_MESSAGE)
 
@@ -269,6 +273,35 @@ class TutorService:
         return OutgoingMessage(
             text=prompts.build_feedback_thanks(record.citations, gave_reason=note is not None),
             citations=record.citations,
+        )
+
+    def _show_feedback(self, message: IncomingMessage) -> OutgoingMessage:
+        """Show the collected feedback, for whoever runs the bot.
+
+        Reading the review sheet means running ``dora-feedback`` in a
+        terminal, which is a barrier when the person who wants to see "did
+        anyone report anything?" is on their phone. This answers the same
+        question in the chat app, with the reporters' names, so the team
+        can act on feedback the day it arrives.
+
+        Restricted to the ids in ``ADMIN_USER_IDS``: the reports name other
+        students, so they are not for classmates to browse.
+
+        Args:
+            message: The incoming message, for the requester's identity.
+
+        Returns:
+            The summary, or a polite refusal for a non-admin.
+        """
+        admins = parse_model_list(self._settings.admin_user_ids)
+        if not admins or message.user_id not in admins:
+            logger.info("Non-admin %s asked for the feedback summary", message.user_id)
+            return OutgoingMessage(text=prompts.ADMIN_ONLY_MESSAGE)
+
+        return OutgoingMessage(
+            text=prompts.build_feedback_summary_message(
+                self._feedback.summary(), self._feedback.recent_reports(limit=5)
+            )
         )
 
     def _rate_answer(
@@ -307,6 +340,7 @@ class TutorService:
                 clarity=clarity,
                 guidance=guidance,
                 comment=comment,
+                user_name=message.display_name,
             )
         except ValueError:
             # A score outside 1-5: a typo in a hand-typed command, not a bug.
@@ -454,6 +488,7 @@ class TutorService:
         feedback_id = self._feedback.record_answer(
             channel=message.channel,
             user_id=message.user_id,
+            display_name=message.display_name,
             grade=profile.grade,
             subject=profile.subject,
             question=question,

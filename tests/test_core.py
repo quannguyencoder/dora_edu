@@ -791,3 +791,76 @@ def test_a_bare_id_is_read_as_an_id_not_as_a_reason(citing_tutor) -> None:
     report = feedback.recent_reports()[0]
     assert report.answer.answer_id == answer.feedback_id
     assert report.note is None
+
+
+# --- seeing the feedback from inside the chat app --------------------------
+
+
+def _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids: str):
+    monkeypatch.setattr(
+        retriever_module, "get_collection", lambda *a, **k: FakeCollection(textbook_rows)
+    )
+    settings = settings.model_copy(update={"admin_user_ids": admin_ids})
+    feedback = FeedbackStore()
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=FakeGenerator(cite_chunks=True),
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+        feedback=feedback,
+    )
+    return tutor, feedback
+
+
+def _ask_named(tutor, text, user_id="1", name=None):
+    return tutor.handle(
+        IncomingMessage(channel="discord", user_id=user_id, text=text, display_name=name)
+    )
+
+
+def test_phanhoi_shows_the_summary_with_reporter_names(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+    _ask_named(tutor, "/lop 6", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/mon toan", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "Phan so la gi?", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/baosai công thức sai dấu", user_id="7", name="Hoàng Khang")
+
+    reply = _ask_named(tutor, "/phanhoi", user_id="99", name="Hoàng Quân")
+
+    assert "Hoàng Khang" in reply.text
+    assert "công thức sai dấu" in reply.text
+    assert "Phan so la gi?" in reply.text
+
+
+def test_phanhoi_is_refused_for_a_student(monkeypatch, textbook_rows, settings) -> None:
+    # The reports name other students, so they are not for classmates to browse.
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+
+    reply = _ask_named(tutor, "/phanhoi", user_id="7", name="Hoàng Khang")
+
+    assert reply.text == prompts.ADMIN_ONLY_MESSAGE
+
+
+def test_phanhoi_is_refused_when_no_admin_is_configured(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # An unconfigured deployment must not leak one student's report to another.
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="")
+
+    reply = _ask_named(tutor, "/phanhoi", user_id="99")
+
+    assert reply.text == prompts.ADMIN_ONLY_MESSAGE
+
+
+def test_the_students_name_is_stored_with_their_answer(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    tutor, feedback = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+    _ask_named(tutor, "/lop 6", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/mon toan", user_id="7", name="Hoàng Khang")
+
+    answer = _ask_named(tutor, "Phan so la gi?", user_id="7", name="Hoàng Khang")
+
+    assert feedback.get_answer(answer.feedback_id).display_name == "Hoàng Khang"

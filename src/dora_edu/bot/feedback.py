@@ -43,6 +43,9 @@ class AnswerRecord:
     created_at: str
     channel: str
     user_id: str
+    #: The student's name as the chat app shows it, when the channel
+    #: exposes one -- so a review sheet names a person, not an id number.
+    display_name: str | None
     grade: int | None
     subject: str | None
     question: str
@@ -61,6 +64,13 @@ class ReportRecord:
     answer: AnswerRecord
     #: What the student said was wrong, when they chose to say anything.
     note: str | None = None
+    #: Who reported it, by name.
+    reporter_name: str | None = None
+
+    @property
+    def reporter(self) -> str:
+        """The reporter as a person: their name, falling back to their id."""
+        return self.reporter_name or f"(mã {self.reporter_id})"
 
 
 @dataclass(frozen=True)
@@ -70,9 +80,15 @@ class RatingRecord:
     answer_id: int
     created_at: str
     user_id: str
+    user_name: str | None
     clarity: int | None
     guidance: int | None
     comment: str | None
+
+    @property
+    def rater(self) -> str:
+        """The rater as a person: their name, falling back to their id."""
+        return self.user_name or f"(mã {self.user_id})"
 
 
 @dataclass(frozen=True)
@@ -163,6 +179,19 @@ class FeedbackStore:
         self._add_missing_columns()
         self._conn.commit()
 
+    #: Columns added after the first version of the schema shipped, as
+    #: ``table -> column``. Everything here must be nullable, since existing
+    #: rows cannot be given a value retrospectively.
+    _LATER_COLUMNS: tuple[tuple[str, str], ...] = (
+        ("reports", "note"),
+        # Who gave the feedback, as the chat app shows them. Without this a
+        # review sheet only identifies people by their channel id number,
+        # which tells a teacher nothing about which student to go and ask.
+        ("answers", "display_name"),
+        ("reports", "reporter_name"),
+        ("ratings", "user_name"),
+    )
+
     def _add_missing_columns(self) -> None:
         """Bring an older database up to the current schema.
 
@@ -172,9 +201,10 @@ class FeedbackStore:
         such a file -- it already holds real students' reports, so it is
         migrated rather than recreated.
         """
-        existing = {row[1] for row in self._conn.execute("PRAGMA table_info(reports)")}
-        if "note" not in existing:
-            self._conn.execute("ALTER TABLE reports ADD COLUMN note TEXT")
+        for table, column in self._LATER_COLUMNS:
+            existing = {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}
+            if column not in existing:
+                self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} TEXT")
 
     @staticmethod
     def _now() -> str:
@@ -187,6 +217,7 @@ class FeedbackStore:
         channel: str,
         user_id: str,
         grade: int | None,
+        display_name: str | None = None,
         subject: str | None,
         question: str,
         answer: str,
@@ -203,12 +234,14 @@ class FeedbackStore:
         """
         cursor = self._conn.execute(
             "INSERT INTO answers "
-            "(created_at, channel, user_id, grade, subject, question, answer, citations, grounded) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "(created_at, channel, user_id, display_name, grade, subject, question, "
+            "answer, citations, grounded) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 self._now(),
                 channel,
                 user_id,
+                display_name,
                 grade,
                 subject,
                 question,
@@ -225,8 +258,8 @@ class FeedbackStore:
     def get_answer(self, answer_id: int) -> AnswerRecord | None:
         """Return a logged answer, or ``None`` when the id is unknown."""
         row = self._conn.execute(
-            "SELECT answer_id, created_at, channel, user_id, grade, subject, "
-            "question, answer, citations, grounded FROM answers WHERE answer_id = ?",
+            "SELECT answer_id, created_at, channel, user_id, display_name, grade, "
+            "subject, question, answer, citations, grounded FROM answers WHERE answer_id = ?",
             (answer_id,),
         ).fetchone()
         return self._as_answer_record(row) if row else None
@@ -239,16 +272,21 @@ class FeedbackStore:
             created_at=row[1],
             channel=row[2],
             user_id=row[3],
-            grade=row[4],
-            subject=row[5],
-            question=row[6],
-            answer=row[7],
-            citations=[c for c in row[8].split(_CITATION_SEPARATOR) if c],
-            grounded=bool(row[9]),
+            display_name=row[4],
+            grade=row[5],
+            subject=row[6],
+            question=row[7],
+            answer=row[8],
+            citations=[c for c in row[9].split(_CITATION_SEPARATOR) if c],
+            grounded=bool(row[10]),
         )
 
     def record_report(
-        self, answer_id: int, reporter_id: str, note: str | None = None
+        self,
+        answer_id: int,
+        reporter_id: str,
+        note: str | None = None,
+        reporter_name: str | None = None,
     ) -> AnswerRecord | None:
         """File a "Báo sai" report against ``answer_id``.
 
@@ -270,9 +308,9 @@ class FeedbackStore:
         if record is None:
             return None
         self._conn.execute(
-            "INSERT INTO reports (answer_id, created_at, reporter_id, note) "
-            "VALUES (?, ?, ?, ?)",
-            (answer_id, self._now(), reporter_id, note or None),
+            "INSERT INTO reports (answer_id, created_at, reporter_id, note, reporter_name) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (answer_id, self._now(), reporter_id, note or None, reporter_name),
         )
         self._conn.commit()
         return record
@@ -285,6 +323,7 @@ class FeedbackStore:
         clarity: int | None = None,
         guidance: int | None = None,
         comment: str | None = None,
+        user_name: str | None = None,
     ) -> AnswerRecord | None:
         """Store (or replace) one student's 1-5 rating of ``answer_id``.
 
@@ -313,12 +352,14 @@ class FeedbackStore:
         if record is None:
             return None
         self._conn.execute(
-            "INSERT INTO ratings (answer_id, user_id, created_at, clarity, guidance, comment) "
-            "VALUES (?, ?, ?, ?, ?, ?) "
+            "INSERT INTO ratings "
+            "(answer_id, user_id, created_at, clarity, guidance, comment, user_name) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?) "
             "ON CONFLICT (answer_id, user_id) DO UPDATE SET "
             "created_at = excluded.created_at, clarity = excluded.clarity, "
-            "guidance = excluded.guidance, comment = excluded.comment",
-            (answer_id, user_id, self._now(), clarity, guidance, comment),
+            "guidance = excluded.guidance, comment = excluded.comment, "
+            "user_name = excluded.user_name",
+            (answer_id, user_id, self._now(), clarity, guidance, comment, user_name),
         )
         self._conn.commit()
         return record
@@ -326,7 +367,7 @@ class FeedbackStore:
     def ratings_for(self, answer_id: int) -> list[RatingRecord]:
         """Return every student's rating of one answer, oldest first."""
         rows = self._conn.execute(
-            "SELECT answer_id, created_at, user_id, clarity, guidance, comment "
+            "SELECT answer_id, created_at, user_id, user_name, clarity, guidance, comment "
             "FROM ratings WHERE answer_id = ? ORDER BY created_at, user_id",
             (answer_id,),
         ).fetchall()
@@ -335,9 +376,10 @@ class FeedbackStore:
                 answer_id=row[0],
                 created_at=row[1],
                 user_id=row[2],
-                clarity=row[3],
-                guidance=row[4],
-                comment=row[5],
+                user_name=row[3],
+                clarity=row[4],
+                guidance=row[5],
+                comment=row[6],
             )
             for row in rows
         ]
@@ -372,9 +414,9 @@ class FeedbackStore:
             limit: Maximum reports to return, newest first.
         """
         rows = self._conn.execute(
-            "SELECT r.report_id, r.created_at, r.reporter_id, r.note, "
-            "a.answer_id, a.created_at, a.channel, a.user_id, a.grade, a.subject, "
-            "a.question, a.answer, a.citations, a.grounded "
+            "SELECT r.report_id, r.created_at, r.reporter_id, r.note, r.reporter_name, "
+            "a.answer_id, a.created_at, a.channel, a.user_id, a.display_name, a.grade, "
+            "a.subject, a.question, a.answer, a.citations, a.grounded "
             "FROM reports r JOIN answers a ON a.answer_id = r.answer_id "
             "ORDER BY r.report_id DESC LIMIT ?",
             (limit,),
@@ -385,7 +427,8 @@ class FeedbackStore:
                 created_at=row[1],
                 reporter_id=row[2],
                 note=row[3],
-                answer=self._as_answer_record(row[4:]),
+                reporter_name=row[4],
+                answer=self._as_answer_record(row[5:]),
             )
             for row in rows
         ]
