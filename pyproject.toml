@@ -43,6 +43,7 @@ dora-ingest = "dora_edu.data_pipeline.ingest:main"
 dora-bulk-ingest = "dora_edu.data_pipeline.bulk_ingest:main"
 dora-eval = "dora_edu.evaluation.runner:main"
 dora-ocr-audit = "dora_edu.evaluation.ocr_audit:main"
+dora-ocr-repair = "dora_edu.data_pipeline.ocr_repair:main"
 dora-feedback = "dora_edu.evaluation.feedback_report:main"
 dora-scan-page-offsets = "dora_edu.data_pipeline.page_offset_scan:main"
 

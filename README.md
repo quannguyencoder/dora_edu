@@ -136,6 +136,7 @@ textbook questions — which costs API calls and takes minutes.
 ```bash
 dora-eval                 # ask the 50-question benchmark and score the answers
 dora-ocr-audit --help     # spot-check OCR quality, formulas and fractions first
+dora-ocr-repair           # re-read the flagged pages with Gemini Vision and index them clean
 dora-feedback             # turn students' "Báo sai"/ratings into a teacher review sheet
 dora-scan-page-offsets    # measure, per book, how far the PDF index runs ahead of the printed page
 ```
@@ -154,8 +155,16 @@ because whether an answer is *correct* still needs a person.
 **The OCR audit** exists because every book here is a scan, and Tesseract fails
 worst exactly where it matters most. It has already caught `a . b = b . a` read
 as `a - b = b - a` (a true commutative law turned false), `a/b` read as a bare
-`=`, and whole formula boxes losing every exponent. Confirmed cases are corrected
-in `manual_patches.py` and re-applied after every ingest.
+`=`, whole formula boxes losing every exponent, and the coloured definition
+boxes MOET textbooks print their definitions in being skipped wholesale.
+
+**`dora-ocr-repair`** closes that loop: it re-reads each flagged page from the
+page image with Gemini Vision (far better at formula notation than local OCR)
+and indexes the result as a clean chunk beside the damaged one. Re-read pages
+are kept in `data/ocr_repairs.json` and re-applied by `dora-bulk-ingest`, so a
+re-ingest cannot restore the mangled version. It runs lower secondary first
+(`--grades 6,7,8,9`, the default), which is both where the bot is used and
+where a page can be checked against the printed book.
 
 See `docs/dinh-huong-va-ban-quyen.md` for the development roadmap, the textbook
 copyright position, and the teacher review process.

@@ -23,6 +23,13 @@ trang, khiến gần như không còn công thức nào đọc được. Lí do 
 dày đặc công thức, mũ, phân số, tích phân — đúng những thứ máy đọc chữ hay sai
 nhất.
 
+**Và vì danh sách ở THCS ngắn nên sửa hết được.** Lọc ra những trang bị gắn cờ
+vì lỗi làm hỏng công thức/phân số/định nghĩa (bỏ qua loại lỗi chỉ là rác trang
+bìa, hình vẽ) còn **54 trang**, gần hết thuộc sách Toán lớp 6-9. Đó là một danh
+sách đọc lại được trong một buổi (`dora-ocr-repair`), chứ không phải một việc
+không bao giờ xong — nếu làm cả 12 lớp cùng lúc thì con số này lớn hơn nhiều và
+nhóm sẽ không kiểm chứng nổi từng trang bằng sách giấy.
+
 **Nội dung THCS cũng là nội dung nhóm kiểm chứng được.** Bộ 50 câu hỏi kiểm thử
 (`dora-eval`) đặt toàn bộ ở lớp 6-9 vì đó là phần hai thành viên đang học và có
 thể mở sách đối chiếu từng câu. Nếu mở rộng lên THPT ngay, nhóm sẽ không còn tự
@@ -37,7 +44,7 @@ và chưa sửa lỗi OCR ở mức như THCS.
 
 | Giai đoạn | Việc chính | Cách biết là đã xong |
 |---|---|---|
-| 1. Đang làm | Hoàn thiện lớp 6-9: sửa lỗi OCR công thức, giảm từ chối nhầm | Bộ 50 câu: không còn câu nào từ chối nhầm, không câu nào trích sai trang |
+| 1. Đang làm | Hoàn thiện lớp 6-9: sửa lỗi OCR công thức (`dora-ocr-repair`), giảm từ chối nhầm | Bộ 50 câu: không còn câu nào từ chối nhầm, không câu nào trích sai trang |
 | 2. Tiếp theo | Mời 5-10 bạn cùng trường dùng thử, thầy cô rà soát câu trả lời | Có đủ điểm 1-5 và phiếu rà soát (`dora-feedback`) của ít nhất 2 môn |
 | 3. Sau đó | Mở rộng lên lớp 10-12, bắt đầu từ môn ít công thức | Bộ câu hỏi kiểm thử riêng cho THPT đạt mức như THCS |
 | 4. Lâu dài | Xin phép bản quyền, mở cho nhiều trường | Có văn bản trả lời của đơn vị giữ bản quyền |

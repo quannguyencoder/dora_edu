@@ -28,12 +28,18 @@ from dora_edu.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
-#: Deliberately not ``settings.llm_model``: this runs rarely (one admin
-#: patching one bad page), so it's worth spending the flagship model's
-#: tighter free-tier quota here rather than the lite model used for every
-#: student chat turn -- image transcription accuracy matters more than quota
-#: headroom for this one-off, low-volume use.
+#: Deliberately not ``settings.llm_model``: transcribing a page image
+#: accurately matters more than quota headroom, so this spends the flagship
+#: model's tighter free-tier quota rather than the lite model used for every
+#: student chat turn.
 _VISION_MODEL = "gemini-3.6-flash"
+
+#: Tried in order once ``_VISION_MODEL``'s own quota is spent (HTTP 429).
+#: The free tier counts each model separately, and repairing a batch of
+#: pages (``dora-ocr-repair``) exhausts the flagship model's daily quota
+#: long before the work is done -- a slightly less accurate transcription
+#: still beats leaving a page's formulas mangled.
+_VISION_FALLBACK_MODELS = ("gemini-3.5-flash", "gemini-3.5-flash-lite")
 
 _PROMPT = """\
 Hãy chép lại TOÀN BỘ chữ, công thức và nội dung trong hình vẽ ở trang sách \
@@ -90,21 +96,32 @@ def ocr_page_with_gemini(image: Image.Image, *, settings: Settings | None = None
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
 
-    try:
-        response = client.models.generate_content(
-            model=_VISION_MODEL,
-            contents=[
-                genai_types.Part.from_bytes(data=buffer.getvalue(), mime_type="image/png"),
-                _PROMPT,
-            ],
-            config=genai_types.GenerateContentConfig(
-                thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
-                max_output_tokens=4096,
-            ),
-        )
-    except (ClientError, ServerError) as exc:
-        logger.warning("Gemini Vision OCR failed: %s", exc)
-        return ""
+    contents = [
+        genai_types.Part.from_bytes(data=buffer.getvalue(), mime_type="image/png"),
+        _PROMPT,
+    ]
+    config = genai_types.GenerateContentConfig(
+        thinking_config=genai_types.ThinkingConfig(thinking_level="low"),
+        max_output_tokens=4096,
+    )
 
-    text = getattr(response, "text", None) or ""
-    return _strip_stray_latex(text).strip()
+    for model in (_VISION_MODEL, *_VISION_FALLBACK_MODELS):
+        try:
+            response = client.models.generate_content(
+                model=model, contents=contents, config=config
+            )
+        except ClientError as exc:
+            if exc.code == 429:
+                logger.warning("%s is rate-limited; trying the next vision model", model)
+                continue
+            logger.warning("Gemini Vision OCR failed on %s: %s", model, exc)
+            return ""
+        except ServerError as exc:
+            logger.warning("Gemini Vision OCR unreachable on %s: %s", model, exc)
+            return ""
+
+        text = getattr(response, "text", None) or ""
+        return _strip_stray_latex(text).strip()
+
+    logger.warning("Every vision model is rate-limited; leaving the page as it is")
+    return ""
