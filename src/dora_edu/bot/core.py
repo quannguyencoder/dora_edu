@@ -408,7 +408,8 @@ class TutorService:
             )
 
         result = self._generator.generate(question, chunks, profile, session.history())
-        session.record_turn(question, result.answer)
+        answer = prompts.hide_internal_wording(result.answer)
+        session.record_turn(question, answer)
 
         # Of the ten passages retrieved, an answer normally leans on one or
         # two; pointing the student at all ten would send them leafing
@@ -417,7 +418,7 @@ class TutorService:
         # actually retrieved -- which also drops a page the LLM invented.
         # Empty citations mean the answer is not grounded in any passage (a
         # refusal), and a refusal has no page to check.
-        cited = prompts.select_cited_sources(result.answer, chunks) if result.citations else []
+        cited = prompts.select_cited_sources(answer, chunks) if result.citations else []
 
         # Logged before sending, and for refusals too: a refusal the student
         # believes is wrong ("the book *does* cover this!") is exactly as
@@ -428,7 +429,7 @@ class TutorService:
             grade=profile.grade,
             subject=profile.subject,
             question=question,
-            answer=result.answer,
+            answer=answer,
             citations=cited,
             grounded=result.grounded,
         )
@@ -437,7 +438,7 @@ class TutorService:
         # Built from retrieval metadata, not from the LLM's prose, so it can
         # only ever name a page that really was retrieved.
         reminder = prompts.build_page_check_reminder(cited)
-        text = f"{result.answer}\n\n{reminder}" if reminder else result.answer
+        text = f"{answer}\n\n{reminder}" if reminder else answer
         return OutgoingMessage(text=text, citations=cited, feedback_id=feedback_id)
 
     def _detect_subject(self, question: str, grade: int) -> str | None:

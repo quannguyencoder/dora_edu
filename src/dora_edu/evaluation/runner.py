@@ -332,6 +332,12 @@ def format_markdown(report: EvalReport) -> str:
         f"| Nêu trang không hề được tra ra | {len(report.invented_citations)} |",
         f"| Dùng đoạn sai môn hoặc vượt lớp | {len(report.out_of_scope)} |",
         f"| Cần người đọc lại để chấm đúng/sai | {len(report.needs_human_review)} |",
+        "",
+        "Nhóm \"cần người đọc lại\" không phải là lỗi: phần lớn là những câu bot "
+        "cố tình KHÔNG nói ngay đáp số mà dẫn dắt để học sinh tự tìm (ví dụ hỏi "
+        "năm diễn ra một sự kiện, bot chỉ đúng trang rồi hỏi lại) — đúng cách dạy "
+        "gợi mở của dự án. Cột tự động chỉ kiểm được từ khoá, nên những câu này "
+        "cần người đọc để kết luận.",
         f"| Lỗi kỹ thuật, chưa hỏi được | {len(report.provider_errors)} |",
         "",
         "Các chỉ số trên là tự động. Riêng việc câu trả lời có ĐÚNG nội dung hay "
@@ -356,7 +362,12 @@ def format_markdown(report: EvalReport) -> str:
         ("Trả lời câu ngoài sách", report.hallucinations),
         ("Nêu trang không có thật", report.invented_citations),
         ("Sai môn / vượt lớp", report.out_of_scope),
-        ("Chưa khớp từ khoá, cần người chấm", report.needs_human_review),
+        (
+            "Chưa khớp từ khoá, cần người đọc lại (phần lớn là bot cố tình "
+            "KHÔNG nói đáp số, để học sinh tự tìm — đúng cách dạy gợi mở, "
+            "không phải lỗi)",
+            report.needs_human_review,
+        ),
     )
     if not any(group for _label, group in problems):
         lines.append("Không có câu nào thuộc 5 nhóm cần xem lại. 🎉")

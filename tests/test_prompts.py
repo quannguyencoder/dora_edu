@@ -161,3 +161,36 @@ def test_the_feedback_thanks_handles_a_refusal_with_no_pages() -> None:
 
     assert "Cảm ơn" in thanks
     assert "trang" not in thanks.replace("trang sách", "")
+
+
+# --- hiding prompt-internal wording from the student -----------------------
+
+
+def test_internal_wording_is_rewritten_for_a_student() -> None:
+    # Real answer from a benchmark run: "đoạn 1 trong ngữ cảnh" means
+    # nothing to a child, who sees no numbered passages -- and rule 11
+    # already forbids it, which the model broke anyway.
+    answer = "Bạn hãy xem lại đoạn 1 trong ngữ cảnh nhé."
+
+    assert prompts.hide_internal_wording(answer) == "Bạn hãy xem lại đoạn 1 trong sách nhé."
+
+
+def test_a_capitalised_internal_term_is_rewritten_too() -> None:
+    assert "Trong sách" in prompts.hide_internal_wording("Trong ngữ cảnh có nói điều này.")
+
+
+def test_an_answer_with_no_internal_wording_is_untouched() -> None:
+    answer = "Theo sách Toán 6, tập 1, trang 71: phép nhân có tính chất giao hoán."
+
+    assert prompts.hide_internal_wording(answer) == answer
+
+
+def test_citations_and_page_numbers_survive_the_rewrite() -> None:
+    # Only wording changes, never a fact or a citation.
+    answer = "Theo ngữ cảnh ở sách Toán 8 - tập 1, trang 40: A² - B² = (A - B)(A + B)"
+
+    cleaned = prompts.hide_internal_wording(answer)
+
+    assert "trang 40" in cleaned
+    assert "A² - B² = (A - B)(A + B)" in cleaned
+    assert "ngữ cảnh" not in cleaned

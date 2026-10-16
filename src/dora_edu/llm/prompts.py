@@ -173,6 +173,38 @@ def build_page_check_reminder(citations: list[str]) -> str:
     )
 
 
+#: Internal wording the LLM is told never to use with a student (rule 11)
+#: but occasionally does anyway -- "bạn hãy xem lại đoạn 1 trong ngữ cảnh
+#: nhé" means nothing to a child, who sees no numbered passages. Rewritten
+#: after generation rather than only forbidden in the prompt, because a
+#: rule the model breaks silently is not a guarantee.
+_INTERNAL_WORDING = (
+    ("trong ngữ cảnh trên", "trong sách"),
+    ("trong ngữ cảnh", "trong sách"),
+    ("ở ngữ cảnh", "trong sách"),
+    ("ngữ cảnh được cung cấp", "sách"),
+    ("ngữ cảnh", "sách"),
+)
+
+
+def hide_internal_wording(answer: str) -> str:
+    """Replace prompt-internal terms in ``answer`` with student-facing ones.
+
+    Only wording is changed, never a fact or a citation, so this cannot make
+    an answer less faithful to the textbook.
+
+    Args:
+        answer: The generated answer.
+
+    Returns:
+        The answer with internal terms rewritten.
+    """
+    for internal, replacement in _INTERNAL_WORDING:
+        answer = answer.replace(internal, replacement)
+        answer = answer.replace(internal.capitalize(), replacement.capitalize())
+    return answer
+
+
 def build_feedback_thanks(citations: list[str]) -> str:
     """Thank a student for flagging an answer, and point them at the page.
 
