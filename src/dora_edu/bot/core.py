@@ -298,6 +298,14 @@ class TutorService:
             logger.info("Non-admin %s asked for the feedback summary", message.user_id)
             return OutgoingMessage(text=prompts.ADMIN_ONLY_MESSAGE)
 
+        if not message.is_private:
+            # A reply in a shared study channel is visible to everyone in it,
+            # and this one names the students who reported and what they said.
+            # Being an admin is permission to read it, not permission to show
+            # it to the class.
+            logger.info("Refusing to print the feedback summary in a shared channel")
+            return OutgoingMessage(text=prompts.FEEDBACK_PRIVATE_ONLY_MESSAGE)
+
         return OutgoingMessage(
             text=prompts.build_feedback_summary_message(
                 self._feedback.summary(), self._feedback.recent_reports(limit=5)

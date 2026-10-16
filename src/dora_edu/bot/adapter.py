@@ -24,6 +24,14 @@ class IncomingMessage(BaseModel):
     user_id: str = Field(min_length=1, description="Stable per-channel user identifier.")
     text: str = Field(description="Raw message text as typed by the student.")
     display_name: str | None = Field(default=None, description="Student name, when the channel exposes one.")
+    is_private: bool = Field(
+        default=False,
+        description=(
+            "Whether this arrived in a one-to-one chat with the bot rather than "
+            "a shared channel. A reply to a shared channel is visible to everyone "
+            "in it, so anything naming other students must refuse to answer there."
+        ),
+    )
 
     @property
     def session_key(self) -> tuple[str, str]:
@@ -102,13 +110,20 @@ class ChannelAdapter(ABC):
     def run(self) -> None:
         """Start receiving messages and block until the bot is stopped."""
 
-    def dispatch(self, user_id: str, text: str, display_name: str | None = None) -> OutgoingMessage:
+    def dispatch(
+        self,
+        user_id: str,
+        text: str,
+        display_name: str | None = None,
+        is_private: bool = False,
+    ) -> OutgoingMessage:
         """Normalise a platform message and hand it to the shared handler.
 
         Args:
             user_id: The platform's user identifier, as a string.
             text: The raw message text.
             display_name: The student's name, when available.
+            is_private: Whether the conversation is one-to-one with the bot.
 
         Returns:
             The reply to render back on the platform.
@@ -118,5 +133,6 @@ class ChannelAdapter(ABC):
             user_id=user_id,
             text=text,
             display_name=display_name,
+            is_private=is_private,
         )
         return self._handler(message)

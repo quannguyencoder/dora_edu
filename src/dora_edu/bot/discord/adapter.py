@@ -195,6 +195,7 @@ class _TutorDiscordClient(discord.Client):
                 str(message.author.id),
                 message.content,
                 message.author.display_name,
+                isinstance(message.channel, discord.DMChannel),
             )
         except ValueError as exc:
             logger.error("Rejected malformed Discord message: %s", exc)
@@ -256,6 +257,9 @@ class _TutorDiscordClient(discord.Client):
                 str(interaction.user.id),
                 command,
                 interaction.user.display_name,
+                # A button reply is sent ephemerally below, so it is private
+                # whatever channel the message it sits under was posted in.
+                True,
             )
         except ValueError as exc:
             logger.error("Rejected malformed Discord interaction: %s", exc)

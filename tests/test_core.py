@@ -827,7 +827,13 @@ def test_phanhoi_shows_the_summary_with_reporter_names(
     _ask_named(tutor, "Phan so la gi?", user_id="7", name="Hoàng Khang")
     _ask_named(tutor, "/baosai công thức sai dấu", user_id="7", name="Hoàng Khang")
 
-    reply = _ask_named(tutor, "/phanhoi", user_id="99", name="Hoàng Quân")
+    # In a direct message with the bot, where only the admin can see it.
+    reply = tutor.handle(
+        IncomingMessage(
+            channel="discord", user_id="99", text="/phanhoi",
+            display_name="Hoàng Quân", is_private=True,
+        )
+    )
 
     assert "Hoàng Khang" in reply.text
     assert "công thức sai dấu" in reply.text
@@ -864,3 +870,54 @@ def test_the_students_name_is_stored_with_their_answer(
     answer = _ask_named(tutor, "Phan so la gi?", user_id="7", name="Hoàng Khang")
 
     assert feedback.get_answer(answer.feedback_id).display_name == "Hoàng Khang"
+
+
+def test_the_feedback_summary_is_refused_in_a_shared_channel(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # A reply in a shared study channel is visible to everyone in it, and the
+    # summary names the students who reported. Being an admin is permission
+    # to read it, not permission to show it to the class.
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+    _ask_named(tutor, "/lop 6", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/mon toan", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "Phan so la gi?", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/baosai sai rồi", user_id="7", name="Hoàng Khang")
+
+    reply = tutor.handle(
+        IncomingMessage(channel="discord", user_id="99", text="/phanhoi", is_private=False)
+    )
+
+    assert reply.text == prompts.FEEDBACK_PRIVATE_ONLY_MESSAGE
+    assert "Hoàng Khang" not in reply.text
+    assert "sai rồi" not in reply.text
+
+
+def test_the_feedback_summary_is_shown_in_a_direct_message(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+    _ask_named(tutor, "/lop 6", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/mon toan", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "Phan so la gi?", user_id="7", name="Hoàng Khang")
+    _ask_named(tutor, "/baosai sai rồi", user_id="7", name="Hoàng Khang")
+
+    reply = tutor.handle(
+        IncomingMessage(channel="discord", user_id="99", text="/phanhoi", is_private=True)
+    )
+
+    assert "Hoàng Khang" in reply.text
+    assert "sai rồi" in reply.text
+
+
+def test_a_non_admin_is_refused_before_the_channel_is_even_considered(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # Even in a direct message, a student must not read other students' reports.
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+
+    reply = tutor.handle(
+        IncomingMessage(channel="discord", user_id="7", text="/phanhoi", is_private=True)
+    )
+
+    assert reply.text == prompts.ADMIN_ONLY_MESSAGE

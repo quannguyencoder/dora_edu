@@ -279,6 +279,16 @@ ADMIN_ONLY_MESSAGE = (
     "Lệnh này dành cho thầy cô phụ trách bạn nhé. Bạn cứ hỏi bài bình thường thôi! 😊"
 )
 
+#: Shown when an admin asks for the feedback summary in a shared channel.
+#: The summary names the students who reported and quotes what they wrote,
+#: so it is only ever printed in a one-to-one chat with the bot.
+FEEDBACK_PRIVATE_ONLY_MESSAGE = (
+    "🔒 Phần phản hồi có kèm TÊN của các bạn đã báo sai, nên mình chỉ gửi trong "
+    "tin nhắn riêng thôi nhé.\n\n"
+    "Bạn bấm vào tên mình (DoraEdu) ở danh sách bên phải, chọn **Nhắn tin**, "
+    "rồi gõ lại /phanhoi trong đó."
+)
+
 
 def build_feedback_summary_message(summary, reports) -> str:
     """Render the collected feedback for whoever runs the bot.
