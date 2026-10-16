@@ -205,19 +205,23 @@ def hide_internal_wording(answer: str) -> str:
     return answer
 
 
-def build_feedback_thanks(citations: list[str]) -> str:
+def build_feedback_thanks(citations: list[str], *, gave_reason: bool = False) -> str:
     """Thank a student for flagging an answer, and point them at the page.
 
     Args:
         citations: Pages the flagged answer was built from; empty when the
             bot had refused to answer at all.
+        gave_reason: Whether the student also wrote what was wrong, so the
+            thank-you can acknowledge it -- someone who took the trouble to
+            explain should see that it was received.
 
     Returns:
         The reply, in Vietnamese.
     """
     opening = (
-        "Cảm ơn bạn đã báo! 🙏 Mình đã ghi lại câu hỏi, câu trả lời và trang sách "
-        "để thầy cô xem lại.\n\n"
+        "Cảm ơn bạn đã báo! 🙏 Mình đã ghi lại câu hỏi, câu trả lời"
+        + (", lý do bạn ghi" if gave_reason else "")
+        + " và trang sách để thầy cô xem lại.\n\n"
     )
     unique = _same_book_as_best_match(citations)
     if not unique:

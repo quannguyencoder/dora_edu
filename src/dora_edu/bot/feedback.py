@@ -59,6 +59,8 @@ class ReportRecord:
     created_at: str
     reporter_id: str
     answer: AnswerRecord
+    #: What the student said was wrong, when they chose to say anything.
+    note: str | None = None
 
 
 @dataclass(frozen=True)
@@ -141,7 +143,11 @@ class FeedbackStore:
                 report_id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 answer_id   INTEGER NOT NULL REFERENCES answers(answer_id),
                 created_at  TEXT    NOT NULL,
-                reporter_id TEXT    NOT NULL
+                reporter_id TEXT    NOT NULL,
+                -- Why the student thinks it is wrong, in their own words.
+                -- Optional: a report must stay one tap, because a required
+                -- field is a reason not to report at all.
+                note        TEXT
             );
             CREATE TABLE IF NOT EXISTS ratings (
                 answer_id  INTEGER NOT NULL REFERENCES answers(answer_id),
@@ -154,7 +160,21 @@ class FeedbackStore:
             );
             """
         )
+        self._add_missing_columns()
         self._conn.commit()
+
+    def _add_missing_columns(self) -> None:
+        """Bring an older database up to the current schema.
+
+        ``CREATE TABLE IF NOT EXISTS`` does nothing to a table that already
+        exists, so a database created before a column was added would keep
+        failing on every write to it. The bot's own feedback.db is exactly
+        such a file -- it already holds real students' reports, so it is
+        migrated rather than recreated.
+        """
+        existing = {row[1] for row in self._conn.execute("PRAGMA table_info(reports)")}
+        if "note" not in existing:
+            self._conn.execute("ALTER TABLE reports ADD COLUMN note TEXT")
 
     @staticmethod
     def _now() -> str:
@@ -227,12 +247,18 @@ class FeedbackStore:
             grounded=bool(row[9]),
         )
 
-    def record_report(self, answer_id: int, reporter_id: str) -> AnswerRecord | None:
+    def record_report(
+        self, answer_id: int, reporter_id: str, note: str | None = None
+    ) -> AnswerRecord | None:
         """File a "Báo sai" report against ``answer_id``.
 
         Args:
             answer_id: The answer the student is flagging.
             reporter_id: Who reported it, in the channel's own id space.
+            note: Why they think it is wrong, in their own words. Optional
+                by design -- "what exactly is wrong?" is a hard question for
+                a 12-year-old who only knows the answer looks off, and
+                making it mandatory would mostly stop them reporting.
 
         Returns:
             The reported answer, so the caller can tell the student which
@@ -244,8 +270,9 @@ class FeedbackStore:
         if record is None:
             return None
         self._conn.execute(
-            "INSERT INTO reports (answer_id, created_at, reporter_id) VALUES (?, ?, ?)",
-            (answer_id, self._now(), reporter_id),
+            "INSERT INTO reports (answer_id, created_at, reporter_id, note) "
+            "VALUES (?, ?, ?, ?)",
+            (answer_id, self._now(), reporter_id, note or None),
         )
         self._conn.commit()
         return record
@@ -345,7 +372,7 @@ class FeedbackStore:
             limit: Maximum reports to return, newest first.
         """
         rows = self._conn.execute(
-            "SELECT r.report_id, r.created_at, r.reporter_id, "
+            "SELECT r.report_id, r.created_at, r.reporter_id, r.note, "
             "a.answer_id, a.created_at, a.channel, a.user_id, a.grade, a.subject, "
             "a.question, a.answer, a.citations, a.grounded "
             "FROM reports r JOIN answers a ON a.answer_id = r.answer_id "
@@ -357,7 +384,8 @@ class FeedbackStore:
                 report_id=row[0],
                 created_at=row[1],
                 reporter_id=row[2],
-                answer=self._as_answer_record(row[3:]),
+                note=row[3],
+                answer=self._as_answer_record(row[4:]),
             )
             for row in rows
         ]

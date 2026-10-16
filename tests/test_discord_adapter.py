@@ -260,13 +260,24 @@ def test_only_the_last_piece_of_a_split_answer_carries_the_button(
     assert message.channel.views[-1] is not None
 
 
+def _submit_report(client, custom_id, *, reason: str = "", user_id: str = "9"):
+    """Press "Báo sai" and submit the form it opens, as a student would."""
+    press = FakeInteraction(custom_id, user_id=user_id)
+    _run(client.on_interaction(press))
+    modal = press.response.modals[0]
+    # discord.py exposes TextInput.value read-only, so seed the backing field.
+    modal.reason._value = reason
+    submit = FakeInteraction(custom_id, user_id=user_id)
+    _run(modal.on_submit(submit))
+    return submit
+
+
 def test_pressing_the_button_files_the_report_and_replies_privately(citing_tutor) -> None:
     _, client = _build_client(citing_tutor)
     message = _answer_one_question(client)
     custom_id = message.channel.views[-1].children[0].custom_id
-    interaction = FakeInteraction(custom_id)
 
-    _run(client.on_interaction(interaction))
+    interaction = _submit_report(client, custom_id)
 
     text, ephemeral = interaction.response.sent[0]
     assert "Cảm ơn bạn đã báo" in text
@@ -278,9 +289,8 @@ def test_pressing_the_button_files_the_report_and_replies_privately(citing_tutor
 
 def test_a_button_from_a_previous_database_is_answered_not_crashed(citing_tutor) -> None:
     _, client = _build_client(citing_tutor)
-    interaction = FakeInteraction(f"{_REPORT_CUSTOM_ID_PREFIX}4242")
 
-    _run(client.on_interaction(interaction))
+    interaction = _submit_report(client, f"{_REPORT_CUSTOM_ID_PREFIX}4242")
 
     assert interaction.response.sent[0][0] == prompts.FEEDBACK_UNKNOWN_MESSAGE
 
@@ -301,8 +311,7 @@ def test_a_classmate_may_flag_an_answer_somebody_else_asked_for(citing_tutor) ->
     message = _answer_one_question(client)
     custom_id = message.channel.views[-1].children[0].custom_id
 
-    interaction = FakeInteraction(custom_id, user_id="77")
-    _run(client.on_interaction(interaction))
+    interaction = _submit_report(client, custom_id, user_id="77")
 
     assert "Cảm ơn bạn đã báo" in interaction.response.sent[0][0]
 
@@ -363,3 +372,43 @@ def test_a_rating_outside_the_scale_is_explained_not_stored(citing_tutor) -> Non
 
     assert submit.response.sent[0][0] == prompts.RATING_USAGE_MESSAGE
     assert tutor_feedback.summary().ratings == 0
+
+
+def test_the_report_form_keeps_the_reason_the_student_typed(citing_tutor) -> None:
+    tutor_feedback = citing_tutor._feedback
+    _, client = _build_client(citing_tutor)
+    message = _answer_one_question(client)
+    custom_id = message.channel.views[-1].children[0].custom_id
+
+    interaction = _submit_report(client, custom_id, reason="Công thức bị sai dấu")
+
+    assert "Cảm ơn bạn đã báo" in interaction.response.sent[0][0]
+    assert "lý do bạn ghi" in interaction.response.sent[0][0]
+    assert tutor_feedback.recent_reports()[0].note == "Công thức bị sai dấu"
+
+
+def test_the_reason_field_may_be_left_empty(citing_tutor) -> None:
+    # The whole point: a student who only senses the answer is off must be
+    # able to report in one tap, without having to explain.
+    tutor_feedback = citing_tutor._feedback
+    _, client = _build_client(citing_tutor)
+    message = _answer_one_question(client)
+    custom_id = message.channel.views[-1].children[0].custom_id
+
+    interaction = _submit_report(client, custom_id, reason="")
+
+    assert "Cảm ơn bạn đã báo" in interaction.response.sent[0][0]
+    assert "lý do bạn ghi" not in interaction.response.sent[0][0]
+    reports = tutor_feedback.recent_reports()
+    assert len(reports) == 1 and reports[0].note is None
+
+
+def test_the_reason_field_is_not_required_by_discord(citing_tutor) -> None:
+    _, client = _build_client(citing_tutor)
+    message = _answer_one_question(client)
+    custom_id = message.channel.views[-1].children[0].custom_id
+
+    press = FakeInteraction(custom_id)
+    _run(client.on_interaction(press))
+
+    assert press.response.modals[0].reason.required is False

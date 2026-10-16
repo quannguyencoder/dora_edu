@@ -741,3 +741,53 @@ def test_a_page_the_llm_invented_is_left_out_of_the_reminder(
     reply = _ask(tutor, "Phan so la gi?")
 
     assert "trang 999" not in reply.text.split("📖")[1]
+
+
+def test_baosai_keeps_the_reason_a_student_typed(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/baosai sách trang này nói khác")
+
+    assert "lý do bạn ghi" in reply.text
+    assert feedback.recent_reports()[0].note == "sách trang này nói khác"
+
+
+def test_baosai_with_an_id_and_a_reason_keeps_both(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    answer = _ask(tutor, "Phan so la gi?")
+
+    _ask(tutor, f"/baosai #{answer.feedback_id} công thức sai dấu")
+
+    report = feedback.recent_reports()[0]
+    assert report.answer.answer_id == answer.feedback_id
+    assert report.note == "công thức sai dấu"
+
+
+def test_baosai_without_a_reason_is_still_a_complete_report(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/baosai")
+
+    assert "Cảm ơn bạn đã báo" in reply.text
+    assert feedback.recent_reports()[0].note is None
+
+
+def test_a_bare_id_is_read_as_an_id_not_as_a_reason(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    answer = _ask(tutor, "Phan so la gi?")
+
+    _ask(tutor, f"/baosai {answer.feedback_id}")
+
+    report = feedback.recent_reports()[0]
+    assert report.answer.answer_id == answer.feedback_id
+    assert report.note is None

@@ -57,6 +57,38 @@ def parse_command(text: str) -> tuple[str, str] | None:
 #: a leading 5 would be indistinguishable from the id of answer 5.
 _FEEDBACK_ID_TOKEN = re.compile(r"^#(\d+)$")
 
+#: ``/baosai`` carries no scores, so a bare number there is unambiguous and
+#: is accepted as the id too -- which keeps "/baosai 12" working for anyone
+#: (or any older button) that sends the id without the marker.
+_REPORT_ID_TOKEN = re.compile(r"^#?(\d+)$")
+
+
+def _parse_report(
+    argument: str, *, fallback_id: int | None
+) -> tuple[int | None, str | None]:
+    """Split a ``/baosai`` argument into an answer id and the student's reason.
+
+    Accepts ``"#12 công thức sai"`` (what the Discord report form sends),
+    ``"#12"`` or ``"12"`` (just the id), and ``"câu này sai rồi"`` (a
+    student typing a reason for the last answer, no id at all).
+
+    Args:
+        argument: Everything after the command name.
+        fallback_id: The answer to flag when the argument names none.
+
+    Returns:
+        An ``(answer_id, note)`` pair; ``note`` is ``None`` when the student
+        gave no reason, which is the common case and perfectly fine.
+    """
+    tokens = argument.split()
+    answer_id = fallback_id
+    if tokens:
+        match = _REPORT_ID_TOKEN.match(tokens[0])
+        if match:
+            answer_id = int(match.group(1))
+            tokens = tokens[1:]
+    return answer_id, " ".join(tokens).strip() or None
+
 
 def _parse_rating(
     argument: str, *, fallback_id: int | None
@@ -200,12 +232,15 @@ class TutorService:
     ) -> OutgoingMessage:
         """Record that a student flagged an answer as wrong.
 
-        The id comes either from the channel's report control (a Discord
-        button passes it as the command argument) or, when the channel has
-        no buttons, from the last answer in this student's session.
+        The id comes either from the channel's report control (the Discord
+        form passes it as the command argument) or, when the channel has no
+        buttons, from the last answer in this student's session. Anything
+        after the id is kept as the student's own account of what is wrong,
+        which is optional: a report has to stay one tap, or the students who
+        notice a mistake but cannot articulate it simply will not report.
 
         Args:
-            argument: The feedback id, or empty for "the last answer".
+            argument: ``"[#id] [lý do]"`` -- either part may be absent.
             message: The incoming message, used for the reporter's identity.
             session: The student's session.
 
@@ -213,33 +248,26 @@ class TutorService:
             A thank-you naming the page to check, or an explanation of why
             the answer could no longer be flagged.
         """
-        answer_id = session.last_feedback_id
-        if argument.strip():
-            try:
-                answer_id = int(argument.strip())
-            except ValueError:
-                # A button always sends a well-formed id, so this is a
-                # student typing "/baosai cau nay sai" -- treat the text as
-                # "the last answer" rather than rejecting them outright.
-                answer_id = session.last_feedback_id
+        answer_id, note = _parse_report(argument, fallback_id=session.last_feedback_id)
         if answer_id is None:
             return OutgoingMessage(text=prompts.FEEDBACK_NOTHING_TO_REPORT_MESSAGE)
 
-        record = self._feedback.record_report(answer_id, message.user_id)
+        record = self._feedback.record_report(answer_id, message.user_id, note)
         if record is None:
             return OutgoingMessage(text=prompts.FEEDBACK_UNKNOWN_MESSAGE)
 
         logger.info(
-            "Answer %s flagged by %s on %s (grade=%s subject=%s grounded=%s)",
+            "Answer %s flagged by %s on %s (grade=%s subject=%s grounded=%s note=%r)",
             answer_id,
             message.user_id,
             message.channel,
             record.grade,
             record.subject,
             record.grounded,
+            note,
         )
         return OutgoingMessage(
-            text=prompts.build_feedback_thanks(record.citations),
+            text=prompts.build_feedback_thanks(record.citations, gave_reason=note is not None),
             citations=record.citations,
         )
 

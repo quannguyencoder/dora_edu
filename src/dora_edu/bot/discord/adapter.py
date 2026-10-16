@@ -66,6 +66,38 @@ def build_feedback_view(feedback_id: int) -> discord.ui.View:
     return view
 
 
+class _ReportModal(discord.ui.Modal):
+    """The form a student sees after pressing "Báo sai".
+
+    One optional field. A student who can say what is wrong ("công thức sai
+    dấu", "sách trang này nói khác") gives the teacher reviewing the report
+    a head start; a student who only senses the answer is off can press
+    Submit straight away. Making the reason mandatory would buy slightly
+    better reports at the cost of the reports that matter most -- the ones
+    from students too unsure to explain.
+    """
+
+    reason: discord.ui.TextInput = discord.ui.TextInput(
+        label="Sai ở chỗ nào? (không bắt buộc)",
+        placeholder="Ví dụ: công thức bị sai dấu, hoặc sách trang này nói khác...",
+        style=discord.TextStyle.paragraph,
+        required=False,
+        max_length=400,
+    )
+
+    def __init__(self, feedback_id: str, client: "_TutorDiscordClient") -> None:
+        super().__init__(title="Báo câu trả lời sai")
+        self._feedback_id = feedback_id
+        self._client = client
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        """Forward the report as the ordinary ``/baosai`` command."""
+        command = f"/baosai #{self._feedback_id}"
+        if self.reason.value:
+            command = f"{command} {self.reason.value}"
+        await self._client.handle_feedback_interaction(interaction, command)
+
+
 class _RatingModal(discord.ui.Modal):
     """The 1-5 form a student fills in after pressing "Chấm điểm".
 
@@ -190,19 +222,24 @@ class _TutorDiscordClient(discord.Client):
         after a restart, since nothing has to be looked up in memory.
         """
         custom_id = str((interaction.data or {}).get("custom_id", ""))
-        if custom_id.startswith(_REPORT_CUSTOM_ID_PREFIX):
-            feedback_id = custom_id[len(_REPORT_CUSTOM_ID_PREFIX) :]
-            await self.handle_feedback_interaction(interaction, f"/baosai {feedback_id}")
-            return
-        if custom_id.startswith(_RATE_CUSTOM_ID_PREFIX):
-            feedback_id = custom_id[len(_RATE_CUSTOM_ID_PREFIX) :]
+        for prefix, modal_type, what in (
+            (_REPORT_CUSTOM_ID_PREFIX, _ReportModal, "báo sai"),
+            (_RATE_CUSTOM_ID_PREFIX, _RatingModal, "chấm điểm"),
+        ):
+            if not custom_id.startswith(prefix):
+                continue
+            feedback_id = custom_id[len(prefix) :]
             try:
-                # A rating needs two numbers, so it opens a form instead of
-                # being recorded straight from the press; the submitted form
-                # comes back through this same method as /chamdiem.
-                await interaction.response.send_modal(_RatingModal(feedback_id, self))
+                # Both presses open a form rather than recording straight
+                # away: a rating needs two numbers, and a report lets the
+                # student say what is wrong. The submitted form comes back
+                # through this same client as /baosai or /chamdiem.
+                await interaction.response.send_modal(modal_type(feedback_id, self))
             except discord.DiscordException as exc:
-                logger.error("Discord rejected the rating form for %s: %s", interaction.user.id, exc)
+                logger.error(
+                    "Discord rejected the %s form for %s: %s", what, interaction.user.id, exc
+                )
+            return
 
     async def handle_feedback_interaction(
         self, interaction: discord.Interaction, command: str
