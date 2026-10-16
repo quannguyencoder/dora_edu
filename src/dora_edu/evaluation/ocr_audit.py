@@ -66,6 +66,29 @@ class PageAudit:
     #: Whether the page carries a formula or fraction at all, which is where
     #: OCR damage is both most likely and most harmful.
     has_formula: bool
+    #: Whether ``dora-ocr-repair`` has already re-read this page from its
+    #: image. The flags stay (they describe the local OCR text, which is
+    #: never rewritten), but the index holds a clean copy, so the page is no
+    #: longer something a person needs to go and check.
+    repaired: bool = False
+
+
+#: Where ``dora-ocr-repair`` records the pages it re-read. Read here as plain
+#: JSON rather than through that module, which imports this one.
+_REPAIRS_PATH = Path("./data/ocr_repairs.json")
+
+
+def _repaired_pages(path: Path = _REPAIRS_PATH) -> set[tuple[str, int]]:
+    """Return ``(book stem, page)`` for every page already re-read."""
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    return {
+        (str(page.get("source_file", "")).removesuffix(".pdf"), int(page["page"]))
+        for page in raw.get("pages", [])
+        if page.get("page") is not None
+    }
 
 
 #: A commutative/associative law whose operator came out as a minus sign:
@@ -296,6 +319,8 @@ def audit_sample(
         chosen = rng.sample(population, min(sample_size, len(population)))
     else:
         chosen = population
+
+    repaired = _repaired_pages()
     return [
         PageAudit(
             grade=grade,
@@ -303,6 +328,7 @@ def audit_sample(
             page=page,
             issues=tuple(scan_page(text)),
             has_formula=bool(_FORMULA_MARKERS.search(text)),
+            repaired=(book, page) in repaired,
         )
         for grade, book, page, text in chosen
     ]
@@ -319,6 +345,8 @@ def format_report(audits: list[PageAudit], *, seed: int) -> str:
         The report, in Vietnamese.
     """
     flagged = [audit for audit in audits if audit.issues]
+    repaired = [audit for audit in flagged if audit.repaired]
+    todo = [audit for audit in flagged if not audit.repaired]
     by_kind = Counter(issue.kind for audit in audits for issue in audit.issues)
 
     lines = [
@@ -328,6 +356,12 @@ def format_report(audits: list[PageAudit], *, seed: int) -> str:
         "— chạy lại cùng seed sẽ ra đúng các trang này)",
         f"Số trang có công thức/phân số: {sum(1 for a in audits if a.has_formula)}",
         f"Số trang bị gắn cờ nghi đọc sai: {len(flagged)}",
+        f"Trong đó đã đọc lại bằng Gemini Vision và vá vào kho: {len(repaired)}",
+        f"Còn phải xử lí: {len(todo)}",
+        "",
+        "Lưu ý: các cờ ở đây mô tả bản chữ do máy đọc tại chỗ (Tesseract), và bản "
+        "đó không bị ghi đè — nên một trang đã vá vẫn còn cờ. Điều đã thay đổi là "
+        "trong kho tìm kiếm đã có thêm một đoạn sạch cho trang đó.",
         "",
         "## Thống kê theo loại lỗi",
         "",
@@ -344,9 +378,9 @@ def format_report(audits: list[PageAudit], *, seed: int) -> str:
         "## Các trang cần mở sách đối chiếu",
         "",
     ]
-    if not flagged:
-        lines.append("Không có trang nào bị gắn cờ trong mẫu này.")
-    for audit in flagged:
+    if not todo:
+        lines.append("Không còn trang nào phải xử lí trong mẫu này. 🎉")
+    for audit in todo:
         lines.append(f"### Lớp {audit.grade} — {audit.book} — trang {audit.page}")
         lines.append("")
         for issue in audit.issues:

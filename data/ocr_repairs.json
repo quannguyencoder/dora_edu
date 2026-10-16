@@ -239,6 +239,17 @@
       "subject": "Toán",
       "book_title": "Toán 8 - tập 2",
       "source_file": "SGKToan8taphai.pdf",
+      "page": 20,
+      "text": "Vận dụng\n\nChú Đức lái ô tô từ Hà Nội về quê. Từ nhà chú đến đường cao tốc dài khoảng 20 km, xe chạy trong thành phố với vận tốc x (km/h) (x > 0). Trên 50 km đường cao tốc, xe tăng vận tốc thêm 55 km/h. Ra khỏi cao tốc, xe còn phải chạy thêm 15 phút thì về đến quê.\n\na) Viết các phân thức biểu thị thời gian xe chạy trong thành phố và thời gian xe chạy trên đường cao tốc.\n\nb) Viết phân thức biểu thị tổng thời gian chú Đức đi từ Hà Nội về quê.\n\nBÀI TẬP\n\nTrong các bài tập từ 6.20 đến 6.24 dưới đây, hãy thực hiện các phép tính đã chỉ ra.\n\n6.20. a) (x bình phương - 3x + 1) / (2x bình phương) + (5x - 1 - x bình phương) / (2x bình phương);\n\nb) y / (x - y) + x / (x + y);\n\nc) x / (2x - 6) + 9 / (2x(3 - x)).\n\n6.21. a) (5 - 3x) / (x + 1) - (-2 + 5x) / (x + 1);\n\nb) x / (x - y) - y / (x + y);\n\nc) 3 / (x + 1) - (2 + 3x) / (x lập phương + 1).\n\n6.22. a) 1 / x + 2 / (x + 1) + 3 / (x + 2) + 1 / x + 2 / (x - 1) + 3 / (x + 2);\n\nb) (2x - 1) / x + (1 - x) / (2x + 1) + 3 / (x bình phương - 9) + (1 - 2x) / x + (x - 1) / (2x + 1) + 3 / (x + 3).\n\n6.23. a) (x bình phương + 4x + 4) / (x bình phương - 4) + x / (2 - x) + (4 - x) / (5x - 10);\n\nb) x / (x bình phương + 1) - [3 / (x + 6) + (x - 2) / (x + 4)] + [3 / (x + 6) - (1 / (x bình phương + 1) - (x - 2) / (x + 4))].\n\n6.24. a) (x - y) / (xy) + (y - z) / (yz) + (z - x) / (zx);\n\nb) x / ((x - y) bình phương) + y / (y bình phương - x bình phương).\n\n6.25. Một tàu du lịch chạy xuôi dòng 15 km, sau đó quay ngược lại để trở về điểm xuất phát và kết thúc chuyến du lịch. Biết rằng vận tốc của tàu khi nước yên lặng là 10 km/h và vận tốc của dòng nước là x (km/h).\n\na) Hãy viết các phân thức biểu thị theo x thời gian xuôi dòng, thời gian ngược dòng và tổng thời gian tàu chạy.\n\nb) Tính tổng thời gian tàu chạy khi vận tốc dòng nước là 2 km/h.\n\n19",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
       "page": 27,
       "text": "B. TỰ LUẬN\n\n6.41. Tìm đa thức P trong các đẳng thức sau:\na) P + 1 / (x + 2) = x / (x bình phương - 2x + 4)\nb) P - 4(x - 2) / (x + 2) = 16 / (x - 2)\nc) P . (x - 2) / (x + 3) = (x bình phương - 4x + 4) / (x bình phương - 9)\nd) P . (x bình phương - 9) / (2x + 4) = (x bình phương - 4) / (x bình phương + 3x)\n\n6.42. Rút gọn các biểu thức sau:\na) 2 / (3x) + x / (x - 1) + (6x bình phương - 4) / (2x(1 - x))\nb) (x lập phương + 1) / (1 - x lập phương) + x / (x - 1) - (x + 1) / (x bình phương + x + 1)\nc) 2 / (x + 2) - 2 / (1 - x) . (x bình phương - 4) / (4x bình phương - 1)\nd) 1 + (x lập phương - x) / (x bình phương + 1) . (1 / (1 - x) - 1 / (1 - x bình phương))\n\n6.43. Cho phân thức P = (2x + 1) / (x + 1)\n\na) Viết điều kiện xác định của P.\nb) Hãy viết P dưới dạng P = a - b / (x + 1), trong đó a, b là hai số nguyên dương.\nc) Với giá trị nguyên nào của x thì P có giá trị là số nguyên?\n\n6.44. Một xe ô tô đi từ Hà Nội đến Cửa Lò với vận tốc 60 km/h và dự kiến sẽ đến Cửa Lò sau 5 giờ xe chạy. Tuy nhiên, sau 2 và 2/3 giờ chạy với vận tốc 60 km/h, xe dừng nghỉ 20 phút. Sau khi dừng nghỉ, để đến Cửa Lò đúng thời gian dự kiến, xe phải tăng vận tốc so với chặng đầu.\n\na) Tính độ dài quãng đường Hà Nội - Cửa Lò.\nb) Tính độ dài quãng đường còn lại sau khi dừng nghỉ.\nc) Cho biết ở chặng thứ hai xe tăng vận tốc thêm x (km/h). Hãy viết biểu thức P biểu thị thời gian (tính bằng giờ) thực tế xe chạy hết chặng đường Hà Nội - Cửa Lò.\nd) Tính giá trị của P lần lượt tại x = 5; x = 10; x = 15, từ đó cho biết ở chặng thứ hai (sau khi xe dừng nghỉ):\n- Nếu tăng vận tốc thêm 5 km/h thì xe đến Cửa Lò muộn hơn dự kiến bao nhiêu giờ?\n- Nếu tăng vận tốc thêm 10 km/h thì xe đến Cửa Lò có đúng thời gian dự kiến không?\n- Nếu tăng vận tốc thêm 15 km/h thì xe đến Cửa Lò sớm hơn dự kiến bao nhiêu giờ?\n\n26",
       "kinds": [
@@ -331,6 +342,17 @@
       "source_file": "SGKToan8tapmot.pdf",
       "page": 34,
       "text": "BÀI TẬP\n\n2.1. Những đẳng thức nào sau đây là hằng đẳng thức?\na) x + 2 = 3x + 1;\nb) 2x(x + 1) = 2x bình phương + 2x;\nc) (a + b)a = a bình phương + ba;\nd) a - 2 = 2a + 1.\n\n2.2. Thay ? bằng biểu thức thích hợp.\na) (x - 3y)(x + 3y) = x bình phương - ?;\nb) (2x - y)(2x + y) = 4 ? - y bình phương;\nc) x bình phương + 8xy + ? = (? + 4y) bình phương;\nd) ? - 12xy + 9y bình phương = (2x - ?) bình phương.\n\n2.3. Tính nhanh:\na) 54 nhân 66;\nb) 203 bình phương.\n\n2.4. Viết các biểu thức sau dưới dạng bình phương của một tổng hoặc một hiệu:\na) x bình phương + 4x + 4;\nb) 16a bình phương - 16ab + 4b bình phương.\n\n2.5. Rút gọn các biểu thức sau:\na) (x - 3y) bình phương - (x + 3y) bình phương;\nb) (3x + 4y) bình phương + (4x - 3y) bình phương.\n\n2.6. Chứng minh rằng với mọi số tự nhiên n, ta có:\n(n + 2) bình phương - n bình phương chia hết cho 4.\n\nKẾT NỐI TRI THỨC VỚI CUỘC SỐNG\n\n33",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 38,
+      "text": "Bài 8 TỔNG VÀ HIỆU HAI LẬP PHƯƠNG\n\nKhái niệm, thuật ngữ\n- Tổng hai lập phương\n- Hiệu hai lập phương\n\nKiến thức, kĩ năng\n- Mô tả các hằng đẳng thức: tổng và hiệu hai lập phương.\n- Vận dụng hai hằng đẳng thức này để rút gọn biểu thức hay viết biểu thức dưới dạng tích.\n\nTớ viết được đa thức x^6 + y^6 dưới dạng tích đấy!\nTròn làm thế nào nhỉ?\n\nHình vẽ: Nhân vật hoạt hình Tròn và Vuông đối thoại.\n\n1 TỔNG HAI LẬP PHƯƠNG\n\nTổng hai lập phương\n\nHĐ1 Với hai số a, b bất kì, thực hiện phép tính (a + b)(a^2 - ab + b^2).\nTừ đó rút ra liên hệ giữa a^3 + b^3 và (a + b)(a^2 - ab + b^2).\nVới A, B là hai biểu thức tuỳ ý, ta có:\nA^3 + B^3 = (A + B)(A^2 - AB + B^2)\n\nVí dụ 1 Viết các đa thức sau dưới dạng tích:\na) x^3 + 8;\nb) 8x^3 + y^3.\n\nGiải\na) x^3 + 8 = x^3 + 2^3 = (x + 2)(x^2 - 2x + 4).\nb) 8x^3 + y^3 = (2x)^3 + y^3 = (2x + y)(4x^2 - 2xy + y^2).\n\nVí dụ 2 Rút gọn các biểu thức sau:\na) (x + 3)(x^2 - 3x + 9) - x^3;\nb) (3x + y)(9x^2 - 3xy + y^2) - y^3 - 26x^3.\n\n37",
       "kinds": [
         "mat-so-mu"
       ]
@@ -441,6 +463,17 @@
       "source_file": "SGKToan9taphai.pdf",
       "page": 14,
       "text": "Luyện tập 4 Cho phương trình x mũ 2 + 6x = 1.\nHãy cộng vào cả hai vế của phương trình với cùng một số thích hợp để được một phương trình mà vế trái có thể biến đổi thành một bình phương. Từ đó, hãy giải phương trình đã cho.\n\n3 CÔNG THỨC NGHIỆM CỦA PHƯƠNG TRÌNH BẬC HAI\n\nXây dựng công thức nghiệm của phương trình bậc hai\nHĐ4 Thực hiện lần lượt các bước sau để giải phương trình:\n2x mũ 2 - 8x + 3 = 0.\na) Chuyển hạng tử tự do sang vế phải.\nb) Chia cả hai vế của phương trình cho hệ số của x mũ 2.\nc) Thêm vào hai vế của phương trình nhận được ở câu b với cùng một số để vế trái có thể biến đổi thành một bình phương. Từ đó tìm nghiệm x.\n\nCách giải phương trình bậc hai\nTương tự HĐ4, để giải phương trình bậc hai ax mũ 2 + bx + c = 0 (a khác 0) trong trường hợp tổng quát, ta làm như sau:\n- Chuyển hạng tử tự do c sang vế phải: ax mũ 2 + bx = -c.\n- Chia cả hai vế của phương trình cho hệ số của x mũ 2: x mũ 2 + b/a nhân x = -c/a.\n- Cộng vào hai vế của phương trình nhận được với b mũ 2 / 4a mũ 2 để vế trái có thể biến đổi thành bình phương của một biểu thức: x mũ 2 + b/a nhân x + b mũ 2 / 4a mũ 2 = -c/a + b mũ 2 / 4a mũ 2 hay (x + b / 2a) mũ 2 = b mũ 2 - 4ac / 4a mũ 2.\nKí hiệu delta = b mũ 2 - 4ac và gọi là biệt thức của phương trình (delta đọc là \"đenta\"). Khi đó, ta có thể viết lại phương trình cuối dưới dạng (x + b / 2a) mũ 2 = delta / 4a mũ 2.\n\nTừ đây, ta có kết quả sau:\nXét phương trình bậc hai một ẩn ax mũ 2 + bx + c = 0 (a khác 0).\nTính biệt thức delta = b mũ 2 - 4ac.\n- Nếu delta lớn hơn 0 thì phương trình có hai nghiệm phân biệt: x1 = (-b + căn bậc hai của delta) / 2a, x2 = (-b - căn bậc hai của delta) / 2a.\n- Nếu delta bằng 0 thì phương trình có nghiệm kép x1 = x2 = -b / 2a.\n- Nếu delta nhỏ hơn 0 thì phương trình vô nghiệm.\n\n13",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 2",
+      "source_file": "SGKToan9taphai.pdf",
+      "page": 15,
+      "text": "Ví dụ 5 Cho phương trình 3x^2 + 7x - 1 = 0.\na) Xác định các hệ số a, b, c.\nb) Tính biệt thức Delta.\nc) Áp dụng công thức nghiệm, giải phương trình đã cho.\nGiải\na) Ta có: a = 3, b = 7, c = -1.\nb) Ta có: Delta = b^2 - 4ac = 7^2 - 4.3.(-1) = 49 + 12 = 61.\nc) Do Delta > 0, áp dụng công thức nghiệm, phương trình có hai nghiệm phân biệt:\nx1 = (-7 + can bậc hai của 61)/6, x2 = (-7 - can bậc hai của 61)/6\n\nVí dụ 6\nGiải các phương trình sau:\na) x^2 - 6x + 9 = 0;\nb) 2x^2 + 3x + 5 = 0.\nGiải\na) Ta có: Delta = (-6)^2 - 4.1.9 = 0. Do đó, phương trình có nghiệm kép:\nx1 = x2 = -b/(2a) = -(-6)/2 = 3.\nb) Ta có: Delta = 3^2 - 4.2.5 = 9 - 40 = -31 < 0. Do đó, phương trình vô nghiệm.\n\nLuyện tập 5\nÁp dụng công thức nghiệm, giải các phương trình sau:\na) 2x^2 - 5x + 1 = 0;\nb) x^2 + 8x + 16 = 0;\nc) x^2 - x + 1 = 0.\n\nThử thách nhỏ\nHình vẽ: Biểu tượng con vật cầm chữ Pi và cái búa.\nCó thể nói gì về nghiệm của phương trình bậc hai ax^2 + bx + c = 0 nếu a và c trái dấu?\n\nEm hãy trả lời câu hỏi của anh Pi.\n\nChú ý. Xét phương trình bậc hai ax^2 + bx + c = 0 (a khác 0), với b = 2b' và Delta' = b'^2 - ac.\n- Nếu Delta' > 0 thì phương trình có hai nghiệm phân biệt:\nx1 = (-b' + can bậc hai của Delta')/a; x2 = (-b' - can bậc hai của Delta')/a\n- Nếu Delta' = 0 thì phương trình có nghiệm kép x1 = x2 = -b'/a\n- Nếu Delta' < 0 thì phương trình vô nghiệm.\nCác công thức ở trên gọi là công thức nghiệm thu gọn.\n\n14",
       "kinds": [
         "mat-so-mu"
       ]
