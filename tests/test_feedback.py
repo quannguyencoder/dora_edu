@@ -267,3 +267,32 @@ def test_the_review_sheet_names_the_reporter(store) -> None:
 
     assert "Hoàng Khang" in sheet
     assert "Người báo" in sheet
+
+
+def test_a_name_learnt_later_also_names_an_earlier_report(store) -> None:
+    # Real case: two reports were filed before names were recorded at all.
+    # The same student asked another question afterwards, which did record
+    # their name -- and a user id that identifies them in one row identifies
+    # them in the other, so the earlier report can be named too.
+    old_answer = store.record_answer(
+        channel="discord", user_id="7", grade=8, subject="Toán",
+        question="Câu hỏi buổi sáng", answer="...", citations=[], grounded=True,
+    )
+    store.record_report(old_answer, "7")  # no name recorded at the time
+
+    store.record_answer(
+        channel="discord", user_id="7", display_name="Khang", grade=8,
+        subject="Toán", question="Câu hỏi buổi chiều", answer="...",
+        citations=[], grounded=True,
+    )
+
+    assert store.recent_reports()[0].reporter == "Khang"
+
+
+def test_an_unknown_student_still_falls_back_to_their_id(store) -> None:
+    answer_id = _log_one(store)
+    store.record_report(answer_id, "999")
+
+    # Nobody has ever been seen under id 999 with a name, so there is
+    # nothing to fill in and the id is shown rather than a guess.
+    assert "999" in store.recent_reports()[0].reporter

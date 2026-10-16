@@ -34,6 +34,17 @@ MAX_RATING = 5
 #: readable in a plain SQLite browser or CSV export.
 _CITATION_SEPARATOR = "\n"
 
+#: The most recent name this person was seen under, for rows written before
+#: names were recorded at all. A report filed in the morning and an answer
+#: the same student asked for in the afternoon share a user id, so the name
+#: learnt later also identifies the earlier report -- which is the whole
+#: point of showing a name rather than an id.
+_LATEST_KNOWN_NAME = (
+    "(SELECT a2.display_name FROM answers a2 "
+    " WHERE a2.user_id = {column} AND a2.display_name IS NOT NULL "
+    " ORDER BY a2.created_at DESC LIMIT 1)"
+)
+
 
 @dataclass(frozen=True)
 class AnswerRecord:
@@ -258,8 +269,10 @@ class FeedbackStore:
     def get_answer(self, answer_id: int) -> AnswerRecord | None:
         """Return a logged answer, or ``None`` when the id is unknown."""
         row = self._conn.execute(
-            "SELECT answer_id, created_at, channel, user_id, display_name, grade, "
-            "subject, question, answer, citations, grounded FROM answers WHERE answer_id = ?",
+            "SELECT answer_id, created_at, channel, user_id, "
+            f"COALESCE(display_name, {_LATEST_KNOWN_NAME.format(column='user_id')}), "
+            "grade, subject, question, answer, citations, grounded "
+            "FROM answers WHERE answer_id = ?",
             (answer_id,),
         ).fetchone()
         return self._as_answer_record(row) if row else None
@@ -367,7 +380,9 @@ class FeedbackStore:
     def ratings_for(self, answer_id: int) -> list[RatingRecord]:
         """Return every student's rating of one answer, oldest first."""
         rows = self._conn.execute(
-            "SELECT answer_id, created_at, user_id, user_name, clarity, guidance, comment "
+            "SELECT answer_id, created_at, user_id, "
+            f"COALESCE(user_name, {_LATEST_KNOWN_NAME.format(column='user_id')}), "
+            "clarity, guidance, comment "
             "FROM ratings WHERE answer_id = ? ORDER BY created_at, user_id",
             (answer_id,),
         ).fetchall()
@@ -414,9 +429,11 @@ class FeedbackStore:
             limit: Maximum reports to return, newest first.
         """
         rows = self._conn.execute(
-            "SELECT r.report_id, r.created_at, r.reporter_id, r.note, r.reporter_name, "
-            "a.answer_id, a.created_at, a.channel, a.user_id, a.display_name, a.grade, "
-            "a.subject, a.question, a.answer, a.citations, a.grounded "
+            "SELECT r.report_id, r.created_at, r.reporter_id, r.note, "
+            f"COALESCE(r.reporter_name, {_LATEST_KNOWN_NAME.format(column='r.reporter_id')}), "
+            "a.answer_id, a.created_at, a.channel, a.user_id, "
+            f"COALESCE(a.display_name, {_LATEST_KNOWN_NAME.format(column='a.user_id')}), "
+            "a.grade, a.subject, a.question, a.answer, a.citations, a.grounded "
             "FROM reports r JOIN answers a ON a.answer_id = r.answer_id "
             "ORDER BY r.report_id DESC LIMIT ?",
             (limit,),
