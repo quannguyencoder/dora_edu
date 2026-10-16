@@ -83,6 +83,19 @@ _FRACTION_WITHOUT_SLASH = re.compile(
     r"(?:gọi|gợi|goi)\s*[=~]\s*l[àa]\s*(?:một|mot)\s*ph[âa]n\s*s", re.IGNORECASE
 )
 
+#: A lesson announcing its definition and then moving straight on to the
+#: next thing. MOET textbooks print the definition itself inside a coloured
+#: box, and Tesseract skips those boxes wholesale -- so the page keeps the
+#: words "Tổng quát, ta có định nghĩa:" and loses the one sentence that
+#: follows them. The bot then correctly refuses a question its textbook
+#: does answer, which is the most common kind of wrong refusal measured so
+#: far (3 of the 40 answerable benchmark questions).
+_LOST_DEFINITION_BOX = re.compile(
+    r"ta\s+có\s+(?:định|dinh)\s+(?:nghĩa|nghia)\s*:?\s*"
+    r"(?:Nhận\s*xét|Nhan\s*xet|Ví\s*dụ|Vi\s*du|Luyện\s*tập|Luyen\s*tap|Chú\s*ý|Chu\s*y)",
+    re.IGNORECASE,
+)
+
 #: A digit wedged inside a Vietnamese word ("s6" for "số", "m0t" for "một",
 #: "l1" for "li"). Tesseract does this when a diacritic confuses it.
 _DIGIT_IN_WORD = re.compile(r"\b[a-zA-ZÀ-ỹ]{1,6}[0-9][a-zA-ZÀ-ỹ]{0,6}\b")
@@ -153,6 +166,19 @@ def scan_page(text: str) -> list[OcrIssue]:
                 explanation=(
                     "Định nghĩa phân số nhưng chỗ đáng lẽ là a/b lại thành dấu '=' "
                     "— máy đọc mất gạch ngang phân số."
+                ),
+                snippet=_snippet(text, match.start(), match.end()),
+            )
+        )
+
+    for match in _LOST_DEFINITION_BOX.finditer(text):
+        issues.append(
+            OcrIssue(
+                kind="mat-hop-dinh-nghia",
+                explanation=(
+                    "Trang có câu 'ta có định nghĩa:' nhưng ngay sau đó đã sang "
+                    "phần khác — định nghĩa in trong khung màu đã bị máy bỏ qua, "
+                    "nên bot sẽ nói 'chưa tìm thấy' dù sách có."
                 ),
                 snippet=_snippet(text, match.start(), match.end()),
             )
