@@ -1,0 +1,560 @@
+{
+  "updated_on": "2026-10-16",
+  "note": "Các trang được đọc lại bằng Gemini Vision vì máy đọc chữ (Tesseract) làm hỏng công thức/phân số. Mỗi trang được thêm vào kho dưới dạng một đoạn sạch, và được áp lại sau mỗi lần nạp dữ liệu.",
+  "pages": [
+    {
+      "grade": 6,
+      "subject": "Toán",
+      "book_title": "Toán 6 - tập 2",
+      "source_file": "SGKToan6taphai.pdf",
+      "page": 6,
+      "text": "Với a, b thuộc Z, b khác 0, ta gọi a/b là một phân số, trong đó a là tử số (tử) và b là mẫu số (mẫu) của phân số.\n\nChẳng hạn, -3/4; 5/-9; 8/3; ... là các phân số.\n\nHình vẽ: Phân số 5/-8 có mũi tên chỉ 5 là tử số, mũi tên chỉ -8 là mẫu số. Đọc là: năm phần âm tám.\n\n? Cách viết nào sau đây cho ta một phân số? Cho biết tử và mẫu của phân số đó.\n2,5/-4 ; 0/7 ; 3/-8 ; 4/0\n\nLuyện tập 1\nViết kết quả của các phép chia sau dưới dạng phân số.\na) 4 : 9;\nb) (-2) : 7;\nc) 8 : (-3).\n\nTranh luận\nTròn: Mọi số nguyên đều có thể viết dưới dạng phân số.\nVuông: Số nguyên sao có thể là một phân số được!!!\n\nEm nghĩ sao về hai ý kiến của Vuông và Tròn? Ai đúng, ai sai?\n\n2. HAI PHÂN SỐ BẰNG NHAU\n\nCho hai hình chữ nhật cùng kích thước, được chia thành các phần bằng nhau và tô màu như Hình 6.1.\n\nHĐ1 Viết phân số biểu thị phần tô màu trong mỗi hình bên.\n\nHĐ2 Dựa vào hình vẽ, em hãy so sánh các phân số nhận được.\nNhận xét. Hai phân số bằng nhau có cùng giá trị.\n\nHĐ3 Em hãy tìm các cặp phân số bằng nhau trong các phân số sau:\n2/5; 1/3; 3/9; 4/10\n\nHình vẽ: Hình 6.1 gồm 2 hình chữ nhật:\n- Hình a: Hình chữ nhật chia làm 3 phần bằng nhau, tô màu 1 phần.\n- Hình b: Hình chữ nhật chia làm 6 phần bằng nhau, tô màu 2 phần.\n\n5",
+      "kinds": [
+        "phan-so-mat-gach-ngang"
+      ]
+    },
+    {
+      "grade": 6,
+      "subject": "Toán",
+      "book_title": "Toán 6 - tập 1",
+      "source_file": "SGKToan6tapmot.pdf",
+      "page": 72,
+      "text": "2. NHÂN HAI SỐ NGUYÊN CÙNG DẤU\n\nTa đã biết cách nhân hai số nguyên dương (cũng là hai số tự nhiên). Dưới đây ta sẽ tìm hiểu cách nhân hai số nguyên âm.\n\nTích của hai số nguyên âm\n\nHĐ3 Quan sát ba dòng đầu và nhận xét về dấu của tích mỗi khi đổi dấu một thừa số và giữ nguyên thừa số còn lại.\n\nHĐ4 Dựa vào nhận xét ở HĐ3, hãy dự đoán kết quả của (-3) . (-7).\n\n(-3) . 7 = -21\ndòng dưới: đổi dấu\n3 . 7 = 21\ndòng dưới: đổi dấu\n3 . (-7) = -21\ndòng dưới: đổi dấu\n(-3) . (-7) = ?\n\nQuy tắc nhân hai số nguyên âm\nMuốn nhân hai số nguyên âm, ta nhân phần số tự nhiên của hai số đó với nhau.\n\nNếu m, n thuộc N* thì (-m) . (-n) = (-n) . (-m) = m . n.\n\nTích của hai số nguyên cùng dấu luôn là số nguyên dương.\n\nVí dụ 2\n(-10) . (-15) = 10 . 15 = 150.\n\nLuyện tập 2\nThực hiện các phép nhân sau:\na) (-12) . (-12);\nb) (-137) . (-15).\n\nChú ý. Tích của một số nguyên với 0 luôn bằng 0:\na . 0 = 0 . a = 0.\n\nThử thách nhỏ\nThay mỗi dấu \"?\" bằng số sao cho số trong mỗi ô ở hàng trên bằng tích các số trong hai ô kề với nó ở hàng dưới (H.3.18).\n\nHình vẽ: Tháp các hình vuông xếp chồng lên nhau thành 4 tầng. Tầng dưới cùng gồm 4 ô tính từ trái sang phải: -1, ?, ?, -1. Tầng thứ hai gồm 3 ô tính từ trái sang phải: -1, ?, 1. Tầng thứ ba gồm 2 ô tính từ trái sang phải: ?, ?. Tầng trên cùng gồm 1 ô: ?. Hình 3.18.\n\n3. TÍNH CHẤT CỦA PHÉP NHÂN\n\nTương tự như phép nhân các số tự nhiên:\n\nPhép nhân các số nguyên có các tính chất:\nGiao hoán: a . b = b . a\nKết hợp: a . (b . c) = (a . b) . c\nPhân phối của phép nhân đối với phép cộng: a . (b + c) = a . b + a . c.\n\nTính a(b + c) và ab + ac khi a = -2, b = 14, c = -4.\n\nChú ý. Tích của nhiều số nguyên cũng được hiểu tương tự như tích của nhiều số tự nhiên.\n\n71",
+      "kinds": [
+        "dau-nhan-thanh-dau-tru"
+      ]
+    },
+    {
+      "grade": 6,
+      "subject": "Toán",
+      "book_title": "Toán 6 - tập 1",
+      "source_file": "SGKToan6tapmot.pdf",
+      "page": 96,
+      "text": "LUYỆN TẬP CHUNG\n\nVí dụ 1\nMột ngôi nhà có bãi cỏ bao quanh như hình bên.\na) Hãy tính diện tích của bãi cỏ.\nb) Nếu một túi hạt giống cỏ gieo vừa đủ trên 33 m2 đất, thì cần bao nhiêu túi hạt giống để gieo hết bãi cỏ?\n\nHình vẽ: một hình thang lớn tượng trưng cho tổng thể (đáy lớn 42 m, đáy nhỏ 30 m, chiều cao 24 m), bên trong có một hình chữ nhật tượng trưng cho ngôi nhà (chiều dài 15 m, chiều rộng 18 m).\n\nGiải. Diện tích cả bãi cỏ và khu đất làm nhà là:\n1/2 x (30 + 42) x 24 = 864 (m2).\nDiện tích khu đất làm nhà là: 15 x 18 = 270 (m2).\nDiện tích cả bãi cỏ là: 864 - 270 = 594 (m2).\nĐể gieo hết bãi cỏ thì cần số túi hạt giống là: 594 : 33 = 18 (túi).\n\nVí dụ 2\nMột nền nhà hình chữ nhật có chiều dài 20 m và chiều rộng bằng 1/4 chiều dài. Người ta lát nền nhà bằng những viên gạch hình vuông cạnh 4 dm. Tổng số tiền mua gạch là 11 875 000 đồng thì vừa đủ để lát. Hỏi giá mỗi viên gạch lát nền là bao nhiêu?\n\nGiải.\nChiều rộng của nền nhà là: 1/4 x 20 = 5 (m).\nDiện tích nền nhà hình chữ nhật là: 20 x 5 = 100 (m2).\nĐổi 4 dm = 0,4 m.\nDiện tích một viên gạch lát nền là: 0,4 x 0,4 = 0,16 (m2).\nSố viên gạch dùng để lát nền nhà là: 100 : 0,16 = 625 (viên).\nGiá mỗi viên gạch lát nền là: 11 875 000 : 625 = 19 000 (đồng).\n\n95",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 6,
+      "subject": "Toán",
+      "book_title": "Toán 6 - tập 1",
+      "source_file": "SGKToan6tapmot.pdf",
+      "page": 118,
+      "text": "MỘT SỐ TÍNH NĂNG HỖ TRỢ\n\n1. Hiển thị giao diện Tiếng Việt\nMở bảng chọn Các tuỳ chọn -> Ngôn ngữ rồi chọn Tiếng Việt.\n\n2. Ẩn/hiện đối tượng\nNháy nút phải chuột lên đối tượng -> Chọn Hiển thị đối tượng\nKết quả: Đối tượng đó được ẩn (không còn hiển thị ở Vùng làm việc nữa).\n\nHình vẽ: Menu chuột phải trong GeoGebra hiển thị các mục:\nĐường tròn c\nPhương trình a x mũ 2 + b x y + c y mũ 2 + d x + e y = f\nHiển thị đối tượng\nHiển thị tên\nMở dấu vết khi di chuyển\n\n3. Xoá đối tượng\nCách 1. Nháy chọn đối tượng rồi nhấn phím Delete.\nCách 2. Nháy nút phải chuột lên đối tượng đó rồi chọn Xoá.\n\n4. Đổi tên đối tượng\nNháy chọn đối tượng rồi nháy nút phải chuột và chọn Đổi tên.\n\n5. Ẩn/hiện hệ trục tọa độ và lưới ô vuông ở vùng làm việc\nChọn Vùng làm việc rồi nháy chuột vào các biểu tượng tương ứng để ẩn/hiện lưới hoặc hệ trục toạ độ.\n\nHình vẽ: Giao diện GeoGebra Classic 5 với các nút chức năng và thanh công cụ. Có các chú thích chỉ vào các biểu tượng ở dưới Vùng làm việc:\n- Hiển thị hoặc ẩn hệ trục toạ độ\n- Hiển thị hoặc ẩn lưới",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Giáo dục công dân",
+      "book_title": "Giáo dục công dân 7",
+      "source_file": "SGKGiaoduccongdan7.pdf",
+      "page": 11,
+      "text": "Bài 2: QUAN TÂM, CẢM THÔNG VÀ CHIA SẺ\n\nMỤC TIÊU:\n- Nêu được những biểu hiện của sự quan tâm, cảm thông và chia sẻ với người khác.\n- Giải thích được vì sao mọi người phải quan tâm, cảm thông và chia sẻ với nhau.\n- Thường xuyên có những lời nói, việc làm thể hiện sự quan tâm, cảm thông và chia sẻ với mọi người.\n- Khuyến lệ, động viên bạn bè quan tâm, cảm thông và chia sẻ với người khác; phê phán thói ích kỷ, thờ ơ trước khó khăn, mất mát của người khác.\n\nMỞ ĐẦU\n\nTrong cuộc sống, mỗi người đều cần sự quan tâm, cảm thông và chia sẻ. Những lời nói động viên, cử chỉ ân cần, sự giúp đỡ chân thành, tấm lòng bao dung,... sẽ làm cho cuộc sống tốt đẹp, ấm áp hơn. Bài học này sẽ giúp em thấu hiểu hơn ý nghĩa của sự quan tâm, cảm thông và chia sẻ, từ đó góp phần lan toả những giá trị tốt đẹp của lòng nhân ái tới cộng đồng.\n\nEm cùng các bạn tham gia trò chơi \"Tiếp sức\": Các thành viên của mỗi đội lần lượt nêu một câu thành ngữ, tục ngữ về quan tâm, cảm thông và chia sẻ. Đội nào nêu được nhiều câu đúng hơn sẽ thắng.\n\nKHÁM PHÁ - KẾT NỐI TRI THỨC\n\n1. Biểu hiện của sự quan tâm, cảm thông và chia sẻ\nEm hãy đọc câu chuyện, quan sát các bức tranh dưới đây và trả lời câu hỏi:\nCHIẾC BĂNG GẠC CHO TRÁI TIM TAN VỠ\n- Mẹ, mẹ đang làm gì thế ạ? - Cô bé Su-ri chỉ mới 6 tuổi hỏi mẹ.\n- Mẹ đang nấu món thịt hầm cho cô Xmit hàng xóm.\n- Vì sao ạ? - Su-ri thắc mắc.\n- Vì cô Xmit đang rất buồn, con ạ! Con gái cô ấy vừa qua đời và trái tim cô ấy đang tan nát. Chúng ta sẽ chăm sóc cô ấy một thời gian - bà mẹ dịu dàng trả lời... Cô Xmit sẽ không bao giờ còn có thể nói chuyện, ôm hôn con gái cô ấy hoặc làm bất cứ điều gì thú vị như mẹ và con có thể làm cùng nhau. Con là một cô bé thông minh, Su-ri. Có thể con sẽ nghĩ ra cách nào đó để giúp đỡ cô ấy.\n... Vài phút sau, Su-ri đã ở trước cửa nhà cô Xmit, rụt rè bấm chuông. Mất một lúc lâu cô Xmit mới ra mở cửa:\n\n10",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 29,
+      "text": "5 BẬC VÀ CÁC HỆ SỐ CỦA MỘT ĐA THỨC\n\nBậc, hệ số cao nhất và hệ số tự do của một đa thức\n\nXét đa thức P = -3x⁴ + 5x² - 2x + 1. Đó là một đa thức thu gọn. Hãy quan sát các hạng tử (các đơn thức) của đa thức P và trả lời các câu hỏi sau:\n\nHĐ1 Trong đa thức P, bậc của hạng tử 5x² là 2 (số mũ của x²). Hãy xác định bậc của các hạng tử trong P.\n\nHĐ2 Trong đa thức P, hạng tử nào có bậc cao nhất? Tìm hệ số và bậc của hạng tử đó.\n\nHĐ3 Trong đa thức P, hạng tử nào có bậc bằng 0?\n\nHạng tử có bậc cao nhất và hạng tử bậc 0 có vai trò đặc biệt trong một đa thức. Ta có định nghĩa:\n\nTrong một đa thức thu gọn và khác đa thức không:\n• Bậc của hạng tử có bậc cao nhất gọi là bậc của đa thức đó.\n• Hệ số của hạng tử có bậc cao nhất gọi là hệ số cao nhất của đa thức đó.\n• Hệ số của hạng tử bậc 0 gọi là hệ số tự do của đa thức đó.\n\nChú ý\n\n• Đa thức không là đa thức không có bậc.\n• Trong một đa thức thu gọn, hệ số cao nhất phải khác 0 (các hệ số khác có thể bằng 0).\n• Muốn tìm bậc của một đa thức chưa thu gọn, ta phải thu gọn đa thức đó.\n\nMột số khác 0 cũng là một đa thức. Vậy bậc của nó bằng bao nhiêu?\n\nVí dụ 3\n\nTìm bậc, hệ số cao nhất và hệ số tự do của đa thức P = -x³ - 2x² + x³ + 4x + 5.\n\nGiải\n\nTrước hết ta thu gọn P:\nP = -x³ - 2x² + x³ + 4x + 5\n= (-x³ + x³) - 2x² + 4x + 5\n= -2x² + 4x + 5.\n\nTrong dạng thu gọn của P, hạng tử có bậc cao nhất là -2x² nên bậc của P là 2, hệ số cao nhất là -2; hạng tử bậc 0 là 5 nên hệ số tự do là 5.\n\nGhi chú bên phải ví dụ: Gọi 5 là hệ số tự do vì trong P, hạng tử 5 không chứa biến.\nHình vẽ: Nhân vật hoạt hình hình tròn màu vàng đang cười vẫy tay.\n\nLuyện tập 5\n\nXác định bậc, hệ số cao nhất và hệ số tự do của mỗi đa thức sau:\na) 5x² - 2x + 1 - 3x⁴;\nb) 1,5x² - 3,4x⁴ + 0,5x² - 1.\n\n28",
+      "kinds": [
+        "mat-hop-dinh-nghia"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 30,
+      "text": "6 NGHIỆM CỦA ĐA THỨC MỘT BIẾN\n\nGiá trị và nghiệm của một đa thức\n\nXét đa thức G(x) = x² - 4. Giá trị của biểu thức G(x) tại x = 3 còn gọi là giá trị của đa thức G(x) tại x = 3 và được kí hiệu là G(3). Như vậy, ta có G(3) = 3² - 4 = 5.\n\nHĐ4 Tính các giá trị G(-2); G(-1); G(0); G(1); G(2).\nHĐ5 Với giá trị nào của x thì G(x) có giá trị bằng 0?\n\nNếu tại x = a, đa thức F(x) có giá trị bằng 0, tức là F(a) = 0, thì ta gọi a (hoặc x = a) là một nghiệm của đa thức F(x).\n\nVí dụ 4\na) x = -3 và x = 0 là hai nghiệm của đa thức A(x) = 2x² + 6x vì\nA(0) = 0 và A(-3) = 2 . (-3)² + 6 . (-3) = 0.\nb) Đa thức B(x) = x² + 1 không có nghiệm vì tại giá trị bất kì của x, ta luôn có x² ≥ 0 nên B(x) = x² + 1 ≥ 1 > 0.\n\nMột đa thức có thể không có nghiệm hoặc có nhiều nghiệm.\n\nNhận xét\nNếu một đa thức có hệ số tự do bằng 0 thì x = 0 là một nghiệm của đa thức đó.\nChẳng hạn, trong ví dụ trên cho thấy đa thức A(x) = 2x² + 6x có hệ số tự do bằng 0 và có nghiệm x = 0.\n\nLuyện tập 6\n1. Tính giá trị của đa thức F(x) = 2x² - 3x - 2 tại x = -1; x = 0; x = 1; x = 2. Từ đó hãy tìm một nghiệm của đa thức F(x).\n2. Tìm nghiệm của đa thức E(x) = x² + x.\n\nVận dụng\nTrở lại bài toán mở đầu, hãy thực hiện các yêu cầu sau:\na) Xác định bậc, hệ số cao nhất và hệ số tự do của đa thức H(x) = -5x² + 15x.\nb) Tại sao x = 0 là một nghiệm của đa thức H(x)? Kết quả đó nói lên điều gì?\nc) Tính giá trị của H(x) khi x = 1; x = 2 và x = 3 để tìm nghiệm khác 0 của H(x). Nghiệm ấy có ý nghĩa gì? Từ đó hãy trả lời câu hỏi của bài toán.\n\nHình vẽ: Cảnh một người đang cầm cần câu cá trên bờ hồ bên cạnh các ngôi nhà, đường lưỡi câu/dây câu tạo thành một hình parabol.\n\n29",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 32,
+      "text": "Bài 26 PHÉP CỘNG VÀ PHÉP TRỪ ĐA THỨC MỘT BIẾN\n\nKhái niệm, thuật ngữ\nTổng, hiệu của hai đa thức\n\nKiến thức, kĩ năng\n. Thực hiện các phép tính cộng, trừ hai đa thức.\n. Nhận biết các tính chất của phép cộng đa thức.\n. Vận dụng các tính chất của phép cộng đa thức trong tính toán.\n\nXét hai biểu thức số A = 5 . 7² + 2 và B = 7² - 12 . 7. Dựa vào tính chất các phép toán đối với các số, ta có:\nA + B = (5 . 7² + 2) + (7² - 12 . 7)\n= (5 . 7² + 7²) - 12 . 7 + 2\n= (5 + 1) . 7² - 12 . 7 + 2\n= 6 . 7² - 12 . 7 + 2.\n\nTương tự, ta cũng có thể thực hiện các phép tính cộng và trừ hai đa thức; kết quả của mỗi phép tính đó cũng là một đa thức. Trong bài này chúng ta sẽ tìm hiểu cách cộng và trừ đa thức.\n\n1 CỘNG HAI ĐA THỨC MỘT BIẾN\n\nTổng của hai đa thức\n\nCho hai đa thức:\nP = x⁴ + 3x³ - 5x² + 7x và Q = -x³ + 4x² - 2x + 1.\n\nGiả sử ta cần tìm tổng:\nP + Q = (x⁴ + 3x³ - 5x² + 7x) + (-x³ + 4x² - 2x + 1).\n\nTa có thể trình bày phép cộng này theo một trong hai cách sau:\n\nCách 1. Bỏ dấu ngoặc rồi nhóm các hạng tử cùng bậc:\n(x⁴ + 3x³ - 5x² + 7x) + (-x³ + 4x² - 2x + 1)\n= x⁴ + 3x³ - 5x² + 7x - x³ + 4x² - 2x + 1  (mũi tên chỉ sang phải: Bỏ dấu ngoặc)\n= x⁴ + (3x³ - x³) + (4x² - 5x²) + (7x - 2x) + 1  (mũi tên chỉ sang phải: Nhóm các hạng tử cùng bậc)\n= x⁴ + 2x³ - x² + 5x + 1.\n\nVậy P + Q = x⁴ + 2x³ - x² + 5x + 1.\n\n31",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 34,
+      "text": "Chú ý. Tương tự như các số, đối với các đa thức P, Q, R, ta cũng có:\nNếu Q + R = P thì R = P - Q.\nNếu R = P - Q thì Q + R = P.\n\nVận dụng 2\nCho đa thức A = x^4 - 3x^2 - 2x + 1. Tìm các đa thức B và C sao cho:\nA + B = 2x^5 + 5x^3 - 2;\nA - C = x^3.\n\nBÀI TẬP\n\n7.12. Tìm tổng của hai đa thức sau bằng cách nhóm các hạng tử cùng bậc:\nx^2 - 3x + 2 và 4x^3 - x^2 + x - 1.\n\n7.13. Tìm hiệu sau theo cách đặt tính trừ: (-x^3 - 5x + 2) - (3x + 8).\n\n7.14. Cho hai đa thức A = 6x^4 - 4x^3 + x - 1/3 và B = -3x^4 - 2x^3 - 5x^2 + x + 2/3.\nTính A + B và A - B.\n\n7.15. Cho các đa thức A = 3x^4 - 2x^3 - x + 1; B = -2x^3 + 4x^2 + 5x và C = -3x^4 + 2x^2 + 5.\nTính A + B + C; A - B + C và A - B - C.\n\n7.16. Bạn Nam được phân công mua một số sách làm quà tặng trong buổi tổng kết cuối năm học của lớp. Nam dự định mua ba loại sách với giá bán như bảng sau. Giả sử Nam cần mua x cuốn sách khoa học, x + 8 cuốn sách tham khảo và x + 5 cuốn truyện tranh.\n\nLoại sách | Giá bán một cuốn (đồng)\nTruyện tranh | 15 000\nSách tham khảo | 12 500\nSách khoa học | 21 500\n\na) Viết các đa thức biểu thị số tiền Nam phải trả cho từng loại sách.\nb) Tìm đa thức biểu thị tổng số tiền Nam phải trả để mua số sách đó.\n\n7.17. Trên một mảnh đất hình chữ nhật có chiều dài 65 m, người ta định làm một bể bơi có chiều rộng là x mét, chiều dài gấp 3 lần chiều rộng. Sơ đồ và kích thước cụ thể (tính bằng mét) được cho trong Hình 7.1. Tìm đa thức (biến x):\na) Biểu thị diện tích của bể bơi.\nb) Biểu thị diện tích mảnh đất.\nc) Biểu thị diện tích phần đất xung quanh bể bơi.\n\nHình vẽ: Hình chữ nhật lớn biểu thị mảnh đất có chiều dài 65 m, bên trong chứa hình chữ nhật nhỏ biểu thị bể bơi với chiều dài được chia thành 3 phần bằng nhau, mỗi phần có độ dài x. Khoảng cách từ mép bể bơi đến mép mảnh đất ở phía trên là 4 m, ở phía dưới là 5 m, ở hai bên chưa rõ số liệu cụ thể trên hình ngoài các đoạn x. Hình 7.1.",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 35,
+      "text": "LUYỆN TẬP CHUNG\n\nVí dụ 1\nBa bạn Lan, Bình và Dung rủ nhau đến cửa hàng sách để mua sách cũ được bán đồng giá (nghĩa là các cuốn sách cũ trong cửa hàng đó đều được bán với cùng một giá). Lan mua 5 cuốn, Bình mua 3 cuốn, Dung mua 6 cuốn. Gọi x (đồng) là giá bán một cuốn sách cũ.\n\na) Tìm đa thức biểu thị tổng số tiền cả ba bạn phải trả.\nb) Nếu mỗi cuốn sách cũ đều có giá là 30 000 đồng thì tổng số tiền cả ba bạn phải trả là bao nhiêu?\n\nGiải. a) Lan mua 5 cuốn sách nên phải trả 5x (đồng).\nBình mua 3 cuốn nên phải trả 3x (đồng).\nDung mua 6 cuốn nên phải trả 6x (đồng).\nVậy đa thức biểu thị tổng số tiền cả ba bạn phải trả là:\nT(x) = 5x + 3x + 6x = (5 + 3 + 6)x = 14x.\n\nb) Nếu mỗi cuốn sách cũ có giá 30 000 đồng thì tổng số tiền cả ba bạn phải trả là giá trị của đa thức T(x) = 14x tại x = 30 000. Giá trị đó là:\nT(30 000) = 14 nhân 30 000 = 420 000 (đồng).\n\nVí dụ 2\nCho hai đa thức F = x mũ 3 trừ x mũ 2 trừ 3x trừ 5 và G = 3x mũ 2 trừ 2x trừ 1.\na) Gọi H(x) là tổng của hai đa thức F và G. Tìm H(x).\nb) Tìm hệ số cao nhất và hệ số tự do của H(x).\nc) Trong tập hợp (-3; -2; -1; 0; 1; 2; 3), những số nào là nghiệm của H(x)?\n\nGiải.\na) Ta có: H(x) = (x mũ 3 trừ x mũ 2 trừ 3x trừ 5) + (3x mũ 2 trừ 2x trừ 1)\n= x mũ 3 trừ x mũ 2 trừ 3x trừ 5 + 3x mũ 2 trừ 2x trừ 1\n= x mũ 3 + (trừ x mũ 2 + 3x mũ 2) + (trừ 3x trừ 2x) + (trừ 5 trừ 1)\n= x mũ 3 + 2x mũ 2 trừ 5x trừ 6.\n\nb) Hệ số cao nhất của H(x) là 1; hệ số tự do của H(x) là trừ 6.\nc) Để tính giá trị của H(x) tại các giá trị đã cho của x ta lập bảng sau:\n\nx | -3 | -2 | -1 | 0 | 1 | 2 | 3\nx mũ 3 | -27 | -8 | -1 | 0 | 1 | 8 | 27\n2x mũ 2 | 18 | 8 | 2 | 0 | 2 | 8 | 18\n-5x | 15 | 10 | 5 | 0 | -5 | -10 | -15\nH(x) = x mũ 3 + 2x mũ 2 trừ 5x trừ 6 | 0 | 4 | 0 | -6 | -8 | 0 | 24\n\nTrong đó, số ghi trong mỗi ô thuộc dòng cuối bằng tổng các số ở cùng cột và thuộc ba dòng không tô màu phía trên, cộng thêm trừ 6.\n\n34",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 38,
+      "text": "Vận dụng 1\na) Rút gọn biểu thức P(x) = 7x^2(x^2 - 5x + 2) - 5x(x^3 - 7x^2 + 3x).\nb) Tính giá trị của biểu thức P(x) khi x = -1/2.\n\nThử thách nhỏ\nRút gọn biểu thức x^3(x + 2) - x(x^3 + 2^3) - 2x(x^2 - 2^2).\n\n2 NHÂN ĐA THỨC VỚI ĐA THỨC\n\nNhân hai đa thức tuỳ ý\nHĐ3 Tính (2x - 3) * (x^2 - 5x + 1) bằng cách thực hiện các bước sau:\nBước 1. Nhân 2x với đa thức x^2 - 5x + 1.\nBước 2. Nhân -3 với đa thức x^2 - 5x + 1.\nBước 3. Cộng các đa thức thu được ở hai bước trên và thu gọn.\nKết quả thu được là tích của đa thức 2x - 3 với đa thức x^2 - 5x + 1.\nTổng quát, ta có quy tắc sau:\n\nMuốn nhân một đa thức với một đa thức, ta nhân mỗi hạng tử của đa thức này với từng hạng tử của đa thức kia rồi cộng các tích với nhau.\n\nVí dụ 2\nThực hiện phép nhân: (x + 3) * (2x^2 - 3x - 5).\nGiải\n(x + 3) * (2x^2 - 3x - 5) = x * (2x^2 - 3x - 5) + 3 * (2x^2 - 3x - 5)\n= x * 2x^2 + x * (-3x) + x * (-5) + 3 * 2x^2 + 3 * (-3x) + 3 * (-5)\n= 2x^3 - 3x^2 - 5x + 6x^2 - 9x - 15\n= 2x^3 - 3x^2 + 6x^2 - 5x - 9x - 15 (Đổi chỗ)\n= 2x^3 - (3x^2 - 6x^2) - (5x + 9x) - 15 (Nhóm các hạng tử cùng bậc)\n= 2x^3 + 3x^2 - 14x - 15.\n\nChú ý\nTa có thể trình bày phép nhân trên bằng cách đặt tính nhân:\n2x^2 - 3x - 5\nx + 3\n6x^2 - 9x - 15 (Nhân 3 với 2x^2 - 3x - 5)\n2x^3 - 3x^2 - 5x (Nhân x với 2x^2 - 3x - 5)\n2x^3 + 3x^2 - 14x - 15\n\nKhi trình bày theo cách này ta cần:\n- Nhân lần lượt mỗi hạng tử ở dòng dưới với đa thức ở dòng trên và viết kết quả trong một dòng riêng.\n- Viết các dòng sao cho các hạng tử cùng bậc thẳng cột với nhau (để thực hiện phép cộng theo cột).\n\nKhi nhân các hạng tử ở dòng dưới với đa thức ở dòng trên, bạn nên nhân các hạng tử theo thứ tự từ bậc thấp đến bậc cao.\n\n37",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 39,
+      "text": "• Phép nhân đa thức cũng có các tính chất:\n- Giao hoán: A . B = B . A.\n- Kết hợp: (A . B) . C = A . (B . C).\n- Phân phối đối với phép cộng: A . (B + C) = A . B + A . C.\n\nLuyện tập 2\nTính (x3 - 2x2 + x - 1)(3x - 2). Trình bày lời giải theo hai cách.\n\nVận dụng 2\nRút gọn biểu thức (x - 2)(2x3 - x2 + 1) + (x - 2)x2(1 - 2x).\n\nVận dụng 3 Trở lại bài toán đoán tuổi, để giải thích bí mật trong bài toán đoán tuổi của anh Pi, em hãy thực hiện các yêu cầu sau:\n• Gọi x là tuổi cần đoán. Tìm hai đa thức (biến x) biểu thị kết quả thứ nhất và kết quả thứ hai.\n• Tìm đa thức biểu thị kết quả cuối cùng.\nTừ đó hãy nêu cách tìm x.\n\nBÀI TẬP\n\n7.23. Thực hiện các phép nhân sau:\na) 6x2 . (2x3 - 3x2 + 5x - 4);\nb) (-1,2x2) . (2,5x4 - 2x3 + x2 - 1,5).\n\n7.24. Rút gọn các biểu thức sau:\na) 4x2(5x2 + 3) - 6x(3x3 - 2x + 1) - 5x3(2x - 1);\nb) 3/2 x (x2 - 2/3 x + 2) - 5/3 x2 (x + 6/5).\n\n7.25. Thực hiện các phép nhân sau:\na) (x2 - x) . (2x2 - x - 10);\nb) (0,2x2 - 3x) . 5(x2 - 7x + 3).\n\n7.26.\na) Tính (x2 - 2x + 5) . (x - 2).\nb) Từ đó hãy suy ra kết quả của phép nhân (x2 - 2x + 5) . (2 - x). Giải thích cách làm.\n\n7.27. Giả sử ba kích thước của một hình hộp chữ nhật là x; x + 1; x - 1 (cm) với x > 1. Tìm đa thức biểu thị thể tích (đơn vị: cm3) của hình hộp chữ nhật đó.\n\n7.28. Thực hiện các phép nhân hai đa thức sau:\na) 5x3 - 2x2 + 4x - 4 và x3 + 3x2 - 5;\nb) -2,5x4 + 0,5x2 + 1 và 4x3 - 2x + 6.\n\n7.29. Người ta dùng những chiếc cọc để rào một mảnh vườn hình chữ nhật sao cho mỗi góc vườn đều có một chiếc cọc và hai cọc liên tiếp cắm cách nhau 0,1 m. Biết rằng số cọc dùng để rào hết chiều dài của vườn nhiều hơn số cọc dùng để rào hết chiều rộng là 20 chiếc. Gọi số cọc dùng để rào hết chiều rộng là x. Tìm đa thức biểu thị diện tích của mảnh vườn đó.\n\n38",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 42,
+      "text": "Bước 3. Lấy hạng tử bậc cao nhất của dư thứ nhất chia cho hạng tử bậc cao nhất của B:\n(-5x³) : x² = -5x.\n\nBước 4. Lấy dư thứ nhất trừ đi tích B · (-5x), ta được dư thứ hai là x² – 4x – 3:\n\n  2x⁴ – 13x³ + 15x² + 11x – 3  |  x² – 4x – 3\n- 2x⁴ –  8x³ –  6x²            |  2x² – 5x                ← (-5x³) : x² = -5x\n------------------------------\n       –5x³ + 21x² + 11x – 3\nB · (-5x) → –5x³ + 20x² + 15x\n------------------------------\n(Dư thứ nhất) – B · (-5x) → x² – 4x – 3\n                        (Dư thứ hai)\n\nBước 5. Làm tương tự như trên, ta được:\n\n  2x⁴ – 13x³ + 15x² + 11x – 3  |  x² – 4x – 3\n- 2x⁴ –  8x³ –  6x²            |  2x² – 5x + 1\n------------------------------\n       –5x³ + 21x² + 11x – 3\n     - –5x³ + 20x² + 15x\n------------------------------\n              x² – 4x – 3\n            - x² – 4x – 3\n------------------------------\n                        0\n\nDư cuối cùng bằng 0 nên quá trình chia kết thúc.\nTa được thương là đa thức 2x² – 5x + 1.\n\n? Kiểm tra lại rằng ta có phép chia hết A : B = 2x² – 5x + 1, nghĩa là xảy ra:\nA = B · (2x² – 5x + 1).\n\nChú ý. Khi chia đa thức cho một đơn thức thì ta có thể không cần đặt tính chia. Cách làm như trong ví dụ sau:\n\n(-6x⁵ + 7x⁴ – 6x³) : 3x³\n= (-6x⁵ : 3x³) + (7x⁴ : 3x³) + (-6x³ : 3x³)\n= -2x² + (7/3)x – 2.\n\nLuyện tập 2\nThực hiện phép chia:\na) (-x⁶ + 5x⁴ – 2x³) : 0,5x².\nb) (9x² – 4) : (3x + 2).\n\nBảng ghi chú: Viết đa thức bị chia là: 9x² + 0x – 4 sẽ dễ làm hơn.\n\nVận dụng\nEm hãy giải bài toán trong tình huống mở đầu.\n\nMô tả hình vẽ góc dưới bên phải: Nhân vật hoạt hình hình chữ nhật màu xanh lá cây đậm có đôi mắt to, đi giày màu cam, giơ tay phải ngón cái lên và tay trái hướng về phía bảng ghi chú.\n\n41",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 43,
+      "text": "3 CHIA ĐA THỨC CHO ĐA THỨC, TRƯỜNG HỢP CHIA CÓ DƯ\n\nPhép chia có dư\n\nBốn bước đầu tiên khi chia đa thức D = 5x^3 - 3x^2 - x + 7 cho đa thức E = x^2 + 1 được viết gọn như sau:\n\n5x^3 - 3x^2 - x + 7 | x^2 + 1\n- (5x^3 + 5x) | 5x - 3\n--------------------------\n(Dư thứ nhất) - 3x^2 - 6x + 7\n- (- 3x^2 - 3)\n--------------------------\n(Dư thứ hai) - 6x + 10\n\nChú thích (hình vẽ ô vàng bên phải): Nếu đa thức ở một dòng khuyết một hạng tử bậc nào đó thì hãy để một khoảng trống ứng với hạng tử đó.\n\nHĐ3 Hãy mô tả lại các bước đã thực hiện trong phép chia đa thức D cho đa thức E.\nHĐ4 Kí hiệu dư thứ hai là G = -6x + 10. Đa thức này có bậc bằng 1. Lúc này phép chia có thể tiếp tục được không? Vì sao?\nHĐ5 Hãy kiểm tra lại đẳng thức: D = E . (5x - 3) + G.\n\nPhép chia đa thức D cho đa thức E trong trường hợp này được gọi là phép chia có dư với đa thức thương là 5x - 3 và đa thức dư là G.\n\nKhi chia đa thức A cho đa thức B:\n- Đa thức dư R phải bằng 0 hoặc có bậc nhỏ hơn bậc của B.\n- Nếu thương là đa thức Q, dư là R thì ta có đẳng thức A = B . Q + R.\n\nKẾT NỐI TRI THỨC\n\nLuyện tập 3\nTìm dư R và thương Q trong phép chia đa thức A = 3x^4 - 6x - 5 cho đa thức B = x^2 + 3x - 1 rồi viết A dưới dạng A = B . Q + R.\n\nThử thách nhỏ\nĐố Vuông tìm được dư trong phép chia x^3 - 3x^2 + x - 1 cho x^2 - 3x.\nNhân vật tròn vàng nói: Mình chỉ nhìn qua cũng biết được dư là x - 1. (Hình vẽ nhân vật tròn mang kính và nhân vật máy xanh dương).\nEm có biết tại sao Vuông làm nhanh thế không?\n\n42",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 46,
+      "text": "BÀI TẬP\n\n7.36. Rút gọn biểu thức sau:\n(5x^3 - 4x^2) : 2x^2 + (3x^4 + 6x) : 3x - x(x^2 - 1).\n\n7.37. Rút gọn các biểu thức sau:\na) 2x(x + 3) - 3x^2(x + 2) + x(3x^2 + 4x - 6);\nb) 3x(2x^2 - x) - 2x^2(3x + 1) + 5(x^2 - 1).\n\n7.38. Tìm giá trị của x, biết rằng:\na) 3x^2 - 3x(x - 2) = 36;\nb) 5x(4x^2 - 2x + 1) - 2x(10x^2 - 5x + 2) = -36.\n\n7.39. Thực hiện các phép tính sau:\na) (x^3 - 8) : (x - 2);\nb) (x - 1)(x + 1)(x^2 + 1).\n\n7.40. Trong một trò chơi ở câu lạc bộ Toán học, chủ trò viết lên bảng biểu thức:\nP(x) = x^2(7x - 5) - (28x^5 - 20x^4 - 12x^3) : 4x^2.\n\nLuật chơi là sau khi chủ trò đọc một số a nào đó, các đội chơi phải tính giá trị của P(x) tại x = a. Đội nào tính đúng và tính nhanh nhất thì thắng cuộc.\n\nKhi chủ trò vừa đọc a = 5, Vuông đã tính ngay được P(a) = 15 và thắng cuộc. Em có biết Vuông làm cách nào không?\n\n7.41. Tìm số b sao cho đa thức x^3 - 3x^2 + 2x - b chia hết cho đa thức x - 3.\n\n45",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 7,
+      "subject": "Toán",
+      "book_title": "Toán 7 - tập 2",
+      "source_file": "SGKToan7taphai.pdf",
+      "page": 101,
+      "text": "LUYỆN TẬP\n\nVí dụ 1\n\nGọi tên đỉnh, cạnh, mặt bên, mặt đáy của hình lăng trụ đứng tam giác ở Hình 10.37.\n\nGiải\n\nCác đỉnh của hình lăng trụ là: A, B, C, M, N, P.\n\nCác cạnh của hình lăng trụ là: AB, BC, CA, MN, NP, PM, AM, BN, CP.\n\nCác mặt bên của hình lăng trụ là các hình chữ nhật ABNM, BCPN, ACPM.\n\nCác mặt đáy của hình lăng trụ là các tam giác ABC và MNP.\n\nHình vẽ: Hình 10.37, hình lăng trụ đứng tam giác ABC.MNP, đáy trên là tam giác MNP, đáy dưới là tam giác ABC, các cạnh bên AM, BN, CP vuông góc với mặt đáy.\n\nVí dụ 2\n\nÔng Khôi làm một khối gỗ hình lăng trụ đứng tam giác, kích thước như Hình 10.38, để chèn bánh xe. Tính thể tích của khối gỗ.\n\nGiải\n\nThể tích của khối gỗ là:\nV = S(đáy) . h = (1/2) . 60 . 90 . 70 = 189 000 (cm3) = 0,189 (m3).\n\nHình vẽ: Hình 10.38, khối gỗ hình lăng trụ đứng tam giác với chiều cao h = 90 cm, mặt đáy là tam giác vuông có hai cạnh góc vuông là 60 cm và 70 cm.\n\nVí dụ 3\n\nChi đội của bạn Trang dựng một lều ở trại hè có dạng lăng trụ đứng tam giác với kích thước như Hình 10.39.\na) Tính thể tích khoảng không bên trong lều.\nb) Biết lều phủ vải bạt 4 phía, trừ mặt tiếp đất. Tính diện tích vải bạt cần phải có để dựng lều.\n\nGiải\n\na) Diện tích đáy lăng trụ là: S(đáy) = (3,2 . 1,2) : 2 = 1,92 (m2).\nThể tích khoảng không bên trong lều là: V = S(đáy) . h = 1,92 . 5 = 9,6 (m3).\n\nb) Diện tích vải bạt cần có để dựng lều chính là diện tích toàn phần của lăng trụ trừ đi diện tích mặt bên có kích thước là 5 m và 3,2 m.\n\nDiện tích xung quanh lăng trụ là: S(xq) = C . h = (2 + 2 + 3,2) . 5 = 36 (m2).\nDiện tích toàn phần của hình lăng trụ là: S(tp) = S(xq) + 2 S(đáy) = 36 + 2 . 1,92 = 39,84 (m2).\nDiện tích mặt bên kích thước 5 m và 3,2 m là: 5 . 3,2 = 16 (m2).\nVậy diện tích vải bạt cần có để dựng lều là: 39,84 - 16 = 23,84 (m2).\n\nHình vẽ: Hình 10.39, chiếc lều hình lăng trụ đứng tam giác với chiều dài lều h = 5 m, mặt đáy là tam giác cân với cạnh đáy 3,2 m, chiều cao tam giác là 1,2 m, hai cạnh bên của tam giác là 2 m.\n\n100",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Khoa học tự nhiên",
+      "book_title": "Khoa học tự nhiên 8",
+      "source_file": "SGKKhoahoctunhien8.pdf",
+      "page": 66,
+      "text": "II - Áp suất\n1. Thí nghiệm\nChuẩn bị: Hai khối sắt giống nhau có dạng hình hộp chữ nhật; một khay nhựa hoặc thuỷ tinh trong suốt đựng bột mịn.\nTiến hành:\n- Bố trí thí nghiệm lần lượt theo Hình 15.2 a, b, c.\n- Quan sát độ lún của khối sắt xuống bột mịn ứng với mỗi trường hợp a, b, c.\n- So sánh độ lớn của áp lực, diện tích bị ép, độ lún của khối sắt xuống bột mịn của trường hợp a với trường hợp b, của trường hợp a với trường hợp c. Chọn dấu \"=\", \">\", \"<\" tới vị trí dấu \"...\" thích hợp để hoàn thành vào vở theo mẫu Bảng 15.1.\nHình 15.2: Thí nghiệm tìm hiểu tác dụng của áp lực\nHình vẽ: Ba trường hợp thí nghiệm a, b, c. Trường hợp a: khối sắt nằm ngang trên bột mịn. Trường hợp b: khối sắt nằm đứng trên bột mịn. Trường hợp c: hai khối sắt chồng lên nhau nằm ngang trên bột mịn.\nBảng 15.1. Kết quả thí nghiệm\nÁp lực (F) | Diện tích bị ép (S) | Độ lún (h)\nFb ... Fa | Sb ... Sa | hb ... ha\nFc ... Fa | Sc ... Sa | hc ... ha\nTừ kết quả thí nghiệm trên có thể rút ra nhận xét gì về các yếu tố ảnh hưởng tới độ lún.\nKẾT NỐI TRI THỨC VỚI CUỘC SỐNG\n2. Công thức tính áp suất\nKết quả thí nghiệm ở mục 1 cho thấy: Khi các áp lực khác nhau tác dụng lên diện tích bề mặt, nó làm cho mặt bị ép chịu những biến dạng khác nhau.\nÁp suất sinh ra khi có áp lực tác dụng lên một diện tích bề mặt.\nÁp suất được tính bằng độ lớn của áp lực trên một đơn vị diện tích bị ép.\np = F / S\nTrong đó: p là áp suất, F là áp lực tác dụng lên mặt bị ép có diện tích là S.\nNếu đơn vị lực là niutơn (N), đơn vị diện tích là mét vuông (m2) thì đơn vị của áp suất là niutơn trên mét vuông (N/m2), còn gọi là paxcan, kí hiệu là Pa:\n1 Pa = 1 N/m2\nNgoài ra người ta còn dùng một số đơn vị khác của áp suất như:\n- Atmôtphe (kí hiệu là atm): 1 atm = 1,013.105 Pa.\n- Milimét thuỷ ngân (kí hiệu là mmHg): 1 mmHg = 133,3 Pa.\n- Bar: 1 Bar = 105 Pa.\n65",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 6,
+      "text": "1 PHÂN THỨC ĐẠI SỐ\n\nPhân thức đại số là gì?\n\nHĐ1 Trong tình huống mở đầu, giả sử vận tốc trung bình của một vận động viên đi xe đạp trên 36 km đường bằng phẳng là x (km/h). Hãy viết biểu thức biểu thị thời gian vận động viên đó hoàn thành chặng leo dốc, chặng xuống dốc, chặng đường bằng phẳng.\n\nHĐ2 Viết biểu thức biểu thị tỉ số giữa chiều rộng và chiều dài của một hình chữ nhật có chiều rộng là x (cm) và chiều dài là y (cm).\n\nCác biểu thức nhận được ở HĐ1, HĐ2 và các biểu thức như (2x - 1)/(3x + 1); (x^2 - x + 1)/(2x + 1); ... được gọi là những phân thức đại số. Tổng quát, ta có định nghĩa:\n\nMột phân thức đại số (hay nói gọn là phân thức) là một biểu thức có dạng A/B, trong đó A, B là hai đa thức và B khác đa thức 0.\n\nA được gọi là tử thức (hoặc tử) và B được gọi là mẫu thức (hoặc mẫu).\n\nNhận xét. Mỗi đa thức cũng được coi là một phân thức với mẫu thức bằng 1. Đặc biệt, số 0 và số 1 cũng là những phân thức đại số.\n\nVí dụ 1\n\na) Cách viết nào sau đây không cho một phân thức?\n(6y^3 z)/x^2; (xy + z)/-3; (y + z)/0; 0/(x + 1); x^3 - xy.\n\nb) Viết mẫu thức của mỗi phân thức trong các cách viết trên.\n\nGiải\n\na) Trong các cách viết trên, (y + z)/0 không phải là một phân thức.\n\nb) Các phân thức (6y^3 z)/x^2; (xy + z)/-3; 0/(x + 1); x^3 - xy có mẫu thức lần lượt là: x^2; -3; x + 1; 1.\n\nLuyện tập 1\n\nTrong các cặp phân thức sau, cặp phân thức nào có cùng mẫu thức?\n\na) -20x / 3y^2 và 4x^3 / 5y^2;\n\nb) (5x - 10) / (x^2 + 1) và (5x - 10) / (x^2 - 1);\n\nc) (5x + 10) / (4x - 8) và (4 - 2x) / 4(x - 2).\n\n5",
+      "kinds": [
+        "mat-hop-dinh-nghia",
+        "so-lan-vao-chu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 12,
+      "text": "Ví dụ 3\nQuy đồng mẫu thức hai phân thức 3 / (5x^3 + 5x^2) và -7 / (2x^3 + 4x^2 + 2x).\nGiải\nTa có: 5x^3 + 5x^2 = 5x^2(x + 1);\n2x^3 + 4x^2 + 2x = 2x(x^2 + 2x + 1) = 2x(x + 1)^2.\nMTC = 10x^2(x + 1)^2.\nNhân tử phụ của 5x^3 + 5x^2 là\nMTC : (5x^3 + 5x^2) = 10x^2(x + 1)^2 : [5x^2(x + 1)] = 2(x + 1).\nNhân tử phụ của 2x^3 + 4x^2 + 2x là\nMTC : (2x^3 + 4x^2 + 2x) = 10x^2(x + 1)^2 : [2x(x + 1)^2] = 5x.\nNhân cả tử và mẫu của mỗi phân thức với nhân tử phụ tương ứng, ta có:\n3 / (5x^3 + 5x^2) = [3 * 2(x + 1)] / [10x^2(x + 1)^2] = [6(x + 1)] / [10x^2(x + 1)^2]\nvà\n-7 / (2x^3 + 4x^2 + 2x) = (-7 * 5x) / [10x^2(x + 1)^2] = -35x / [10x^2(x + 1)^2]\n\nLuyện tập 4\nQuy đồng mẫu thức hai phân thức 1 / (3x^2 - 3) và 1 / (x^3 - 1).\n\nTranh luận\nBên trái: Hai phân thức 5 / (x - 1) và x / (1 - x) có MTC là x - 1.\nBên phải: Không đúng, MTC là (x - 1)(1 - x) chứ!\nTheo em, bạn nào chọn MTC hợp lí hơn? Vì sao?\n\nBÀI TẬP\n6.7. Dùng tính chất cơ bản của phân thức, giải thích vì sao các kết luận sau đúng.\na) (x - 2)^3 / (x^2 - 2x) = (x - 2)^2 / x\nb) (1 - x) / (-5x + 1) = (x - 1) / (5x - 1)",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 13,
+      "text": "6.8. Tìm đa thức thích hợp thay cho dấu \"?\".\ny-x / 4-x = ? / x-4\n\n6.9. Rút gọn các phân thức sau:\na) 5x+10 / 25x bình + 50\nb) 45x(3-x) / 15x(3-x) mũ 3\nc) (x bình - 1) bình / (x+1)(x lập + 1)\n\n6.10. Cho phân thức P = x+1 / x bình - 1\na) Rút gọn phân thức đã cho, kí hiệu Q là phân thức nhận được.\nb) Tính giá trị của P và Q tại x = 11. So sánh hai kết quả đó.\n\n6.11. Tìm a sao cho hai phân thức sau bằng nhau:\n5x / x+1 và ax(x-1) / (1-x)(x+1)\n\n6.12. Quy đồng mẫu thức các phân thức sau:\na) 1 / x lập - 8 và 3 / 4-2x\nb) x / x bình - 1 và 1 / x bình + 2x + 1\n\n6.13. Quy đồng mẫu thức các phân thức sau:\na) 1 / x+2 và x+1 / x bình - 4x + 4 và 5 / 2-x\nb) 1 / 3x + 3y và 2x / x bình - y bình và x bình - xy + y bình / x bình - 2xy + y bình\n\n6.14. Cho hai phân thức 9x bình + 3x + 1 / 27x lập - 1 và x bình - 4x / 16 - x bình\na) Rút gọn hai phân thức đã cho.\nb) Quy đồng mẫu thức hai phân thức nhận được ở câu a.\n\n12",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 15,
+      "text": "BÀI TẬP\n\n6.15. Quy đồng mẫu thức các phân thức sau:\n\na) 1 / (4xy^2) và 5 / (6x^2y)\n\nb) 9 / (4x^2 - 36) và 1 / (x^2 + 6x + 9)\n\n6.16. Cho phân thức P = (x^3 - 4x) / (x + 2)^2\n\na) Viết điều kiện xác định của phân thức.\n\nb) Rút gọn phân thức P.\n\nc) Tính giá trị của phân thức đã cho tại x = 98.\n\n6.17. Cho hai phân thức (x^2 + 5x) / ((x - 10)(x^2 + 10x + 25)) và (x^2 + 10x) / (x^4 - 100x^2)\n\na) Rút gọn hai phân thức đã cho. Kí hiệu P và Q là hai phân thức nhận được.\n\nb) Quy đồng mẫu thức hai phân thức P và Q.\n\n6.18. Lúc 6 giờ sáng, bác Vinh lái ô tô xuất phát từ Hà Nội đi Tĩnh Gia (Thanh Hoá). Khi đến Phủ Lý (Ninh Bình), cách Hà Nội khoảng 60 km, bác Vinh dừng lại ăn sáng trong 20 phút. Sau đó, bác Vinh tiếp tục đi về Tĩnh Gia và phải tăng vận tốc thêm 10 km/h để đến nơi đúng giờ dự định.\n\na) Gọi x (km/h) là vận tốc ô tô đi trên quãng đường Hà Nội - Phủ Lý. Hãy viết các phân thức biểu thị thời gian bác Vinh chạy xe trên các quãng đường Hà Nội - Phủ Lý và Phủ Lý - Tĩnh Gia, biết rằng quãng đường Hà Nội - Tĩnh Gia có chiều dài khoảng 200 km.\n\nb) Nếu vận tốc ô tô đi trên quãng đường Hà Nội - Phủ Lý là 60 km/h thì bác Vinh đến Tĩnh Gia lúc mấy giờ?\n\n6.19. Để loại bỏ x% chất gây ô nhiễm không khí từ khí thải của một nhà máy, ước tính cần chi phí là (1,7x) / (100 - x) (tỉ đồng).\n\na) Nếu muốn loại bỏ 90% chất gây ô nhiễm từ khí thải nhà máy thì cần chi phí là bao nhiêu?\n\nb) Viết điều kiện xác định của phân thức (1,7x) / (100 - x). Hỏi có thể loại bỏ được 100% chất gây ô nhiễm từ khí thải nhà máy hay không?\n\n14",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 27,
+      "text": "B. TỰ LUẬN\n\n6.41. Tìm đa thức P trong các đẳng thức sau:\na) P + 1 / (x + 2) = x / (x bình phương - 2x + 4)\nb) P - 4(x - 2) / (x + 2) = 16 / (x - 2)\nc) P . (x - 2) / (x + 3) = (x bình phương - 4x + 4) / (x bình phương - 9)\nd) P . (x bình phương - 9) / (2x + 4) = (x bình phương - 4) / (x bình phương + 3x)\n\n6.42. Rút gọn các biểu thức sau:\na) 2 / (3x) + x / (x - 1) + (6x bình phương - 4) / (2x(1 - x))\nb) (x lập phương + 1) / (1 - x lập phương) + x / (x - 1) - (x + 1) / (x bình phương + x + 1)\nc) 2 / (x + 2) - 2 / (1 - x) . (x bình phương - 4) / (4x bình phương - 1)\nd) 1 + (x lập phương - x) / (x bình phương + 1) . (1 / (1 - x) - 1 / (1 - x bình phương))\n\n6.43. Cho phân thức P = (2x + 1) / (x + 1)\n\na) Viết điều kiện xác định của P.\nb) Hãy viết P dưới dạng P = a - b / (x + 1), trong đó a, b là hai số nguyên dương.\nc) Với giá trị nguyên nào của x thì P có giá trị là số nguyên?\n\n6.44. Một xe ô tô đi từ Hà Nội đến Cửa Lò với vận tốc 60 km/h và dự kiến sẽ đến Cửa Lò sau 5 giờ xe chạy. Tuy nhiên, sau 2 và 2/3 giờ chạy với vận tốc 60 km/h, xe dừng nghỉ 20 phút. Sau khi dừng nghỉ, để đến Cửa Lò đúng thời gian dự kiến, xe phải tăng vận tốc so với chặng đầu.\n\na) Tính độ dài quãng đường Hà Nội - Cửa Lò.\nb) Tính độ dài quãng đường còn lại sau khi dừng nghỉ.\nc) Cho biết ở chặng thứ hai xe tăng vận tốc thêm x (km/h). Hãy viết biểu thức P biểu thị thời gian (tính bằng giờ) thực tế xe chạy hết chặng đường Hà Nội - Cửa Lò.\nd) Tính giá trị của P lần lượt tại x = 5; x = 10; x = 15, từ đó cho biết ở chặng thứ hai (sau khi xe dừng nghỉ):\n- Nếu tăng vận tốc thêm 5 km/h thì xe đến Cửa Lò muộn hơn dự kiến bao nhiêu giờ?\n- Nếu tăng vận tốc thêm 10 km/h thì xe đến Cửa Lò có đúng thời gian dự kiến không?\n- Nếu tăng vận tốc thêm 15 km/h thì xe đến Cửa Lò sớm hơn dự kiến bao nhiêu giờ?\n\n26",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 94,
+      "text": "Bài 35 ĐỊNH LÍ PYTHAGORE VÀ ỨNG DỤNG\n\nKhái niệm, thuật ngữ\nĐịnh lí Pythagore\n\nKiến thức, kĩ năng\n- Giải thích định lí Pythagore.\n- Tính độ dài cạnh trong tam giác vuông bằng cách sử dụng định lí Pythagore.\n- Giải quyết một số vấn đề thực tiễn gắn với việc vận dụng định lí Pythagore.\n\nBạn Lan vẽ một hình chữ nhật với chiều rộng và chiều dài lần lượt là 1; 3 (đơn vị độ dài). Sau đó Lan đặt lên trục số đoạn OM có độ dài bằng độ dài của đường chéo hình chữ nhật vừa vẽ (trục số nằm ngang và M nằm bên phải gốc O). Hỏi điểm M biểu diễn số thực nào? Biết rằng đơn vị độ dài trên trục số và đơn vị độ dài đo kích thước hình chữ nhật là như nhau.\n\n1 ĐỊNH LÍ PYTHAGORE\n\nĐộ dài ba cạnh trong một tam giác vuông có liên hệ gì với nhau không?\n\nĐịnh lí Pythagore\n\nHĐ1 Cho tam giác vuông ABC có hai cạnh góc vuông AB = 3 cm, AC = 4 cm (H.9.31). Hãy đo độ dài cạnh BC và so sánh hai đại lượng AB bình phương + AC bình phương với BC bình phương.\nHình vẽ: tam giác ABC vuông tại A, cạnh AB = 3 cm, cạnh AC = 4 cm, cạnh BC đối diện góc A.\n\nHĐ2 Lấy giấy trắng cắt bốn tam giác vuông bằng nhau. Gọi a, b là độ dài hai cạnh góc vuông, c là độ dài cạnh huyền của các tam giác vuông này. Cắt một hình vuông bằng tấm bìa có cạnh dài a + b. Dán bốn tam giác vuông lên tấm bìa như Hình 9.32.\nHình vẽ: một hình vuông lớn cạnh a + b chứa bốn tam giác vuông bằng nhau bên trong, các cạnh góc vuông là a và b, cạnh huyền là c tạo thành một hình vuông nhỏ ở giữa.\n\n- Dùng ê ke kiểm tra xem phần bìa không bị che lấp có phải là hình vuông cạnh bằng c không? Từ đó tính diện tích phần bìa này theo c.\n- Tổng diện tích bốn tam giác vuông có độ dài hai cạnh góc vuông a, b là bao nhiêu?\n- Diện tích cả tấm bìa hình vuông cạnh a + b bằng bao nhiêu?\n- So sánh c bình phương + 2ab với (a + b) bình phương để rút ra nhận xét về mối quan hệ giữa hai đại lượng c bình phương và a bình phương + b bình phương.\n\n93",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 97,
+      "text": "Vận dụng 2\n\nĐể đón được một người khách, một xe taxi xuất phát từ vị trí điểm A, chạy dọc một con phố dài 3 km đến điểm B thì rẽ vuông góc sang trái, chạy được 3 km đến điểm C thì tài xế cho xe rẽ vuông góc sang phải, chạy 1 km nữa thì gặp người khách tại điểm D (Hình 9.38). Hỏi lúc đầu, khoảng cách từ chỗ người lái xe đến người khách là bao nhiêu kilômét?\n\nHình vẽ: Hình 9.38 gồm điểm A, B, C, D, M. Đoạn AB = 3 km, BC = 3 km, CD = 1 km. Đoạn AM vuông góc với DC kéo dài tại M, BM = 3 km, MC = 3 km + 1 km = 4 km. Đường chéo AD là khoảng cách từ A đến D.\n\nChứng minh tính chất hình học\n\nBài toán 2. Một chiếc cột có chiều cao h dựng thẳng đứng trên mặt đất tại điểm M, người ta kéo căng các sợi dây từ đỉnh cột (điểm A) lần lượt đến các điểm C và D trên mặt đất (Hình 9.39). Biết rằng AC = a, AD = b, CM = c, DM = d và c nhỏ hơn d. Hãy chứng minh rằng a nhỏ hơn b.\n\nGiải. (Hình 9.39)\n\nÁp dụng định lí Pythagore cho hai tam giác vuông AMC và AMD, ta được:\nAC bình phương = AM bình phương + CM bình phương, hay a bình phương = h bình phương + c bình phương (1)\nvà AD bình phương = AM bình phương + DM bình phương, hay b bình phương = h bình phương + d bình phương (2).\n\nVì c nhỏ hơn d nên từ (1) và (2) suy ra a bình phương nhỏ hơn b bình phương. Do đó a nhỏ hơn b.\n\nHình vẽ: Hình 9.39 mô tả cột AM vuông góc với đoạn thẳng CD. Điểm C và D nằm trên mặt đất. Đoạn AC = a, AD = b, AM = h, MC = c, MD = d.\n\nChú ý. Trong Bài toán 2, nếu gọi AM là đường cao, các đoạn thẳng AC, AD là đường xiên thì đoạn thẳng MC được gọi là hình chiếu của đường xiên AC và đoạn thẳng MD được gọi là hình chiếu của đường xiên AD.\n\nKhung vàng: Với cùng một đường cao, hình chiếu càng lớn thì đường xiên càng lớn.\n\nCho Hình 9.40, trong các đoạn thẳng AC, AD, AE, đoạn nào có độ dài lớn nhất, đoạn nào có độ dài nhỏ nhất?\n\nHình vẽ: Hình 9.40 mô tả đường cao AH vuông góc với đoạn thẳng HE tại các điểm H, D, C, E trên đường thẳng. Các đoạn thẳng nối từ A đến H, D, C, E tạo thành các tam giác vuông chung đường cao AH.\n\nLuyện tập 3\n\nTrước đây chúng ta thừa nhận định lí về trường hợp bằng nhau đặc biệt của hai tam giác vuông: \"Nếu một cạnh góc vuông và cạnh huyền của tam giác vuông này bằng một cạnh góc vuông và cạnh huyền của tam giác vuông kia thì hai tam giác vuông đó bằng nhau\". Áp dụng định lí Pythagore, em hãy chứng minh định lí trên.\n\nGT: tam giác ABC, tam giác A'B'C', góc A bằng góc A' bằng 90 độ, AB = A'B', BC = B'C'\nKL: tam giác ABC bằng tam giác A'B'C'\n\nHình vẽ: Hình 9.41 mô tả hai tam giác vuông ABC và A'B'C' vuông tại A và A'. Các cạnh huyền BC và B'C', các cạnh góc vuông AB và A'B'.\n\n96",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 2",
+      "source_file": "SGKToan8taphai.pdf",
+      "page": 136,
+      "text": "BÀI TẬP ÔN TẬP CUỐI NĂM\n\nSỐ HỌC VÀ ĐẠI SỐ\n\n1. Rút gọn các biểu thức sau:\na) (2x + y)^2 + (5x - y)^2 + 2(2x + y)(5x - y);\nb) (2x - y^3)(2x + y^3) - (2x - y^2)(4x^2 + 2xy^2 + y^4).\n\n2. Cho đa thức P = x^2 - y^2 + 6x + 9.\na) Phân tích đa thức P thành nhân tử.\nb) Sử dụng kết quả của câu a để tìm thương của phép chia đa thức P cho x + y + 3.\n\n3. Cho đa thức f(x) = x^2 - 15x + 56.\na) Phân tích đa thức f(x) thành nhân tử.\nb) Tìm x sao cho f(x) = 0.\n\n4. Cho phân thức P = (2x^3 + 6x^2) / (2x^3 - 18x).\na) Viết điều kiện xác định và rút gọn phân thức P.\nb) Có thể tính giá trị của P tại x = -3 được không? Vì sao?\nc) Tính giá trị của phân thức P tại x = 4.\nd) Với các giá trị nguyên nào của x thì P nhận giá trị nguyên?\n\n5. Cho biểu thức P = ((x + y)/(1 - xy) + (x - y)/(1 + xy)) : (1 + (x^2 + y^2 + 2x^2y^2)/(1 - x^2y^2)), trong đó x và y là hai biến thỏa mãn điều kiện x^2y^2 - 1 khác 0.\na) Tính mỗi tổng A = (x + y)/(1 - xy) + (x - y)/(1 + xy) và B = 1 + (x^2 + y^2 + 2x^2y^2)/(1 - x^2y^2).\nb) Từ kết quả câu a, hãy thu gọn P và giải thích tại sao giá trị của P không phụ thuộc vào giá trị của biến y.\nc) Chứng minh đẳng thức P = 1 - ((1 - x)^2)/(1 + x^2).\nd) Sử dụng câu c, hãy tìm các giá trị của x và y sao cho P = 1.\n\n6. Bảng giá cước của một hãng taxi như sau:\nGiá mở cửa (từ 0 đến 1 km): 10 000 đồng\nGiá cước các kilômét tiếp theo (từ trên 1 km đến 30 km): 13 600 đồng\nGiá cước từ kilômét thứ 31: 11 000 đồng\n\na) Tính số tiền taxi phải trả khi di chuyển 35 km.\nb) Lập công thức tính số tiền taxi y (đồng) phải trả khi di chuyển x kilômét, với 1 < x <= 30. Từ đó tính số tiền taxi phải trả khi di chuyển 30 km.\n\n135",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 15,
+      "text": "Tranh luận\n\nBạn Trang nêu vấn đề: Một đa thức bậc hai thu gọn với hai biến (x và y) mà mỗi hạng tử của nó đều có hệ số bằng 1 thì có nhiều nhất là mấy hạng tử? Có ba bạn trả lời như sau:\n\nAnh: Có 3 hạng tử.\nBình: Có 5 hạng tử.\nChung: Có 6 hạng tử.\n\nEm hãy nêu ý kiến của mình và cho biết đó là đa thức nào.\n\nBÀI TẬP\n\n1.8. Trong các biểu thức sau, biểu thức nào là đa thức?\n\n-x² + 3x + 1; x/√5; x - √5/x; 2024; 3x²y² - 5x³y + 2,4; 1/(x² + x + 1).\n\n1.9. Xác định hệ số và bậc của từng hạng tử trong đa thức sau:\na) x²y - 3xy + 5x²y² + 0,5x - 4;\nb) x√2 - 2xy³ + y³ - 7x³y.\n\n1.10. Thu gọn các đa thức sau:\na) 5x⁴ - 2x³y + 20xy³ + 6x³y - 3x²y² + xy³ - y⁴;\nb) 0,6x³ + x²z - 2,7xy² + 0,4x³ + 1,7xy².\n\n1.11. Thu gọn (nếu cần) và tìm bậc của mỗi đa thức sau:\na) x⁴ - 3x²y² + 3xy² - x⁴ + 1;\nb) 5x²y + 8xy - 2x² - 5x²y + x².\n\n1.12. Thu gọn rồi tính giá trị của đa thức:\nM = 1/3 x²y + xy² - xy + 1/2 xy² - 5xy - 1/3 x²y tại x = 0,5 và y = 1.\n\n1.13. Cho đa thức P = 8x²y²z - 2xyz + 5y²z - 5x²y²z + x²y² - 3x²y²z.\na) Thu gọn và tìm bậc của đa thức P.\nb) Tính giá trị của đa thức P tại x = -4; y = 2 và z = 1.\n\n14",
+      "kinds": [
+        "mat-so-mu",
+        "so-lan-vao-chu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 22,
+      "text": "Ví dụ 3\nTrở lại tình huống mở đầu, ta thực hiện phép nhân như sau:\n(x + 3y + 2)(x + y) = x^2 + xy + 3xy + 3y^2 + 2x + 2y\n= x^2 + 4xy + 3y^2 + 2x + 2y.\nTa thấy kết quả cũng là một đa thức.\nTích của hai đa thức cũng là một đa thức.\n\nVí dụ 4 Rút gọn biểu thức: (x + y)(2x - y) - (x - y)(2x + y).\nGiải\nBiểu thức đã cho có dạng A - B, trong đó A = (x + y)(2x - y) và B = (x - y)(2x + y).\nTa tính riêng từng biểu thức A và B:\n• A = (x + y)(2x - y) = 2x^2 - xy + 2xy - y^2 = 2x^2 + xy - y^2;\n• B = (x - y)(2x + y) = 2x^2 + xy - 2xy - y^2 = 2x^2 - xy - y^2.\nTừ đó ta có: (x + y)(2x - y) - (x - y)(2x + y) = A - B\n= (2x^2 + xy - y^2) - (2x^2 - xy - y^2) = 2x^2 + xy - y^2 - 2x^2 + xy + y^2 = 2xy.\n\nLuyện tập 3 Thực hiện phép nhân:\na) (2x + y)(4x^2 - 2xy + y^2);\nb) (x^2y^2 - 3)(3 + x^2y^2).\n\nThử thách nhỏ\nXét biểu thức đại số với hai biến k và m sau:\nP = (2k - 3)(3m - 2) - (3k - 2)(2m - 3).\na) Rút gọn biểu thức P.\nb) Chứng minh rằng tại mọi giá trị nguyên của k và m, giá trị của biểu thức P luôn là một số nguyên chia hết cho 5.\nHãy viết P dưới dạng P = 5A, trong đó A là một biểu thức nhận giá trị nguyên tại mọi giá trị nguyên của k và m.\n\nBÀI TẬP\n\n1.24. Nhân hai đơn thức:\na) 5x^2y và 2xy^2;\nb) 3/4 xy và 8x^3y^2;\nc) 1,5x^2z^3 và 2x^3y^2z.\n\n1.25. Tìm tích của đơn thức với đa thức:\na) (-0,5)xy^2 (2xy - x^2 + 4y);\nb) (x^3y - 1/2 x^2 + 1/3 xy) 6xy^3.\n\n1.26. Rút gọn biểu thức: x(x^2 - y) - x^2(x + y) + xy(x - 1).\n\n1.27. Làm tính nhân:\na) (x^2 - xy + 1)(xy + 3);\nb) (x^2y^2 - 1/2 xy + 2)(x - 2y).\n\n1.28. Rút gọn biểu thức sau để thấy rằng giá trị của nó không phụ thuộc vào giá trị của biến: (x - 5)(2x + 3) - 2x(x - 3) + x + 7.\n\n1.29. Chứng minh đẳng thức sau: (2x + y)(2x^2 + xy - y^2) = (2x - y)(2x^2 + 3xy + y^2).\n\n21",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 31,
+      "text": "1 HẰNG ĐẲNG THỨC\n\nNhận biết hằng đẳng thức\n\nTa có (a + 1) . b = a . b + b.\nTrong đẳng thức trên, khi thay a, b bởi bất kì giá trị số nào thì hai vế của đẳng thức luôn nhận giá trị bằng nhau, ta gọi đẳng thức như vậy là hằng đẳng thức.\nTổng quát ta có\n\nNếu hai biểu thức (đại số) A và B luôn cùng nhận giá trị bằng nhau với mọi giá trị của biến thì ta nói A = B là một đồng nhất thức hay là một hằng đẳng thức.\n\nVí dụ 1 Các đẳng thức thường gặp\na + b = b + a; a . b = b . a; a(b + c) = ab + ac\nlà những hằng đẳng thức.\n\nVí dụ 2 Đẳng thức nào sau đây là hằng đẳng thức?\na) a(a – 2) = a² – 2a; b) a² – 1 = 3a.\n\nGiải\na) Đẳng thức a(a – 2) = a² – 2a là hằng đẳng thức.\nb) Đẳng thức a² – 1 = 3a không là hằng đẳng thức (vì khi ta thay a = 1 thì hai vế của đẳng thức không bằng nhau).\n\nLuyện tập 1\nTrong các đẳng thức sau, đẳng thức nào là hằng đẳng thức?\na) a(a + 2b) = a² + 2ab; b) a + 1 = 3a – 1.\n\n2 HIỆU HAI BÌNH PHƯƠNG\n\nHiệu hai bình phương\nHĐ1 Quan sát Hình 2.1.\n\nHình 2.1:\na) Hình vuông lớn cạnh a chứa hình vuông nhỏ cạnh b ở góc, phần hình chữ nhật nhỏ có các kích thước là b và a - b.\nb) Hình chữ nhật ghép từ các mảnh cắt có chiều cao a - b và chiều dài các đoạn là a và b.\n\n30",
+      "kinds": [
+        "dau-nhan-thanh-dau-tru",
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 32,
+      "text": "a) Tính diện tích của phần hình màu xanh ở Hình 2.1a.\nb) Tính diện tích hình chữ nhật màu xanh ở Hình 2.1b.\nc) Có nhận xét gì về diện tích của hai hình ở câu a và câu b?\nHĐ2 Với hai số a, b bất kì, thực hiện phép tính (a+b)(a-b).\nTừ đó rút ra liên hệ giữa a bình phương - b bình phương và (a+b)(a-b).\nVới A, B là hai biểu thức tuỳ ý, ta cũng có:\nA bình phương - B bình phương = (A-B)(A+B).\n\nVí dụ 3\na) Tính nhanh 101 bình phương - 99 bình phương;\nb) Viết x bình phương - 4 dưới dạng tích.\n\nGiải\na) 101 bình phương - 99 bình phương = (101-99)(101+99) = 2 nhân 200 = 400.\nb) x bình phương - 4 = x bình phương - 2 bình phương = (x-2)(x+2).\n\nLuyện tập 2\na) Tính nhanh 99 bình phương - 1;\nb) Viết x bình phương - 9 dưới dạng tích.\n\nVận dụng 1 Ở bài toán mở đầu, em hãy giải thích xem bạn đó tính nhanh như thế nào.\n\n3. BÌNH PHƯƠNG CỦA MỘT TỔNG\nBình phương của một tổng\nHĐ3 Với hai số a, b bất kì, thực hiện phép tính (a+b)(a+b).\nTừ đó rút ra liên hệ giữa (a+b) bình phương và a bình phương + 2ab + b bình phương.\nVới A, B là hai biểu thức tuỳ ý, ta có:\n(A+B) bình phương = A bình phương + 2AB + B bình phương.\n\nVí dụ 4\na) Tính nhanh 101 bình phương;\nb) Khai triển (2x+y) bình phương.\n\nGiải\na) 101 bình phương = (100+1) bình phương = 100 bình phương + 2 nhân 100 nhân 1 + 1 bình phương\n= 10 000 + 200 + 1 = 10 201.\nb) (2x+y) bình phương = (2x) bình phương + 2 nhân 2x nhân y + y bình phương = 4x bình phương + 4xy + y bình phương.\n\nTa nói khai triển (A+B) bình phương được biểu thức A bình phương + 2AB + B bình phương.\n\n31",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 34,
+      "text": "BÀI TẬP\n\n2.1. Những đẳng thức nào sau đây là hằng đẳng thức?\na) x + 2 = 3x + 1;\nb) 2x(x + 1) = 2x bình phương + 2x;\nc) (a + b)a = a bình phương + ba;\nd) a - 2 = 2a + 1.\n\n2.2. Thay ? bằng biểu thức thích hợp.\na) (x - 3y)(x + 3y) = x bình phương - ?;\nb) (2x - y)(2x + y) = 4 ? - y bình phương;\nc) x bình phương + 8xy + ? = (? + 4y) bình phương;\nd) ? - 12xy + 9y bình phương = (2x - ?) bình phương.\n\n2.3. Tính nhanh:\na) 54 nhân 66;\nb) 203 bình phương.\n\n2.4. Viết các biểu thức sau dưới dạng bình phương của một tổng hoặc một hiệu:\na) x bình phương + 4x + 4;\nb) 16a bình phương - 16ab + 4b bình phương.\n\n2.5. Rút gọn các biểu thức sau:\na) (x - 3y) bình phương - (x + 3y) bình phương;\nb) (3x + 4y) bình phương + (4x - 3y) bình phương.\n\n2.6. Chứng minh rằng với mọi số tự nhiên n, ta có:\n(n + 2) bình phương - n bình phương chia hết cho 4.\n\nKẾT NỐI TRI THỨC VỚI CUỘC SỐNG\n\n33",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 39,
+      "text": "Giải\na) (x + 3)(x^2 - 3x + 9) - x^3 = x^3 + 3^3 - x^3 = (x^3 - x^3) + 27 = 27.\nb) (3x + y)(9x^2 - 3xy + y^2) - y^3 - 26x^3 = (3x)^3 + y^3 - y^3 - 26x^3\n= (27x^3 - 26x^3) + (y^3 - y^3) = x^3.\n\nLuyện tập 1\n1. Viết x^3 + 27 dưới dạng tích.\n2. Rút gọn biểu thức x^3 + 8y^3 - (x + 2y)(x^2 - 2xy + 4y^2).\n\n2 HIỆU HAI LẬP PHƯƠNG\n\nHiệu hai lập phương\nHĐ2 Với hai số bất kì, viết a^3 - b^3 = a^3 + (-b)^3 và sử dụng hằng đẳng thức tổng hai lập phương để tính a^3 + (-b)^3.\nTừ đó rút ra liên hệ giữa a^3 - b^3 và (a - b)(a^2 + ab + b^2).\nVới A, B là hai biểu thức tuỳ ý, ta có:\nA^3 - B^3 = (A - B)(A^2 + AB + B^2).\n\nVí dụ 3 Viết các đa thức sau dưới dạng tích:\na) x^3 - 1;\nb) 8x^3 - y^3.\nGiải\na) x^3 - 1 = x^3 - 1^3 = (x - 1)(x^2 + x + 1).\nb) 8x^3 - y^3 = (2x)^3 - y^3 = (2x - y)(4x^2 + 2xy + y^2).\n\nVí dụ 4 Rút gọn các biểu thức sau:\na) (x - 3)(x^2 + 3x + 9) - x^3;\nb) (2x - y)(4x^2 + 2xy + y^2) + y^3 - 7x^3.\nGiải\na) (x - 3)(x^2 + 3x + 9) - x^3 = x^3 - 3^3 - x^3 = (x^3 - x^3) - 27 = -27.\nb) (2x - y)(4x^2 + 2xy + y^2) + y^3 - 7x^3 = (2x)^3 - y^3 + y^3 - 7x^3\n= (8x^3 - 7x^3) + (y^3 - y^3) = x^3.\n\n38",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 40,
+      "text": "Luyện tập 2\n1. Viết đa thức x mũ 3 trừ 8 dưới dạng tích.\n2. Rút gọn biểu thức mở ngoặc 3x trừ 2y đóng ngoặc nhân mở ngoặc 9x bình cộng 6xy cộng 4y bình đóng ngoặc cộng 8y mũ 3.\nVận dụng Giải quyết tình huống mở đầu.\nChú ý. Các hằng đẳng thức vừa học được sử dụng thường xuyên trong các biến đổi đại số nên ta gọi chúng là các hằng đẳng thức đáng nhớ.\nBẢY HẰNG ĐẲNG THỨC ĐÁNG NHỚ\nA bình trừ B bình bằng mở ngoặc A trừ B đóng ngoặc nhân mở ngoặc A cộng B đóng ngoặc;\nmở ngoặc A cộng B đóng ngoặc bình bằng A bình cộng 2AB cộng B bình;\nmở ngoặc A trừ B đóng ngoặc bình bằng A bình trừ 2AB cộng B bình;\nmở ngoặc A cộng B đóng ngoặc mũ 3 bằng A mũ 3 cộng 3A bình B cộng 3AB bình cộng B mũ 3;\nmở ngoặc A trừ B đóng ngoặc mũ 3 bằng A mũ 3 trừ 3A bình B cộng 3AB bình trừ B mũ 3;\nA mũ 3 cộng B mũ 3 bằng mở ngoặc A cộng B đóng ngoặc nhân mở ngoặc A bình trừ AB cộng B bình đóng ngoặc;\nA mũ 3 trừ B mũ 3 bằng mở ngoặc A trừ B đóng ngoặc nhân mở ngoặc A bình cộng AB cộng B bình đóng ngoặc.\nKẾT NỐI TRI THỨC VỚI CUỘC SỐNG\nBÀI TẬP\n2.12. Viết các biểu thức sau dưới dạng tổng hay hiệu hai lập phương:\na) mở ngoặc x cộng 4 đóng ngoặc nhân mở ngoặc x bình trừ 4x cộng 16 đóng ngoặc;\nb) mở ngoặc 4x bình cộng 2xy cộng y bình đóng ngoặc nhân mở ngoặc 2x trừ y đóng ngoặc.\n2.13. Thay dấu hỏi chấm bằng biểu thức thích hợp.\na) x mũ 3 cộng 512 bằng mở ngoặc x cộng 8 đóng ngoặc nhân mở ngoặc x bình trừ dấu hỏi chấm cộng 64 đóng ngoặc;\nb) 27x mũ 3 trừ 8y mũ 3 bằng mở ngoặc dấu hỏi chấm trừ 2y đóng ngoặc nhân mở ngoặc dấu hỏi chấm cộng 6xy cộng 4y bình đóng ngoặc.\n2.14. Viết các đa thức sau dưới dạng tích:\na) 27x mũ 3 cộng y mũ 3;\nb) x mũ 3 trừ 8y mũ 3.\n2.15. Rút gọn biểu thức sau:\nmở ngoặc x trừ 2y đóng ngoặc nhân mở ngoặc x bình cộng 2xy cộng 4y bình đóng ngoặc cộng mở ngoặc x cộng 2y đóng ngoặc nhân mở ngoặc x bình trừ 2xy cộng 4y bình đóng ngoặc.\n39",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 41,
+      "text": "LUYỆN TẬP CHUNG\n\nVí dụ 1 Rút gọn các biểu thức sau:\na) (2x + y)^2 + (x - 2y)^2;\nb) (x + y + z)^2 - (x + y - z)^2.\n\nGiải\na) (2x + y)^2 + (x - 2y)^2 = (4x^2 + 4xy + y^2) + (x^2 - 4xy + 4y^2)\n= (4x^2 + x^2) + (4xy - 4xy) + (y^2 + 4y^2) = 5x^2 + 5y^2.\nb) (x + y + z)^2 - (x + y - z)^2 = [(x + y + z) - (x + y - z)][(x + y + z) + (x + y - z)]\n= (x + y + z - x - y + z)(x + y + z + x + y - z) = 2z(2x + 2y) = 4z(x + y).\n\nVí dụ 2 Rút gọn các biểu thức sau:\na) (x - 1)^3 + (x + 1)^3 - 2x(x - 1)(x + 1);\nb) (x + 3y)(x^2 - 3xy + 9y^2) + (3x - y)(9x^2 + 3xy + y^2).\n\nGiải\na) (x - 1)^3 + (x + 1)^3 - 2x(x - 1)(x + 1)\n= x^3 - 3x^2 + 3x - 1 + x^3 + 3x^2 + 3x + 1 - 2x(x^2 - 1)\n= 2x^3 + 6x - 2x^3 + 2x\n= 8x.\nb) Ta có\n(x + 3y)(x^2 - 3xy + 9y^2) = (x + 3y)[x^2 - x.3y + (3y)^2] = x^3 + (3y)^3 = x^3 + 27y^3;\n(3x - y)(9x^2 + 3xy + y^2) = (3x - y)[(3x)^2 + 3x.y + y^2] = (3x)^3 - y^3 = 27x^3 - y^3.\nVậy\n(x + 3y)(x^2 - 3xy + 9y^2) + (3x - y)(9x^2 + 3xy + y^2)\n= x^3 + 27y^3 + 27x^3 - y^3 = 28x^3 + 26y^3.\n\nVí dụ 3\nMẹ của Mai gửi vào ngân hàng 150 triệu đồng theo thể thức lãi kép theo định kì với lãi suất không đổi x mỗi năm (tức là nếu đến kì hạn người gửi không rút lãi ra thì tiền lãi được tính vào vốn của kì kế tiếp). Biểu thức S = 150(1 + x)^3 (triệu đồng) biểu thị số tiền mẹ của Mai nhận được sau 3 năm.\n\n40",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 43,
+      "text": "Bài 9\nPHÂN TÍCH ĐA THỨC THÀNH NHÂN TỬ\n\nKhái niệm, thuật ngữ\n- Phân tích đa thức thành nhân tử\n- Đặt nhân tử chung\n- Nhóm các hạng tử\n\nKiến thức, kĩ năng\n- Nhận biết phân tích đa thức thành nhân tử.\n- Mô tả ba cách phân tích đa thức thành nhân tử: Đặt nhân tử chung; Nhóm các hạng tử; Sử dụng hằng đẳng thức.\n\nTớ biết cách tìm được tất cả số x để 2 nhân x bình phương cộng x bằng 0.\nTròn làm thế nào nhỉ?\n\n1. PHÂN TÍCH ĐA THỨC THÀNH NHÂN TỬ BẰNG CÁCH ĐẶT NHÂN TỬ CHUNG\n\nPhân tích đa thức thành nhân tử\nHoạt động: Hãy viết đa thức x bình phương trừ 2 nhân x nhân y thành tích của các đa thức, khác đa thức là số.\n\nPhân tích đa thức thành nhân tử (hay thừa số) là biến đổi đa thức đó thành một tích của những đa thức.\n\nVí dụ 1: Phân tích các đa thức sau thành nhân tử:\na) x mũ 3 cộng x;\nb) 2 nhân mở ngoặc x cộng y đóng ngoặc trừ 2 nhân y nhân mở ngoặc x cộng y đóng ngoặc.\n\nGiải:\na) Ta có x mũ 3 cộng x bằng x nhân x bình phương cộng x bằng x nhân mở ngoặc x bình phương cộng 1 đóng ngoặc.\nb) 2 nhân mở ngoặc x cộng y đóng ngoặc trừ 2 nhân y nhân mở ngoặc x cộng y đóng ngoặc bằng mở ngoặc 2 trừ 2y đóng ngoặc nhân mở ngoặc x cộng y đóng ngoặc bằng 2 nhân mở ngoặc 1 trừ y đóng ngoặc nhân mở ngoặc x cộng y đóng ngoặc.\n\nSơ đồ nhỏ bên cạnh:\nNhân tử chỉ vào x và mở ngoặc x bình phương cộng 1 đóng ngoặc.\nx mũ 3 cộng x bằng x nhân mở ngoặc x bình phương cộng 1 đóng ngoặc.\n\nChú ý: Cách làm như Ví dụ 1 gọi là phân tích đa thức thành nhân tử bằng cách đặt nhân tử chung.\n\nLuyện tập 1: Phân tích các đa thức sau thành nhân tử:\na) 6 nhân y mũ 3 cộng 2y;\nb) 4 nhân mở ngoặc x trừ y đóng ngoặc trừ 3 nhân mở ngoặc x trừ y đóng ngoặc.\n\nVận dụng 1: Giải bài toán mở đầu bằng cách phân tích 2 nhân x bình phương cộng x thành nhân tử.\n\n42",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 44,
+      "text": "2 PHÂN TÍCH ĐA THỨC THÀNH NHÂN TỬ BẰNG CÁCH SỬ DỤNG HẰNG ĐẲNG THỨC\n\nVí dụ 2 Phân tích các đa thức sau thành nhân tử:\na) x^2 - 8x + 16;\nb) x^2 - 3;\nc) 9x^2 + 12x + 4;\nd) 8x^3 - 27.\n\nGiải\na) x^2 - 8x + 16 = x^2 - 2.x.4 + 4^2 = (x - 4)^2.\nb) x^2 - 3 = x^2 - (căn bậc hai của 3)^2 = (x - căn bậc hai của 3)(x + căn bậc hai của 3).\nc) 9x^2 + 12x + 4 = (3x)^2 + 2.3x.2 + 2^2 = (3x + 2)^2.\nd) 8x^3 - 27 = (2x)^3 - 3^3 = (2x - 3)(4x^2 + 6x + 9).\n\nChú ý. Cách làm như ví dụ trên gọi là phân tích đa thức thành nhân tử bằng cách sử dụng hằng đẳng thức.\n\nLuyện tập 2 Phân tích các đa thức sau thành nhân tử:\na) (x + 1)^2 - y^2;\nb) x^3 + 3x^2 + 3x + 1;\nc) 8x^3 - 12x^2 + 6x - 1.\n\n3 PHÂN TÍCH ĐA THỨC THÀNH NHÂN TỬ BẰNG CÁCH NHÓM CÁC HẠNG TỬ\n\nTrong giờ học toán, cô giáo yêu cầu cả lớp phân tích đa thức sau thành nhân tử: x^2 - xy - 2y + 2x.\nHai bạn Nam và Hà đã làm như sau:\n\nBảng của bạn Nam:\nx^2 - xy - 2y + 2x\n= (x^2 - xy) + (2x - 2y)\n= x(x - y) + 2(x - y)\n= (x + 2)(x - y)\n\nBảng của bạn Hà:\nx^2 - xy - 2y + 2x\n= (x^2 + 2x) - (xy + 2y)\n= x(x + 2) - y(x + 2)\n= (x - y)(x + 2)\n\nChú ý\n- Cách làm như trên của hai bạn Nam và Hà được gọi là phân tích đa thức thành nhân tử bằng cách nhóm hạng tử.\n- Đối với một đa thức có thể có nhiều cách nhóm những hạng tử thích hợp.\n\n43",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 45,
+      "text": "Ví dụ 3 Phân tích đa thức xy + 3z + xz + 3y thành nhân tử.\nGiải\nxy + 3z + xz + 3y = (xy + xz) + (3z + 3y) = x(y + z) + 3(z + y) = (x + 3)(y + z).\nChú ý. Ta có thể phân tích bằng cách nhóm khác như sau:\nxy + 3z + xz + 3y = (xy + 3y) + (3z + xz) = (x + 3)y + (3 + x)z = (x + 3)(y + z).\n\nLuyện tập 3 Phân tích đa thức 2x mũ 2 - 4xy + 2y - x thành nhân tử.\n\nVận dụng 2 Tính nhanh giá trị của biểu thức\nA = x mũ 2 + 2y - 2x - xy tại x = 2022, y = 2020.\n\nTranh luận\nPhân tích đa thức x mũ 3 - x thành nhân tử.\nTròn nói: x mũ 3 - x = x(x mũ 2 - 1)\nVuông nói: x mũ 3 - x = x(x - 1)(x + 1)\nEm hãy nêu ý kiến của em về lời giải của Tròn và Vuông.\n\nBÀI TẬP\n2.22. Phân tích các đa thức sau thành nhân tử:\na) x mũ 2 + xy;\nb) 6a mũ 2 b - 18ab;\nc) x mũ 3 - 4x;\nd) x mũ 4 - 8x.\n\n2.23. Phân tích các đa thức sau thành nhân tử:\na) x mũ 2 - 9 + xy + 3y;\nb) x mũ 2 y + x mũ 2 + xy - 1.\n\n2.24. Tìm x, biết:\na) x mũ 2 - 4x = 0;\nb) 2x mũ 3 - 2x = 0.\n\n2.25. Một mảnh vườn hình vuông có độ dài cạnh bằng x (mét). Người ta làm đường đi xung quanh mảnh vườn, có độ rộng như nhau và bằng y (mét) (H.2.2).\na) Viết biểu thức tính diện tích S của đường bao quanh mảnh vườn theo x và y.\nb) Phân tích S thành nhân tử rồi tính S khi x = 102 m, y = 2 m.\nHình vẽ: Hình 2.2 mô tả một hình vuông lớn bên ngoài và hình vuông nhỏ bên trong (mảnh vườn). Cạnh hình vuông nhỏ là x, chiều rộng đường đi xung quanh là y ở cả 4 phía (trên, dưới, trái, phải).\n\n44",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 46,
+      "text": "LUYỆN TẬP CHUNG\n\nVí dụ 1: Phân tích các đa thức sau thành nhân tử:\na) x^2 - x + 2y - 4y^2;\nb) 3xy + 2z^2 - 6y - xz^2.\n\nGiải:\na) x^2 - x + 2y - 4y^2 = [x^2 - (2y)^2] - (x - 2y)\n= (x - 2y)(x + 2y) - (x - 2y) = (x - 2y)(x + 2y - 1).\nb) 3xy + 2z^2 - 6y - xz^2 = (3xy - 6y) + (2z^2 - xz^2)\n= 3y(x - 2) + z^2(2 - x) = 3y(x - 2) - z^2(x - 2) = (3y - z^2)(x - 2).\n\nVí dụ 2: Phân tích các đa thức sau thành nhân tử:\na) 4x^2 - 4x + 1 - 4y^2;\nb) 8x^3 - 27y^3 - 27y^2 - 9y - 1.\n\nGiải:\na) 4x^2 - 4x + 1 - 4y^2 = (4x^2 - 4x + 1) - (2y)^2 = (2x - 1)^2 - (2y)^2\n= (2x - 1 - 2y)(2x - 1 + 2y).\nb) 8x^3 - 27y^3 - 27y^2 - 9y - 1 = (2x)^3 - (27y^3 + 27y^2 + 9y + 1)\n= (2x)^3 - (3y + 1)^3 = (2x - 3y - 1)[4x^2 + 2x(3y + 1) + (3y + 1)^2].\n\nVí dụ 3: Phân tích các đa thức sau thành nhân tử:\na) x^3 - x + 2y - 8y^3;\nb) 2x^3 - 8x^2 - 24x + 54.\n\nGiải:\na) x^3 - x + 2y - 8y^3 = (x^3 - 8y^3) - (x - 2y) = [x^3 - (2y)^3] - (x - 2y)\n= (x - 2y)(x^2 + x.2y + 4y^2) - (x - 2y) = (x - 2y)(x^2 + 2xy + 4y^2 - 1).\nb) 2x^3 - 8x^2 - 24x + 54 = 2(x^3 - 4x^2 - 12x + 27) = 2[(x^3 + 27) - (4x^2 + 12x)]\n= 2[(x^3 + 3^3) - 4x(x + 3)] = 2[(x + 3)(x^2 - 3x + 9) - 4x(x + 3)]\n= 2(x + 3)(x^2 - 3x + 9 - 4x) = 2(x + 3)(x^2 - 7x + 9).\n\n45",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 47,
+      "text": "BÀI TẬP\n\n2.26. Phân tích các đa thức sau thành nhân tử:\na) x^2 - 6x + 9 - y^2;\nb) 4x^2 - y^2 + 4y - 4;\nc) xy + z^2 + xz + yz;\nd) x^2 - 4xy + 4y^2 + xz - 2yz.\n\n2.27. Phân tích các đa thức sau thành nhân tử:\na) x^3 + y^3 + x + y;\nb) x^3 - y^3 + x - y;\nc) (x - y)^3 + (x + y)^3;\nd) x^3 - 3x^2y + 3xy^2 - y^3 + y^2 - x^2.\n\nEM CÓ BIẾT?\n\nHình vẽ: Chân dung Étienne Bézout (1730 - 1783).\n\nÉtienne Bézout (1730 - 1783) là nhà toán học người Pháp. Ông có nhiều công trình toán học nổi tiếng, đặc biệt là các công trình nghiên cứu về nghiệm của đa thức.\n\nĐỊNH LÍ BÉZOUT VÀ ỨNG DỤNG\n\nNếu đa thức f(x) có nghiệm x = a thì f(x) có thể phân tích được thành tích f(x) = (x - a)g(x) trong đó g(x) là thương của phép chia đa thức f(x) cho x - a.\n\nChẳng hạn, đa thức 2x^3 + x^2 - 3x - 14 nhận x = 2 làm nghiệm và thương của phép chia 2x^3 + x^2 - 3x - 14 cho x - 2 là 2x^2 + 5x + 7 nên 2x^3 + x^2 - 3x - 14 = (x - 2)(2x^2 + 5x + 7).\n\nTheo: E. Bézout, \"Théorie générale des équations algébriques\", Paris (1779).\n\n46",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 8,
+      "subject": "Toán",
+      "book_title": "Toán 8 - tập 1",
+      "source_file": "SGKToan8tapmot.pdf",
+      "page": 48,
+      "text": "BÀI TẬP CUỐI CHƯƠNG II\n\nA. TRẮC NGHIỆM\nChọn phương án đúng trong mỗi câu sau:\n2.28. Đa thức x^2 - 9x + 8 được phân tích thành tích của hai đa thức\nA. x - 1 và x + 8.    B. x - 1 và x - 8.    C. x - 2 và x - 4.    D. x - 2 và x + 4.\n2.29. Khẳng định nào sau đây là đúng?\nA. (A - B)(A + B) = A^2 + 2AB + B^2.\nB. (A + B)(A - B) = A^2 - 2AB + B^2.\nC. (A + B)(A - B) = A^2 + B^2.\nD. (A + B)(A - B) = A^2 - B^2.\n2.30. Biểu thức 25x^2 + 20xy + 4y^2 viết dưới dạng bình phương của một tổng là:\nA. [5x + (-2y)]^2.    B. [2x + (-5y)]^2.\nC. (2x + 5y)^2.    D. (5x + 2y)^2.\n2.31. Rút gọn biểu thức A = (2x + 1)^3 - 6x(2x + 1) ta được\nA. x^3 + 8.    B. x^3 + 1.\nC. 8x^3 + 1.    D. 8x^3 - 1.\n\nB. TỰ LUẬN\n2.32. Tính nhanh giá trị của các biểu thức:\na) x^2 - 4x + 4 tại x = 102;    b) x^3 + 3x^2 + 3x + 1 tại x = 999.\n2.33. Rút gọn các biểu thức:\na) (2x - 5y)(2x + 5y) + (2x + 5y)^2;\nb) (x + 2y)(x^2 - 2xy + 4y^2) + (2x - y)(4x^2 + 2xy + y^2).\n2.34. Phân tích các đa thức sau thành nhân tử:\na) 6x^2 - 24y^2;    b) 64x^3 - 27y^3;\nc) x^4 - 2x^3 + x^2;    d) (x - y)^3 + 8y^3.\n2.35. Sử dụng Hình 2.3, bằng cách tính diện tích hình vuông ABCD theo hai cách, hãy giải thích hằng đẳng thức (a + b)^2 = a^2 + 2ab + b^2.\n\nHình vẽ: Hình vuông ABCD có cạnh bằng a + b. Cạnh AB được chia thành hai đoạn có độ dài a và b (từ A sang B). Cạnh AD được chia thành hai đoạn có độ dài a và b (từ A xuống D). Bên trong hình vuông ABCD được chia thành 4 phần: hình vuông P có cạnh a, hình vuông S có cạnh b, và hai hình chữ nhật Q, R có kích thước a nhân b. Phía trên có mũi tên chỉ tổng chiều dài cạnh là a + b ở đoạn AB. Phía bên trái có mũi tên chỉ tổng chiều dài cạnh là a + b ở đoạn AD. Nhãn hình: Hình 2.3.\n\n47",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 2",
+      "source_file": "SGKToan9taphai.pdf",
+      "page": 14,
+      "text": "Luyện tập 4 Cho phương trình x mũ 2 + 6x = 1.\nHãy cộng vào cả hai vế của phương trình với cùng một số thích hợp để được một phương trình mà vế trái có thể biến đổi thành một bình phương. Từ đó, hãy giải phương trình đã cho.\n\n3 CÔNG THỨC NGHIỆM CỦA PHƯƠNG TRÌNH BẬC HAI\n\nXây dựng công thức nghiệm của phương trình bậc hai\nHĐ4 Thực hiện lần lượt các bước sau để giải phương trình:\n2x mũ 2 - 8x + 3 = 0.\na) Chuyển hạng tử tự do sang vế phải.\nb) Chia cả hai vế của phương trình cho hệ số của x mũ 2.\nc) Thêm vào hai vế của phương trình nhận được ở câu b với cùng một số để vế trái có thể biến đổi thành một bình phương. Từ đó tìm nghiệm x.\n\nCách giải phương trình bậc hai\nTương tự HĐ4, để giải phương trình bậc hai ax mũ 2 + bx + c = 0 (a khác 0) trong trường hợp tổng quát, ta làm như sau:\n- Chuyển hạng tử tự do c sang vế phải: ax mũ 2 + bx = -c.\n- Chia cả hai vế của phương trình cho hệ số của x mũ 2: x mũ 2 + b/a nhân x = -c/a.\n- Cộng vào hai vế của phương trình nhận được với b mũ 2 / 4a mũ 2 để vế trái có thể biến đổi thành bình phương của một biểu thức: x mũ 2 + b/a nhân x + b mũ 2 / 4a mũ 2 = -c/a + b mũ 2 / 4a mũ 2 hay (x + b / 2a) mũ 2 = b mũ 2 - 4ac / 4a mũ 2.\nKí hiệu delta = b mũ 2 - 4ac và gọi là biệt thức của phương trình (delta đọc là \"đenta\"). Khi đó, ta có thể viết lại phương trình cuối dưới dạng (x + b / 2a) mũ 2 = delta / 4a mũ 2.\n\nTừ đây, ta có kết quả sau:\nXét phương trình bậc hai một ẩn ax mũ 2 + bx + c = 0 (a khác 0).\nTính biệt thức delta = b mũ 2 - 4ac.\n- Nếu delta lớn hơn 0 thì phương trình có hai nghiệm phân biệt: x1 = (-b + căn bậc hai của delta) / 2a, x2 = (-b - căn bậc hai của delta) / 2a.\n- Nếu delta bằng 0 thì phương trình có nghiệm kép x1 = x2 = -b / 2a.\n- Nếu delta nhỏ hơn 0 thì phương trình vô nghiệm.\n\n13",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 2",
+      "source_file": "SGKToan9taphai.pdf",
+      "page": 31,
+      "text": "BÀI TẬP CUỐI CHƯƠNG VI\n\nA. TRẮC NGHIỆM\n\n6.39. Điểm nào sau đây thuộc đồ thị của hàm số y = 1/2 x^2?\nA. (1; 2).\nB. (2; 1).\nC. (-1; 2).\nD. (1; 1/2).\n\n6.40. Hình 6.11 là hai đường parabol trong mặt phẳng tọa độ Oxy. Khẳng định nào sau đây là đúng?\nA. a < 0 < b.\nB. a < b < 0.\nC. a > b > 0.\nD. a > 0 > b.\n\nHình 6.11: Đồ thị hàm số y = ax^2 (parabol hướng lên trên) và y = bx^2 (parabol hướng xuống dưới), gốc tọa độ O tại giao điểm hai trục.\n\n6.41. Các nghiệm của phương trình x^2 + 7x + 12 = 0 là\nA. x1 = 3; x2 = 4.\nB. x1 = -3; x2 = -4.\nC. x1 = 3; x2 = -4.\nD. x1 = -3; x2 = 4.\n\n6.42. Phương trình bậc hai có hai nghiệm x1 = 13 và x2 = 25 là\nA. x^2 - 13x + 25 = 0.\nB. x^2 - 25x + 13 = 0.\nC. x^2 - 38x + 325 = 0.\nD. x^2 + 38x + 325 = 0.\n\n6.43. Gọi x1, x2 là hai nghiệm của phương trình x^2 - 5x + 6 = 0. Khi đó, giá trị của biểu thức A = x1^2 + x2^2 là\nA. 13.\nB. 19.\nC. 25.\nD. 5.\n\n6.44. Chiều dài và chiều rộng của hình chữ nhật có chu vi 20 cm và diện tích 24 cm^2 là\nA. 5 cm và 4 cm.\nB. 6 cm và 4 cm.\nC. 8 cm và 3 cm.\nD. 10 cm và 2 cm.\n\nB. TỰ LUẬN\n\n6.45. Vẽ đồ thị của các hàm số y = 5/2 x^2 và y = -5/2 x^2 trên cùng một mặt phẳng tọa độ.\n\n6.46. Cho hàm số y = ax^2. Xác định hệ số a, biết đồ thị hàm số đi qua điểm A(3; 3). Vẽ đồ thị của hàm số trong trường hợp đó.\n\n6.47. Giải các phương trình sau:\na) 5x^2 - 6 căn 5 x + 2 = 0;\nb) 2x^2 - 2 căn 6 x + 3 = 0.\n\n30",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 2",
+      "source_file": "SGKToan9taphai.pdf",
+      "page": 117,
+      "text": "Điểm D có nằm trên trung trực các đoạn thẳng AB, BC và CA không? Hãy dùng lệnh vẽ đường trung trực (biểu tượng đường trung trực) trong nhóm công cụ vẽ các đường đặc biệt để kiểm tra điều đó.\n\nHD2 Vẽ đường tròn nội tiếp tam giác\n\nChúng ta sẽ sử dụng nhóm công cụ đường thẳng và đường tròn trong GeoGebra để vẽ đường tròn nội tiếp một tam giác.\n\nBước 1. Vẽ tam giác ABC như Bước 1 trong HD1.\n\nBước 2. Vẽ tâm đường tròn nội tiếp tam giác ABC.\n\nChọn (biểu tượng điểm) -> Chọn (biểu tượng đường thẳng) Đường phân giác -> Lần lượt nháy nút trái chuột vào các điểm A, B, C ta được đường phân giác góc B.\n\nChọn (biểu tượng điểm) -> Chọn (biểu tượng đường thẳng) Đường phân giác -> Lần lượt nháy nút trái chuột vào các điểm A, C, B ta được đường phân giác góc C.\n\nChọn (biểu tượng điểm A) -> Chọn (biểu tượng giao điểm) Giao điểm của 2 đối tượng -> Nháy nút trái chuột vào hai đường phân giác vừa vẽ bên trên ta được điểm D là tâm đường tròn nội tiếp tam giác ABC.\n\nBước 3. Vẽ đường tròn nội tiếp tam giác ABC.\n\nChọn (biểu tượng điểm) -> Chọn (biểu tượng đường thẳng) Đường vuông góc -> Lần lượt nháy nút trái chuột vào điểm D và đoạn thẳng BC ta được đường thẳng qua D vuông góc với BC.\n\nChọn (biểu tượng điểm A) -> Chọn (biểu tượng giao điểm) Giao điểm của 2 đối tượng -> Nháy nút trái chuột vào đoạn thẳng BC và đường thẳng vừa vẽ ta được tiếp điểm E của đường tròn nội tiếp trên cạnh BC.\n\nChọn (biểu tượng đường tròn) -> Chọn (biểu tượng đường tròn) Đường tròn khi biết tâm và 1 điểm trên đường tròn -> Nháy chuột lần lượt vào điểm D và E ta được đường tròn (D) nội tiếp tam giác ABC.\n\nBước 4. Vẽ các tiếp điểm trên AC và AB.\n\nChọn (biểu tượng điểm A) -> Chọn (biểu tượng giao điểm) Giao điểm của 2 đối tượng -> Nháy nút trái chuột vào đường tròn (D) và đoạn thẳng AC ta được tiếp điểm F.\n\nChọn (biểu tượng điểm A) -> Chọn (biểu tượng giao điểm) Giao điểm của 2 đối tượng -> Nháy nút trái chuột vào đường tròn (D) và đoạn thẳng AB ta được tiếp điểm G.\n\n116",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 28,
+      "text": "1 PHƯƠNG TRÌNH TÍCH\n\nPhương trình tích\nHĐ1 Phân tích đa thức P(x) = (x + 1)(2x - 1) + (x + 1)x thành nhân tử.\nHĐ2 Giải phương trình P(x) = 0.\n\nĐể giải phương trình tích (ax + b)(cx + d) = 0, ta giải hai phương trình ax + b = 0 và cx + d = 0. Sau đó lấy tất cả các nghiệm của chúng.\n\nVí dụ 1\nGiải phương trình (2x + 1)(3x - 1) = 0.\nGiải\nTa có (2x + 1)(3x - 1) = 0\nnên 2x + 1 = 0 hoặc 3x - 1 = 0.\n• 2x + 1 = 0 hay 2x = -1, suy ra x = -1/2.\n• 3x - 1 = 0 hay 3x = 1, suy ra x = 1/3.\nVậy phương trình đã cho có hai nghiệm là x = -1/2 và x = 1/3.\n\nVí dụ 2 Giải phương trình x^2 - x = -2x + 2.\nGiải\nBiến đổi phương trình đã cho về phương trình tích như sau:\nx^2 - x = -2x + 2\nx^2 - x + 2x - 2 = 0\nx(x - 1) + 2(x - 1) = 0\n(x + 2)(x - 1) = 0.\nTa giải hai phương trình sau:\n• x + 2 = 0, suy ra x = -2.\n• x - 1 = 0, suy ra x = 1.\nVậy phương trình đã cho có hai nghiệm là x = -2 và x = 1.\n\n27",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 37,
+      "text": "LUYỆN TẬP CHUNG\n\nVí dụ 1 Giải phương trình 1/x - 1 + 2/x^2 + x + 1 = x^2 + x/x^3 - 1 (1)\n\nGiải\n\nĐKXĐ: x khác 1. Quy đồng mẫu hai vế của phương trình:\n(x^2 + x + 1) + 2(x - 1)/(x - 1)(x^2 + x + 1) = x^2 + x/x^3 - 1\nx^2 + 3x - 1/x^3 - 1 = x^2 + x/x^3 - 1\n\nSuy ra x^2 + 3x - 1 = x^2 + x hay 2x - 1 = 0.\n\nGiải phương trình: 2x - 1 = 0\n2x = 1\nx = 1/2 (thoả mãn ĐKXĐ).\n\nVậy phương trình (1) có nghiệm là x = 1/2.\n\nVí dụ 2 Giải phương trình x/x + 3 - 2/x - 3 = -2x - 6/x^2 - 9 (2)\n\nGiải\n\nĐKXĐ: x khác 3 và x khác -3.\n\nQuy đồng mẫu hai vế của phương trình:\nx(x - 3) - 2(x + 3)/(x + 3)(x - 3) = -2x - 6/x^2 - 9\nx^2 - 5x - 6/x^2 - 9 = -2x - 6/x^2 - 9\n\nSuy ra x^2 - 5x - 6 = -2x - 6 hay x^2 - 3x = 0.\n\nGiải phương trình x^2 - 3x = 0:\nx(x - 3) = 0\nx = 0 hoặc x - 3 = 0\nx = 0 (thoả mãn ĐKXĐ) hoặc x = 3 (không thoả mãn ĐKXĐ).\n\nVậy phương trình (2) có nghiệm là x = 0.\n\n36",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 38,
+      "text": "Ví dụ 3 Cho a < b. Chứng minh rằng:\na) 2a + 1 < 2b + 2;\nb) -2a - 5 > -2b - 7.\n\nGiải\na) Từ a < b, ta có 2a < 2b. Suy ra 2a + 1 < 2b + 1. (1)\nVì 1 < 2 nên 2b + 1 < 2b + 2. (2)\nTheo tính chất bắc cầu, từ (1) và (2) suy ra 2a + 1 < 2b + 2.\nb) Từ a < b, ta có -2a > -2b. Suy ra -2a - 5 > -2b - 5. (3)\nVì -5 > -7 nên -2b - 5 > -2b - 7. (4)\nTheo tính chất bắc cầu, từ (3) và (4) suy ra -2a - 5 > -2b - 7.\n\nBÀI TẬP\n\n2.12. Giải các phương trình sau:\na) 2(x + 1) = (5x - 1)(x + 1);\nb) (-4x + 3)x = (2x + 5)x.\n\n2.13. Để loại bỏ x% một loại tảo độc khỏi một hồ nước, người ta ước tính chi phí cần bỏ ra là C(x) = (50x) / (100 - x) (triệu đồng), với 0 <= x < 100.\n\nNếu bỏ ra 450 triệu đồng, người ta có thể loại bỏ được bao nhiêu phần trăm loại tảo độc đó?\n\n2.14. Giải các phương trình sau:\na) 1 / (x + 2) + 2 / (x^2 - 2x + 4) = (x - 4) / (x^3 + 8);\nb) 2x / (x - 4) + 3 / (x + 4) = (x - 12) / (x^2 - 16).\n\n2.15. Cho a > b, chứng minh rằng:\na) 4a + 4 > 4b + 3;\nb) 1 - 3a < 3 - 3b.\n\n37",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 46,
+      "text": "1 CĂN BẬC HAI\n\nTìm hiểu khái niệm căn bậc hai\nHĐ1 Tìm các số thực x sao cho x mũ 2 = 49.\n\nCăn bậc hai của số thực không âm a là số thực x sao cho x mũ 2 = a.\n\nNhận xét\n- Số âm không có căn bậc hai;\n- Số 0 có một căn bậc hai duy nhất là 0;\n- Số dương a có đúng hai căn bậc hai đối nhau là căn a (căn bậc hai số học của a) và âm căn a.\n\nVí dụ 1 Tìm căn bậc hai của 81.\nGiải\nTa có căn 81 = 9 nên 81 có hai căn bậc hai là 9 và âm 9.\n\nLuyện tập 1 Tìm căn bậc hai của 121.\n\nTính căn bậc hai của một số bằng máy tính cầm tay\nĐể tính các căn bậc hai của một số a lớn hơn 0, chỉ cần tính căn a. Có thể dễ dàng làm điều này bằng cách sử dụng MTCT.\n\nVí dụ 2 Sử dụng MTCT, tính căn bậc hai của 11,1 (làm tròn đến chữ số thập phân thứ hai).\nGiải\nBấm các phím căn 1 chấm 1 1 bằng S hai chiều màn hình hiện kết quả là 3,33166625. Làm tròn kết quả đến chữ số thập phân thứ hai ta được căn 11,1 xấp xỉ 3,33.\nVậy căn bậc hai của 11,1 (làm tròn đến chữ số thập phân thứ hai) là 3,33 và âm 3,33.\n\nLuyện tập 2 Sử dụng MTCT tìm căn bậc hai của 7 phần 11 (làm tròn đến chữ số thập phân thứ hai).\n\nTính chất của căn bậc hai\nHĐ2 Tính và so sánh căn của a mũ 2 và trị tuyệt đối của a trong mỗi trường hợp sau:\na) a = 3;\nb) a = âm 3.\n\n45",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 51,
+      "text": "Ví dụ 3 Tính √(2² . 3² . 5²).\n\nGiải\n√(2² . 3² . 5²) = √2² . √3² . √5² = 2 . 3 . 5 = 30.\n\nNếu A ≥ 0, B ≥ 0, C ≥ 0\nthì √(A²B²C²) = ABC.\n\nVí dụ 4 Rút gọn biểu thức √(25a²b²) (với a ≥ 0, b < 0).\n\nGiải\nTheo giả thiết a ≥ 0, b < 0, do đó\n√(25a²b²) = √25 . √a² . √b² = 5|a| . |b| = -5ab.\n\nLuyện tập 2\na) Tính nhanh √(25 . 49).\nb) Phân tích thành nhân tử: √(ab) - 4√a (với a ≥ 0, b ≥ 0).\n\n2 KHAI CĂN BẬC HAI VÀ PHÉP CHIA\n\nLiên hệ giữa phép khai căn bậc hai và phép chia\n\nHĐ2 Tính và so sánh: √100 : √4 và √(100 : 4).\n\nNếu A, B là các biểu thức với A ≥ 0, B > 0 thì √A / √B = √(A / B).\n\nVí dụ 5\na) Tính √8 : √2.\nb) Rút gọn √(52a³) : √(13a) (a > 0).\n\nGiải\na) √8 : √2 = √(8 : 2) = √4 = 2.\nb) √(52a³) : √(13a) = √(52a³ : (13a)) = √(4a²) = √((2a)²) = |2a| = 2a (do a > 0).\n\nLuyện tập 3\na) Tính √18 : √50.\nb) Rút gọn √(16ab²) : √(4a) (với a > 0, b < 0).\n\nVí dụ 6\na) Viết số dưới dấu căn thành một phân số thập phân rồi tính √1,69.\nb) Rút gọn a . √(2 / a²) (a > 0).\n\n50",
+      "kinds": [
+        "mat-so-mu",
+        "so-lan-vao-chu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 52,
+      "text": "Giải\na) Ta co 1,69 = 169/100 = 13 bình phương / 10 bình phương nen căn bậc hai của 1,69 = căn bậc hai của (13 bình phương / 10 bình phương) = (căn bậc hai của 13 bình phương) / (căn bậc hai của 10 bình phương) = 13/10 = 1,3.\nb) Do a lớn hơn 0 nen a nhân căn bậc hai của (2/a bình phương) = a nhân (căn bậc hai của 2 / căn bậc hai của (a bình phương)) = a nhân (căn bậc hai của 2 / a) = căn bậc hai của 2.\n\nLuyện tập 4\na) Tính căn bậc hai của 6,25.\nb) Rút gọn (a bình phương trừ 1) nhân căn bậc hai của (5 / (a trừ 1) bình phương) (với a lớn hơn 1).\n\nVận dụng\nCông suất P (W), hiệu điện thế U (V), điện trở R (ôm) trong đoạn mạch một chiều liên hệ với nhau theo công thức U bằng căn bậc hai của P nhân R. Nếu công suất tăng gấp 8 lần, điện trở giảm 2 lần thì tỉ số giữa hiệu điện thế lúc đó và hiệu điện thế ban đầu bằng bao nhiêu?\n\nTranh luận\nVì căn bậc hai của (-3) bình phương = -3 và căn bậc hai của (-12) bình phương = -12 nen căn bậc hai của ((-3) bình phương nhân (-12) bình phương) = (-3) nhân (-12) = 36.\nTheo em, cách làm của Vuông có đúng không? Vì sao?\n\nBÀI TẬP\n3.7. Tính:\na) căn bậc hai của 12 nhân (căn bậc hai của 12 + căn bậc hai của 3);\nb) căn bậc hai của 8 nhân (căn bậc hai của 50 - căn bậc hai của 2);\nc) (căn bậc hai của 3 + căn bậc hai của 2) bình phương - 2 nhân căn bậc hai của 6.\n\n3.8. Rút gọn biểu thức căn bậc hai của (2 nhân (a bình phương - b bình phương)) nhân căn bậc hai của (3 / (a + b)) (với a lớn hơn hoặc bằng b lớn hơn 0).\n\n3.9. Tính:\na) căn bậc hai của 99 chia căn bậc hai của 11;\nb) căn bậc hai của 7,84;\nc) căn bậc hai của 1815 chia căn bậc hai của 15.\n\n3.10. Rút gọn (-3 nhân căn bậc hai của 16a + 5 nhân căn bậc hai của 16ab bình phương) chia (2 nhân căn bậc hai của a) (với a lớn hơn 0, b lớn hơn 0).\n\n3.11. Kích thước màn hình ti vi hình chữ nhật được xác định bởi độ dài đường chéo. Một loại ti vi có tỉ lệ hai cạnh màn hình là 4 : 3.\na) Gọi x (inch) là chiều rộng của màn hình ti vi. Viết công thức tính độ dài đường chéo d (inch) của màn hình ti vi theo x.\nb) Tính chiều rộng và chiều dài (theo centimét) của màn hình ti vi loại 40 inch.\n\n51",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 59,
+      "text": "Ví dụ 6\n\nRút gọn biểu thức A = 2 nhân căn bậc hai của 3 trừ căn bậc hai của 75 cộng căn bậc hai của biểu tượng mở ngoặc 1 trừ căn bậc hai của 3 đóng ngoặc bình phương.\n\nGiải\n\nĐưa thừa số ra ngoài dấu căn, ta có: căn bậc hai của 75 = căn bậc hai của 3 nhân 5 bình phương = 5 nhân căn bậc hai của 3;\n\ncăn bậc hai của biểu tượng mở ngoặc 1 trừ căn bậc hai của 3 đóng ngoặc bình phương = giá trị tuyệt đối của 1 trừ căn bậc hai của 3 = căn bậc hai của 3 trừ 1.\n\nDo đó A = 2 nhân căn bậc hai của 3 trừ 5 nhân căn bậc hai của 3 cộng căn bậc hai của 3 trừ 1 = negative 1 trừ 2 nhân căn bậc hai của 3.\n\nVí dụ 7\n\na) Trục căn thức ở mẫu các biểu thức: biểu thức x bình phương trừ 1 chia cho căn bậc hai của x trừ 1; biểu thức x bình phương trừ x chia cho căn bậc hai của x cộng 1 với x lớn hơn hoặc bằng 0 và x khác 1.\n\nb) Sử dụng kết quả câu a, rút gọn biểu thức P = biểu thức x bình phương trừ 1 chia cho căn bậc hai của x trừ 1 trừ biểu thức x bình phương trừ x chia cho căn bậc hai của x cộng 1 với x lớn hơn hoặc bằng 0 và x khác 1.\n\nGiải\n\na) Ta có\n\nbiểu thức x bình phương trừ 1 chia cho căn bậc hai của x trừ 1 = biểu thức mở ngoặc x bình phương trừ 1 đóng ngoặc nhân mở ngoặc căn bậc hai của x cộng 1 đóng ngoặc chia cho biểu tượng mở ngoặc căn bậc hai của x trừ 1 đóng ngoặc nhân mở ngoặc căn bậc hai của x cộng 1 đóng ngoặc = biểu thức mở ngoặc x trừ 1 đóng ngoặc nhân mở ngoặc x cộng 1 đóng ngoặc nhân mở ngoặc căn bậc hai của x cộng 1 đóng ngoặc chia cho x trừ 1 = mở ngoặc x cộng 1 đóng ngoặc nhân mở ngoặc căn bậc hai của x cộng 1 đóng ngoặc = x nhân căn bậc hai của x cộng x cộng căn bậc hai của x cộng 1;\n\nbiểu thức x bình phương trừ x chia cho căn bậc hai của x cộng 1 = biểu thức mở ngoặc x bình phương trừ x đóng ngoặc nhân mở ngoặc căn bậc hai của x trừ 1 đóng ngoặc chia cho biểu tượng mở ngoặc căn bậc hai của x cộng 1 đóng ngoặc nhân mở ngoặc căn bậc hai của x trừ 1 đóng ngoặc = biểu thức x nhân mở ngoặc x trừ 1 đóng ngoặc nhân mở ngoặc căn bậc hai của x trừ 1 đóng ngoặc chia cho x trừ 1 = x nhân mở ngoặc căn bậc hai của x trừ 1 đóng ngoặc = x nhân căn bậc hai của x trừ x.\n\nb) Sử dụng kết quả câu a ta có P = mở ngoặc x nhân căn bậc hai của x cộng x cộng căn bậc hai của x cộng 1 đóng ngoặc trừ mở ngoặc x nhân căn bậc hai của x trừ x đóng ngoặc = 2x cộng căn bậc hai của x cộng 1.\n\nLuyện tập 5 Rút gọn biểu thức sau:\n\nmở ngoặc phân số tử căn bậc hai của 22 trừ căn bậc hai của 11 mẫu 1 trừ căn bậc hai của 2 cộng phân số tử căn bậc hai của 21 trừ căn bậc hai của 7 mẫu 1 trừ căn bậc hai của 3 đóng ngoặc nhân mở ngoặc căn bậc hai của 7 trừ căn bậc hai của 11 đóng ngoặc.\n\nVận dụng Trong thuyết tương đối, khối lượng m (kg) của một vật khi chuyển động với vận tốc v (m/s) được cho bởi công thức\n\nm = phân số tử m không mẫu căn bậc hai của mở ngoặc 1 trừ phân số tử v bình phương mẫu c bình phương đóng ngoặc\n\ntrong đó m không (kg) là khối lượng của vật khi đứng yên, c (m/s) là vận tốc của ánh sáng trong chân không (Theo Vật lí đại cương, NXB Giáo dục Việt Nam, 2016).\n\n58",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    },
+    {
+      "grade": 9,
+      "subject": "Toán",
+      "book_title": "Toán 9 - tập 1",
+      "source_file": "SGKToan9tapmot.pdf",
+      "page": 61,
+      "text": "Bài 10 CĂN BẬC BA VÀ CĂN THỨC BẬC BA\n\nKhái niệm, thuật ngữ\n- Căn bậc ba\n- Căn thức bậc ba\n\nKiến thức, kĩ năng\n- Nhận biết căn bậc ba của một số thực.\n- Tính giá trị đúng, gần đúng của căn bậc ba của một số bằng máy tính cầm tay.\n- Nhận biết căn thức bậc ba của một biểu thức đại số.\n\nCăn bậc hai của một số thực (dương) có một vai trò quan trọng trong đời sống và toán học. Căn bậc hai của số thực a không âm là các số thực x thoả mãn điều kiện x bình phương bằng a. Trong bài học này, các em sẽ được làm quen với khái niệm căn bậc ba, một khái niệm tương tự khái niệm căn bậc hai.\n\n1 CĂN BẬC BA\n\nCăn bậc ba của một số thực\n\nHĐ Kí hiệu V là thể tích của hình lập phương với cạnh x. Hãy thay dấu hỏi chấm trong bảng sau bằng các giá trị thích hợp.\nCột trái: x, hàng dưới là 2, dấu hỏi chấm, dấu hỏi chấm.\nCột phải: V bằng x mũ 3, hàng dưới là 8, 27, 64.\n\nTổng quát, ta định nghĩa:\nCăn bậc ba của số thực a là số thực x thoả mãn x mũ 3 bằng a.\n\nChú ý. Mỗi số a đều có duy nhất một căn bậc ba. Căn bậc ba của số a được kí hiệu là căn bậc ba của a. Trong kí hiệu căn bậc ba của a, số 3 được gọi là chỉ số của căn. Phép tìm căn bậc ba của một số gọi là phép khai căn bậc ba.\n\nVí dụ 1\na) Chứng minh rằng căn bậc ba của 64 bằng 4.\nb) Tính căn bậc ba của 0 và căn bậc ba của âm 27.\n\nGiải. a) Vì 4 mũ 3 bằng 64 nên căn bậc ba của 64 bằng 4.\nb) Vì 0 mũ 3 bằng 0 nên căn bậc ba của 0 bằng 0. Vì âm 3 trong ngoặc mũ 3 bằng âm 27 nên căn bậc ba của âm 27 bằng âm 3.\n\nNhận xét. Từ định nghĩa căn bậc ba, ta có mở ngoặc căn bậc ba của a đóng ngoặc mũ 3 bằng căn bậc ba của a mũ 3 bằng a với mọi số thực a. Do đó có thể giải Ví dụ 1 như sau: căn bậc ba của 64 bằng căn bậc ba của 4 mũ 3 bằng 4.\n\n60",
+      "kinds": [
+        "mat-so-mu"
+      ]
+    }
+  ]
+}
