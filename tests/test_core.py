@@ -1014,3 +1014,87 @@ def test_the_password_is_never_written_to_the_log(
         _dm(tutor, "/phanhoi sai-mat-khau-nay")
 
     assert "sai-mat-khau-nay" not in caplog.text
+
+
+# --- changing the password from the chat app -------------------------------
+
+
+def test_the_password_can_be_changed_with_the_old_one(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
+
+    reply = _dm(tutor, "/doimatkhau matkhau-cu matkhau-moi-123")
+
+    assert reply.text == prompts.PASSWORD_CHANGED_MESSAGE
+    # The new one works...
+    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-moi-123").text
+    # ...and the old one no longer does, which is the point of changing it.
+    assert _dm(tutor, "/phanhoi matkhau-cu").text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
+
+
+def test_the_wrong_old_password_changes_nothing(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
+
+    reply = _dm(tutor, "/doimatkhau doan-bua matkhau-moi-123")
+
+    assert reply.text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
+    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-cu").text
+
+
+def test_an_admin_can_change_the_password_without_the_old_one(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # The point of the admin list: someone who has forgotten the password
+    # can still rotate it after a leak.
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
+
+    reply = _dm(tutor, "/doimatkhau matkhau-moi-123", user_id="99")
+
+    assert reply.text == prompts.PASSWORD_CHANGED_MESSAGE
+    # The password the admin just set now opens the summary for anyone who
+    # types it -- a classmate with the password, not just the admin.
+    opened = _dm(tutor, "/phanhoi matkhau-moi-123", user_id="7")
+    assert "Phản hồi của học sinh" in opened.text
+
+
+def test_a_too_short_password_is_refused(monkeypatch, textbook_rows, settings) -> None:
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
+
+    reply = _dm(tutor, "/doimatkhau matkhau-cu abc")
+
+    assert reply.text == prompts.PASSWORD_TOO_SHORT_MESSAGE
+    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-cu").text
+
+
+def test_changing_the_password_in_a_shared_channel_is_refused(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # Both passwords would have been read by everyone in the channel.
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
+
+    reply = tutor.handle(
+        IncomingMessage(
+            channel="discord", user_id="1",
+            text="/doimatkhau matkhau-cu matkhau-moi-123", is_private=False,
+        )
+    )
+
+    assert reply.text == prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE
+    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-cu").text
+
+
+def test_the_password_is_stored_hashed_not_in_the_clear(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # The database gets copied around (backups, handing it to a teacher), so
+    # a readable password in it would outlive every place it belonged.
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
+
+    _dm(tutor, "/doimatkhau matkhau-cu matkhau-moi-123")
+
+    stored = tutor._feedback._stored_password()
+    assert "matkhau-moi-123" not in stored
+    assert tutor._feedback.check_password("matkhau-moi-123")

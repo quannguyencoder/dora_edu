@@ -294,6 +294,29 @@ FEEDBACK_WRONG_PASSWORD_MESSAGE = (
     "Mật khẩu chưa đúng rồi bạn ơi. 🔑 Bạn kiểm tra lại giúp mình nhé."
 )
 
+#: Short enough to type on a phone, long enough not to be guessed by a
+#: classmate who watched someone type it once.
+MIN_PASSWORD_LENGTH = 8
+
+#: Shown when /doimatkhau is called without the right arguments.
+PASSWORD_USAGE_MESSAGE = (
+    "Cách đổi mật khẩu xem phản hồi:\n\n"
+    "`/doimatkhau <mật khẩu cũ> <mật khẩu mới>`\n\n"
+    "Nhớ nhắn riêng cho mình, đừng gõ ở phòng chat chung nhé! 🔒"
+)
+
+#: Shown when the new password is too short to be worth having.
+PASSWORD_TOO_SHORT_MESSAGE = (
+    f"Mật khẩu mới cần ít nhất {MIN_PASSWORD_LENGTH} ký tự bạn nhé — ngắn quá thì "
+    "bạn khác đoán ra mất. 🔑"
+)
+
+#: Shown after a successful change.
+PASSWORD_CHANGED_MESSAGE = (
+    "✅ Đã đổi mật khẩu xong! Từ giờ dùng mật khẩu mới để gõ /phanhoi nhé.\n\n"
+    "Nhớ báo cho bạn cùng nhóm biết, và mật khẩu cũ sẽ không dùng được nữa."
+)
+
 #: Shown when an admin asks for the feedback summary in a shared channel.
 #: The summary names the students who reported and quotes what they wrote,
 #: so it is only ever printed in a one-to-one chat with the bot.

@@ -303,8 +303,18 @@ Có hai cách xem phản hồi:
 tổng hợp và 5 lượt báo sai gần nhất, kèm **tên bạn đã báo** và lý do bạn ấy ghi.
 
 Hai cách mở khoá — dùng cách nào cũng được:
-- **Mật khẩu:** `/phanhoi <mật khẩu>`, mật khẩu đặt ở `FEEDBACK_PASSWORD` trong `.env`
+- **Mật khẩu:** `/phanhoi <mật khẩu>`, mật khẩu ban đầu đặt ở `FEEDBACK_PASSWORD` trong `.env`
 - **Theo tài khoản:** khai ID Discord vào `ADMIN_USER_IDS` thì không cần gõ mật khẩu
+
+Đổi mật khẩu ngay trong chat (nhắn riêng cho bot):
+
+```
+/doimatkhau <mật khẩu cũ> <mật khẩu mới>
+```
+
+Người trong `ADMIN_USER_IDS` đổi được mà không cần mật khẩu cũ — để vẫn xoay được
+mật khẩu khi lỡ quên hoặc khi mật khẩu bị lộ. Mật khẩu mới lưu **dạng băm** trong
+`data/feedback.db`, không lưu chữ thật, và ghi đè mật khẩu trong `.env`.
 
 Và hai lớp bảo vệ, vì báo cáo có tên của học sinh khác:
 1. Không khai cả hai = **không ai xem được** (mặc định an toàn).
@@ -426,7 +436,8 @@ dora-run-zalo-bot      # Zalo OA webhook (cần TLS phía trước và đăng k�
 | `/chamdiem <dễ hiểu> <gợi mở>` | Chấm 1–5, ví dụ: `/chamdiem 5 4` |
 | `/xoa` | Xoá lịch sử trò chuyện |
 | `/trogiup` | Xem hướng dẫn |
-| `/phanhoi` | *(chỉ quản trị, chỉ trong tin nhắn riêng)* Xem phản hồi đã thu được, kèm tên người báo |
+| `/phanhoi [mật khẩu]` | *(chỉ quản trị, chỉ trong tin nhắn riêng)* Xem phản hồi đã thu được, kèm tên người báo |
+| `/doimatkhau <cũ> <mới>` | *(chỉ quản trị, chỉ trong tin nhắn riêng)* Đổi mật khẩu xem phản hồi |
 
 ---
 
@@ -764,8 +775,19 @@ Two ways to read it:
 five most recent reports, each naming **who reported it** and what they said.
 
 Two ways in — either works:
-- **A password:** `/phanhoi <password>`, set in `FEEDBACK_PASSWORD`
+- **A password:** `/phanhoi <password>`, initially set in `FEEDBACK_PASSWORD`
 - **By account:** list Discord ids in `ADMIN_USER_IDS` and skip the password
+
+Rotate it from the chat app (in a direct message):
+
+```
+/doimatkhau <old password> <new password>
+```
+
+Anyone on `ADMIN_USER_IDS` can change it without the old one, so a forgotten
+or leaked password can still be rotated. The new password is stored **salted
+and hashed** in `data/feedback.db` — never in the clear — and takes precedence
+over the one in `.env`.
 
 And two gates, because the reports name other students:
 1. With neither configured, **nobody** can read it.
@@ -890,7 +912,8 @@ dora-run-zalo-bot      # Zalo OA webhook (put TLS in front, register the URL)
 | `/chamdiem <dễ hiểu> <gợi mở>` | Rate 1–5, e.g. `/chamdiem 5 4` |
 | `/xoa` | Clear conversation history |
 | `/trogiup` | Help |
-| `/phanhoi` | *(admins only, direct message only)* Show collected feedback, with reporters' names |
+| `/phanhoi [password]` | *(admins only, direct message only)* Show collected feedback, with reporters' names |
+| `/doimatkhau <old> <new>` | *(admins only, direct message only)* Change the feedback password |
 
 ---
 

@@ -19,6 +19,9 @@ same SQLite file.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import secrets
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -175,6 +178,10 @@ class FeedbackStore:
                 -- Optional: a report must stay one tap, because a required
                 -- field is a reason not to report at all.
                 note        TEXT
+            );
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS ratings (
                 answer_id  INTEGER NOT NULL REFERENCES answers(answer_id),
@@ -449,6 +456,74 @@ class FeedbackStore:
             )
             for row in rows
         ]
+
+    # --- The feedback password ---------------------------------------------
+    #
+    # Kept here rather than only in .env so the team can change it from the
+    # chat app: a password nobody can rotate without editing a file on the
+    # server is one nobody rotates after it leaks.
+
+    _PASSWORD_KEY = "feedback_password_hash"
+
+    #: Work factor for PBKDF2. High enough that guessing is slow, low enough
+    #: that checking one password does not stall the bot.
+    _HASH_ROUNDS = 200_000
+
+    @staticmethod
+    def _hash_password(password: str, salt: str) -> str:
+        """Hash a password with its salt, as stored."""
+        derived = hashlib.pbkdf2_hmac(
+            "sha256", password.encode(), bytes.fromhex(salt), FeedbackStore._HASH_ROUNDS
+        )
+        return derived.hex()
+
+    def set_password(self, password: str) -> None:
+        """Store ``password`` for later checking.
+
+        Stored as a salted hash, never as the password itself: this database
+        is copied around (backups, handing the project to a teacher), and a
+        readable password in it would outlive every place it was meant to
+        stay.
+
+        Args:
+            password: The new password, already validated by the caller.
+        """
+        salt = secrets.token_hex(16)
+        self._conn.execute(
+            "INSERT INTO app_settings (key, value) VALUES (?, ?) "
+            "ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+            (self._PASSWORD_KEY, f"{salt}${self._hash_password(password, salt)}"),
+        )
+        self._conn.commit()
+
+    def has_password(self) -> bool:
+        """Whether a password has been set through :meth:`set_password`."""
+        return self._stored_password() is not None
+
+    def _stored_password(self) -> str | None:
+        """Return the stored ``salt$hash`` pair, if any."""
+        row = self._conn.execute(
+            "SELECT value FROM app_settings WHERE key = ?", (self._PASSWORD_KEY,)
+        ).fetchone()
+        return row[0] if row else None
+
+    def check_password(self, password: str) -> bool:
+        """Whether ``password`` matches the stored one.
+
+        Args:
+            password: What the person typed.
+
+        Returns:
+            ``False`` when no password has been set, so a database with no
+            password cannot be opened by guessing.
+        """
+        stored = self._stored_password()
+        if not stored or not password:
+            return False
+        salt, _, expected = stored.partition("$")
+        # compare_digest: a plain == returns sooner the earlier the first
+        # wrong byte is, which leaks the hash one byte at a time.
+        return hmac.compare_digest(self._hash_password(password, salt), expected)
 
     def close(self) -> None:
         """Close the database handle."""
