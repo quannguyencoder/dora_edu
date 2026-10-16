@@ -11,6 +11,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from dora_edu.page_numbering import printed_page
+
 MIN_GRADE = 1
 MAX_GRADE = 12
 
@@ -191,12 +193,34 @@ class RetrievedChunk(BaseModel):
     distance: float
     metadata: dict[str, Any]
 
+    def _printed(self, pdf_page: Any) -> Any:
+        """Convert a stored PDF page index to the page printed in the book."""
+        source_file = self.metadata.get("source_file")
+        if not isinstance(pdf_page, int) or not isinstance(source_file, str):
+            return pdf_page
+        return printed_page(source_file, pdf_page)
+
+    @property
+    def page_start(self) -> Any:
+        """First page of this passage, as printed in the paper book."""
+        return self._printed(self.metadata.get("page_start"))
+
+    @property
+    def page_end(self) -> Any:
+        """Last page of this passage, as printed in the paper book."""
+        return self._printed(self.metadata.get("page_end"))
+
     @property
     def citation(self) -> str:
-        """Return a short Vietnamese source label shown to the student."""
+        """Return a short Vietnamese source label shown to the student.
+
+        Pages are the ones printed in the book, not the PDF's own indices --
+        the student is being told where to look in a paper textbook, and the
+        scan's first page is the cover (see :mod:`dora_edu.page_numbering`).
+        """
         book = self.metadata.get("book_title", "SGK")
-        page_start = self.metadata.get("page_start")
-        page_end = self.metadata.get("page_end")
+        page_start = self.page_start
+        page_end = self.page_end
         if page_start is None:
             return str(book)
         if page_end is None or page_end == page_start:

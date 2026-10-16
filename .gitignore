@@ -19,6 +19,16 @@ data/processed/*
 vector_db/
 data/sessions.db
 
+# Student feedback: what real students asked and flagged, keyed by their
+# channel user id. Stays on the machine running the bot.
+data/feedback.db
+data/feedback/
+
+# Measured page offsets (data/page_offsets.json) and benchmark reports
+# (data/eval/) are deliberately NOT ignored: the offsets are needed for
+# citations to name the right printed page, and the reports are the evidence
+# behind the project's quality claims.
+
 # OS Files
 .DS_Store
 Thumbs.db
