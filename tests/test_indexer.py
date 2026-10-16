@@ -87,3 +87,66 @@ def test_has_source_is_scoped_to_the_exact_grade_subject_and_file(monkeypatch, s
     assert indexer.has_source(7, "Toán", "SGKToan6tapmot.pdf") is False
     assert indexer.has_source(6, "Ngữ văn", "SGKToan6tapmot.pdf") is False
     assert indexer.has_source(6, "Toán", "SGKToan6taphai.pdf") is False
+
+
+# --- correcting a mis-OCR'd chunk in place ---------------------------------
+
+
+def _indexer_with(collection: FakeCollection, monkeypatch) -> TextbookIndexer:
+    monkeypatch.setattr(indexer_module, "get_collection", lambda *a, **k: collection)
+    return TextbookIndexer()
+
+
+def test_repairing_a_chunk_rewrites_its_text_and_drops_the_stale_copy(monkeypatch) -> None:
+    collection = FakeCollection()
+    indexer = _indexer_with(collection, monkeypatch)
+    metadata = _metadata(grade=8, book_title="Toán 8 - tập 1", source_file="SGKToan8tapmot.pdf")
+    indexer.index_chunks([_chunk(55, "thuong gap a-b=b-a la hang dang thuc")], metadata)
+
+    repaired = indexer.repair_chunk_text(
+        metadata, chunk_index=55, wrong="a-b=b-a", right="a . b = b . a"
+    )
+
+    assert repaired is True
+    assert collection.count() == 1
+    assert collection.rows[0]["text"] == "thuong gap a . b = b . a la hang dang thuc"
+    # The old row is gone, so the false version can never be retrieved again.
+    assert len(collection.deleted_ids) == 1
+
+
+def test_repairing_a_chunk_keeps_its_page_numbers(monkeypatch) -> None:
+    collection = FakeCollection()
+    indexer = _indexer_with(collection, monkeypatch)
+    metadata = _metadata()
+    indexer.index_chunks(
+        [TextChunk(text="sai roi", chunk_index=7, page_start=30, page_end=31)], metadata
+    )
+
+    indexer.repair_chunk_text(metadata, chunk_index=7, wrong="sai roi", right="dung roi")
+
+    row = collection.rows[0]["metadata"]
+    assert (row["page_start"], row["page_end"]) == (30, 31)
+    assert row["chunk_index"] == 7
+
+
+def test_repairing_an_already_fixed_chunk_changes_nothing(monkeypatch) -> None:
+    # apply_text_fixes re-runs after every ingest, so this must be a no-op.
+    collection = FakeCollection()
+    indexer = _indexer_with(collection, monkeypatch)
+    metadata = _metadata()
+    indexer.index_chunks([_chunk(3, "da dung roi")], metadata)
+
+    assert indexer.repair_chunk_text(
+        metadata, chunk_index=3, wrong="sai", right="dung"
+    ) is False
+    assert collection.count() == 1
+    assert collection.deleted_ids == []
+
+
+def test_repairing_a_chunk_that_is_not_indexed_is_reported_not_raised(monkeypatch) -> None:
+    collection = FakeCollection()
+    indexer = _indexer_with(collection, monkeypatch)
+
+    assert indexer.repair_chunk_text(
+        _metadata(), chunk_index=404, wrong="x", right="y"
+    ) is False

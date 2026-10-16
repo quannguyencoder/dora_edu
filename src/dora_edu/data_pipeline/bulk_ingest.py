@@ -22,7 +22,7 @@ from pathlib import Path
 from dora_edu.config import get_settings
 from dora_edu.data_pipeline.catalog import infer_book_info
 from dora_edu.data_pipeline.ingest import ingest_file
-from dora_edu.data_pipeline.manual_patches import apply_patches
+from dora_edu.data_pipeline.manual_patches import apply_patches, apply_text_fixes
 from dora_edu.rag_engine.indexer import TextbookIndexer
 
 logger = logging.getLogger(__name__)
@@ -203,6 +203,11 @@ def main(argv: list[str] | None = None) -> int:
         # silently lose one -- the next run just restores it.
         n_patches = apply_patches(indexer)
         logger.info("Re-applied %d manual chunk patch(es)", n_patches)
+        # Same reasoning, for chunks whose OCR text is actively wrong: a
+        # re-ingest brings the mis-read page back, so the correction has to
+        # be re-applied right behind it.
+        n_fixes = apply_text_fixes(indexer)
+        logger.info("Re-applied %d OCR correction(s)", n_fixes)
         logger.info("Collection now holds %d chunks", indexer.count())
     return 1 if (failed or ingest_failed) else 0
 

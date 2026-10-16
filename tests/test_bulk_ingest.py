@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 
 from dora_edu.data_pipeline import bulk_ingest as bulk_ingest_module
+from dora_edu.data_pipeline import manual_patches
 
 
 class FakeIndexer:
@@ -23,6 +24,7 @@ class FakeIndexer:
         self.already_indexed = already_indexed
         self.lookups: list[tuple[int, str, str]] = []
         self.index_chunks_calls: list[Any] = []
+        self.repair_calls: list[tuple[Any, int, str, str]] = []
 
     def has_source(self, grade: int, subject: str, source_file: str) -> bool:
         self.lookups.append((grade, subject, source_file))
@@ -31,6 +33,13 @@ class FakeIndexer:
     def index_chunks(self, chunks: list[Any], metadata: Any) -> int:
         self.index_chunks_calls.append((chunks, metadata))
         return len(chunks)
+
+    def repair_chunk_text(
+        self, metadata: Any, *, chunk_index: int, wrong: str, right: str
+    ) -> bool:
+        """Report every OCR correction as applied, like a first run would."""
+        self.repair_calls.append((metadata, chunk_index, wrong, right))
+        return True
 
     def count(self) -> int:
         return 999
@@ -118,3 +127,15 @@ def test_dry_run_never_checks_or_writes_the_index(monkeypatch, settings, data_ro
     ingested_files = {name for name, *_ in ingested}
     assert ingested_files == {"SGKToan6tapmot.pdf", "SGKToan6taphai.pdf"}
     assert all(indexer is None for *_, indexer in ingested)
+
+
+def test_ocr_corrections_are_reapplied_after_a_normal_run(monkeypatch, settings, data_root) -> None:
+    """A re-ingest restores the mis-read page, so the fix has to follow it."""
+    ingested = _patch_common(monkeypatch, settings, already_indexed=set())
+
+    assert bulk_ingest_module.main(["--data-root", str(data_root)]) == 0
+
+    indexer = ingested[-1][-1]
+    repaired = indexer.repair_calls
+    assert len(repaired) == len(manual_patches.TEXT_FIXES)
+    assert [c[1] for c in repaired] == [f["chunk_index"] for f in manual_patches.TEXT_FIXES]

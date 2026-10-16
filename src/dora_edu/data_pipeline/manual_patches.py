@@ -23,6 +23,20 @@ from dora_edu.models import TextbookMetadata, TextChunk
 from dora_edu.rag_engine.indexer import TextbookIndexer
 
 
+class _TextFix(TypedDict):
+    """One mis-OCR'd passage to correct inside an existing chunk."""
+
+    grade: int
+    subject: str
+    book_title: str
+    source_file: str
+    chunk_index: int
+    #: The exact string Tesseract produced, as stored in ChromaDB.
+    wrong: str
+    #: What the printed page actually says, re-read from the page image.
+    right: str
+
+
 class _Patch(TypedDict):
     grade: int
     subject: str
@@ -131,7 +145,142 @@ PATCHES: list[_Patch] = [
             "phân số đó."
         ),
     },
+    {
+        # The summary box listing all seven identities is printed white-on-
+        # blue, and Tesseract lost every exponent in it ("A? ~B? =(A-B)(A+B)",
+        # and the cube-of-a-difference line came out as "CN. =....."), so the
+        # one passage that answers "có những hằng đẳng thức đáng nhớ nào"
+        # carried no usable formula at all. Re-read from the page image with
+        # Gemini Vision. Found live: a student asked exactly this and the bot
+        # answered from p.31 instead, which is about what a hằng đẳng thức
+        # *is*, not which seven are the đáng nhớ ones.
+        "grade": 8,
+        "subject": "Toán",
+        "book_title": "Toán 8 - tập 1",
+        "source_file": "SGKToan8tapmot.pdf",
+        "page": 40,
+        "chunk_index": 900040,
+        "text": (
+            "Có những hằng đẳng thức đáng nhớ nào? Bảy hằng đẳng thức đáng "
+            "nhớ là: "
+            "A² - B² = (A - B)(A + B); "
+            "(A + B)² = A² + 2AB + B²; "
+            "(A - B)² = A² - 2AB + B²; "
+            "(A + B)³ = A³ + 3A²B + 3AB² + B³; "
+            "(A - B)³ = A³ - 3A²B + 3AB² - B³; "
+            "A³ + B³ = (A + B)(A² - AB + B²); "
+            "A³ - B³ = (A - B)(A² + AB + B²). "
+            "Chú ý: các hằng đẳng thức này được sử dụng thường xuyên trong "
+            "các biến đổi đại số nên ta gọi chúng là các hằng đẳng thức "
+            "đáng nhớ."
+        ),
+    },
+    {
+        # Tesseract read the multiplication dot in "a . b = b . a" as a minus
+        # sign, turning a correct commutative law into "a - b = b - a", which
+        # is simply false. The bot then quoted it faithfully to a grade-8
+        # student -- the worst failure mode there is, since the answer looks
+        # authoritative and cites a real page. Re-read with Gemini Vision.
+        "grade": 8,
+        "subject": "Toán",
+        "book_title": "Toán 8 - tập 1",
+        "source_file": "SGKToan8tapmot.pdf",
+        "page": 31,
+        "chunk_index": 900031,
+        "text": (
+            "Hằng đẳng thức là gì? Nếu hai biểu thức (đại số) A và B luôn "
+            "cùng nhận giá trị bằng nhau với mọi giá trị của biến thì ta nói "
+            "A = B là một đồng nhất thức hay là một hằng đẳng thức. "
+            "Các đẳng thức thường gặp: a + b = b + a; a . b = b . a; "
+            "a(b + c) = ab + ac là những hằng đẳng thức."
+        ),
+    },
 ]
+
+
+#: Chunks whose OCR text is not merely unhelpful but *wrong*. A clean extra
+#: chunk in :data:`PATCHES` cannot fix these on its own: the corrupted chunk
+#: stays retrievable, and a student asking a slightly different question
+#: still gets the false version quoted back at them with a real page number.
+TEXT_FIXES: list[_TextFix] = [
+    {
+        # "a . b = b . a" (phép nhân giao hoán): Tesseract read the
+        # multiplication dot as a minus sign, producing "a - b = b - a",
+        # which is false for every a != b. Found live, in a grade-8
+        # student's Discord question about hằng đẳng thức đáng nhớ.
+        "grade": 8,
+        "subject": "Toán",
+        "book_title": "Toán 8 - tập 1",
+        "source_file": "SGKToan8tapmot.pdf",
+        "chunk_index": 55,
+        "wrong": "a+b=b+a; a-b=b-a, a(b + e) = ab + ac",
+        "right": "a + b = b + a; a . b = b . a; a(b + c) = ab + ac",
+    },
+    {
+        # The same mis-read dot, in the passage that states all three
+        # properties of integer multiplication ("3. TÍNH CHẤT CỦA PHÉP
+        # NHÂN", Toán 6 tập 1). Tesseract turned every multiplication dot
+        # into a minus sign, so the commutative and associative laws both
+        # came out false and the distributive law came out as nonsense.
+        # Found by `dora-ocr-audit`, which flags exactly this shape, then
+        # confirmed against the page image with Gemini Vision.
+        "grade": 6,
+        "subject": "Toán",
+        "book_title": "Toán 6 - tập 1",
+        "source_file": "SGKToan6tapmot.pdf",
+        "chunk_index": 179,
+        "wrong": (
+            "Giao hoán: a - b=b-a Kết hợp: a - (Ð - c) = (a - b) -c "
+            "Phân phối của phép nhân đối với phép cộng: a: (b + c) = a - b + a: c."
+        ),
+        "right": (
+            "Giao hoán: a . b = b . a. Kết hợp: a . (b . c) = (a . b) . c. "
+            "Phân phối của phép nhân đối với phép cộng: a . (b + c) = a . b + a . c."
+        ),
+    },
+    {
+        # And again on the facing page, in the sentence that introduces
+        # multiplication as repeated addition: "1 . a = a . 1 = a và
+        # a . b = b . a = a + a + ... + a" became "1-a=a-1=a vàa-b=b-a=...".
+        "grade": 6,
+        "subject": "Toán",
+        "book_title": "Toán 6 - tập 1",
+        "source_file": "SGKToan6tapmot.pdf",
+        "chunk_index": 176,
+        "wrong": "N_ 1-a=a-1=a vàa-b=b-a=a+a+...+a",
+        "right": "1 . a = a . 1 = a và a . b = b . a = a + a + ... + a",
+    },
+]
+
+
+def apply_text_fixes(indexer: TextbookIndexer) -> int:
+    """Re-apply every known OCR correction to the indexed chunks.
+
+    Safe to call repeatedly and after every ingest: a chunk that no longer
+    contains the mis-read text is left untouched.
+
+    Args:
+        indexer: The index holding the chunks to correct.
+
+    Returns:
+        The number of chunks actually corrected by this call.
+    """
+    fixed = 0
+    for fix in TEXT_FIXES:
+        metadata = TextbookMetadata(
+            grade=fix["grade"],
+            subject=fix["subject"],
+            book_title=fix["book_title"],
+            source_file=fix["source_file"],
+        )
+        if indexer.repair_chunk_text(
+            metadata,
+            chunk_index=fix["chunk_index"],
+            wrong=fix["wrong"],
+            right=fix["right"],
+        ):
+            fixed += 1
+    return fixed
 
 
 def apply_patches(indexer: TextbookIndexer) -> int:

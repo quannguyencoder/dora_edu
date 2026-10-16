@@ -50,6 +50,91 @@ class TextbookIndexer:
         self._settings = settings or get_settings()
         self._collection = get_collection(self._settings, create=True)
 
+    def repair_chunk_text(
+        self,
+        metadata: TextbookMetadata,
+        *,
+        chunk_index: int,
+        wrong: str,
+        right: str,
+    ) -> bool:
+        """Correct a mis-OCR'd passage inside one already-indexed chunk.
+
+        Adding a clean chunk next to a corrupted one (what
+        :data:`~dora_edu.data_pipeline.manual_patches.PATCHES` does) is
+        enough when the original merely ranks badly. It is *not* enough when
+        the original says something false: the bad chunk stays retrievable,
+        and the LLM may quote it. This rewrites it in place instead.
+
+        :func:`build_chunk_id` hashes the chunk's text, so the corrected
+        chunk gets a new id -- it is written first and the stale row deleted
+        afterwards, so a failure in between leaves the chunk duplicated
+        rather than missing.
+
+        Args:
+            metadata: Provenance of the book the chunk came from.
+            chunk_index: Position of the chunk within that book.
+            wrong: The exact mis-read substring to replace.
+            right: What the page actually says.
+
+        Returns:
+            ``True`` when a chunk was corrected, ``False`` when none matched
+            or it no longer contains ``wrong`` (already fixed) -- so this is
+            safe to re-run after every ingest.
+        """
+        try:
+            found = self._collection.get(
+                where={
+                    "$and": [
+                        {"source_file": {"$eq": metadata.source_file}},
+                        {"chunk_index": {"$eq": chunk_index}},
+                    ]
+                }
+            )
+        except (chromadb.errors.ChromaError, ValueError) as exc:
+            raise RuntimeError(
+                f"Failed to look up chunk {chunk_index} of {metadata.source_file}: {exc}"
+            ) from exc
+
+        ids = found.get("ids") or []
+        documents = found.get("documents") or []
+        metadatas = found.get("metadatas") or []
+        if not ids or not documents:
+            logger.warning(
+                "No chunk %d in %s to repair", chunk_index, metadata.source_file
+            )
+            return False
+
+        stale_id, old_text, row = ids[0], documents[0], metadatas[0]
+        if wrong not in old_text:
+            logger.debug(
+                "Chunk %d of %s needs no repair", chunk_index, metadata.source_file
+            )
+            return False
+
+        corrected = TextChunk(
+            text=old_text.replace(wrong, right),
+            chunk_index=chunk_index,
+            page_start=row["page_start"],
+            page_end=row["page_end"],
+        )
+        self.index_chunks([corrected], metadata)
+        try:
+            self._collection.delete(ids=[stale_id])
+        except (chromadb.errors.ChromaError, ValueError) as exc:
+            raise RuntimeError(
+                f"Corrected chunk {chunk_index} of {metadata.source_file} was written "
+                f"but the stale copy could not be deleted: {exc}"
+            ) from exc
+        logger.info(
+            "Repaired chunk %d of %s (%r -> %r)",
+            chunk_index,
+            metadata.source_file,
+            wrong,
+            right,
+        )
+        return True
+
     def index_chunks(self, chunks: list[TextChunk], metadata: TextbookMetadata) -> int:
         """Embed and upsert ``chunks`` under the given book metadata.
 
