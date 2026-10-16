@@ -24,11 +24,20 @@ class FakeCollection:
         self.rows = rows or []
         self.queries: list[dict[str, Any]] = []
         self.get_calls: list[dict[str, Any]] = []
+        self.deleted_ids: list[str] = []
 
     def query(self, **kwargs: Any) -> dict[str, Any]:
-        """Return the rows whose metadata satisfies the recorded ``where`` clause."""
+        """Return the rows whose metadata satisfies the recorded ``where`` clause.
+
+        ``where_document={"$contains": ...}`` is honoured the way ChromaDB
+        honours it (a case-sensitive substring match on the chunk text), so
+        the retriever's literal-match pass can be tested for real.
+        """
         self.queries.append(kwargs)
         matched = [row for row in self.rows if _matches(row["metadata"], kwargs.get("where"))]
+        contains = (kwargs.get("where_document") or {}).get("$contains")
+        if contains:
+            matched = [row for row in matched if contains in row["text"]]
         matched = matched[: kwargs.get("n_results", len(matched))]
         return {
             "documents": [[row["text"] for row in matched]],
@@ -57,6 +66,11 @@ class FakeCollection:
             "metadatas": [row["metadata"] for row in matched],
             "documents": [row["text"] for row in matched],
         }
+
+    def delete(self, ids: list[str]) -> None:
+        """Drop rows by id, the way an in-place chunk repair removes the stale copy."""
+        self.deleted_ids.extend(ids)
+        self.rows = [row for row in self.rows if row.get("id") not in set(ids)]
 
     def count(self) -> int:
         """Return the number of rows currently stored."""
@@ -93,8 +107,13 @@ class FakeGenerator(AnswerGenerator):
         answer: str = "Cau tra loi mau",
         classify_subject_response: str | None = None,
         restore_diacritics_response: Callable[[str], str] | None = None,
+        cite_chunks: bool = False,
     ) -> None:
         self.answer = answer
+        #: Off by default so existing tests keep asserting the bare answer.
+        #: When on, this mirrors the real generators, which cite every chunk
+        #: they were given -- which is what drives the page reminder.
+        self._cite_chunks = cite_chunks
         self.calls: list[dict[str, Any]] = []
         self.classify_calls: list[dict[str, Any]] = []
         self.restore_diacritics_calls: list[str] = []
@@ -121,7 +140,11 @@ class FakeGenerator(AnswerGenerator):
                 "history": list(history or []),
             }
         )
-        return GeneratedAnswer(answer=self.answer, grounded=bool(chunks))
+        return GeneratedAnswer(
+            answer=self.answer,
+            grounded=bool(chunks),
+            citations=[chunk.citation for chunk in chunks] if self._cite_chunks else [],
+        )
 
     def classify_subject(self, question: str, subjects: list[str]) -> str | None:
         self.classify_calls.append({"question": question, "subjects": list(subjects)})

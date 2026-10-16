@@ -25,6 +25,7 @@ rule above holds exactly as strictly as when the subject is chosen by hand.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 import chromadb
@@ -34,6 +35,91 @@ from dora_edu.models import MIN_GRADE, RetrievedChunk, StudentProfile
 from dora_edu.rag_engine.store import get_collection
 
 logger = logging.getLogger(__name__)
+
+#: Ways a Vietnamese student asks for a definition, stripped to leave the
+#: term itself: "Thế nào là tam giác cân?" -> "tam giác cân".
+_QUESTION_PREFIXES = (
+    "thế nào là",
+    "thế nào gọi là",
+    "em hiểu thế nào về",
+    "cho biết",
+    "hãy cho biết",
+    "hãy nêu",
+    "nêu khái niệm",
+    "khái niệm",
+    "định nghĩa",
+    "giải thích",
+    "trình bày",
+    "bạn hãy nói về",
+    "nói về",
+)
+
+_QUESTION_SUFFIXES = (
+    "là gì",
+    "nghĩa là gì",
+    "có nghĩa là gì",
+    "được hiểu là gì",
+    "phát biểu thế nào",
+    "phát biểu như thế nào",
+    "là như thế nào",
+    "như thế nào",
+    "cho biết điều gì",
+    "gồm những gì",
+    "gồm những hạt nào",
+    "có tính chất gì",
+    "có đặc điểm gì",
+    "có vai trò gì",
+    "dùng để làm gì",
+    "khác nhau thế nào",
+    "khác nhau như thế nào",
+)
+
+#: Leading/trailing punctuation and filler a student types around the term.
+_EDGE_NOISE = re.compile(r"^[\s,.:;?!\"'-]+|[\s,.:;?!\"'-]+$")
+
+#: A phrase shorter than this matches far too much text to be a useful
+#: filter ("ta", "số"), and one much longer is a whole sentence rather than
+#: a term -- a substring filter would then match nothing at all.
+_MIN_KEYWORD_LENGTH = 4
+_MAX_KEYWORD_LENGTH = 40
+
+
+def keyword_phrase(question: str) -> str | None:
+    """Extract the term a definition question is about, for full-text search.
+
+    Vector similarity alone is unreliable on short Vietnamese terms whose
+    words are common elsewhere: "tam giác **cân**" embeds close to grade-2
+    pages about weighing things in kilograms ("cân nặng"), which in a real
+    run pushed the actual tam-giác-cân pages out of the top 10 entirely and
+    made the bot refuse a question its textbook answers on two pages. A
+    literal substring match on the term does not have that failure mode, so
+    :meth:`Retriever.retrieve` runs one as well and puts its hits first.
+
+    Args:
+        question: The student's question, in Vietnamese.
+
+    Returns:
+        The lower-cased term to search for literally, or ``None`` when the
+        question carries no usable term (too short, too long, or not a
+        definition-shaped question).
+    """
+    phrase = _EDGE_NOISE.sub("", question.lower())
+    for prefix in _QUESTION_PREFIXES:
+        if phrase.startswith(prefix):
+            phrase = phrase[len(prefix) :]
+            break
+    for suffix in _QUESTION_SUFFIXES:
+        if phrase.endswith(suffix):
+            phrase = phrase[: -len(suffix)]
+            break
+    phrase = _EDGE_NOISE.sub("", " ".join(phrase.split()))
+    if not _MIN_KEYWORD_LENGTH <= len(phrase) <= _MAX_KEYWORD_LENGTH:
+        return None
+    # Nothing was stripped: the question is not definition-shaped, so a
+    # literal search for the whole sentence would only ever match nothing.
+    if phrase == _EDGE_NOISE.sub("", question.lower()):
+        return None
+    return phrase
 
 
 def build_metadata_filter(profile: StudentProfile) -> dict[str, Any]:
@@ -56,6 +142,42 @@ def build_metadata_filter(profile: StudentProfile) -> dict[str, Any]:
             {"subject": {"$eq": profile.subject}},
         ]
     }
+
+
+def _passage_key(chunk: RetrievedChunk) -> tuple[Any, Any]:
+    """Identify a passage across two queries that may both return it."""
+    return (chunk.metadata.get("source_file"), chunk.metadata.get("chunk_index"))
+
+
+def _merge_by_passage(
+    preferred: list[RetrievedChunk], rest: list[RetrievedChunk], limit: int
+) -> list[RetrievedChunk]:
+    """Put ``preferred`` passages first, then fill up from ``rest``.
+
+    Order matters downstream: the prompt numbers the passages it is given,
+    and the generator leans on the earlier ones, so a literal-match hit
+    belongs ahead of a merely-nearby one even when its vector distance is
+    larger.
+
+    Args:
+        preferred: Passages to place first (the literal-match pass).
+        rest: Passages to fill the remaining slots with.
+        limit: Maximum passages to return in total.
+
+    Returns:
+        At most ``limit`` passages, no passage repeated.
+    """
+    merged: list[RetrievedChunk] = []
+    seen: set[tuple[Any, Any]] = set()
+    for chunk in [*preferred, *rest]:
+        key = _passage_key(chunk)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(chunk)
+        if len(merged) >= limit:
+            break
+    return merged
 
 
 class Retriever:
@@ -185,17 +307,17 @@ class Retriever:
         limit = top_k or self._settings.retrieval_top_k
         where = build_metadata_filter(profile)
 
-        try:
-            response = self._collection.query(
-                query_texts=[cleaned_question],
-                n_results=limit,
-                where=where,
-                include=["documents", "metadatas", "distances"],
-            )
-        except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
-            raise RuntimeError(f"ChromaDB query failed: {exc}") from exc
+        chunks = self._query(cleaned_question, where, limit)
 
-        chunks = self._parse_response(response)
+        # Further passes restricted to passages that literally contain the
+        # term being asked about. Vector distance alone misses these when
+        # the term's individual words are common elsewhere in the corpus
+        # (see :func:`keyword_phrase`), and a missed definition means the
+        # bot refuses a question its own textbook answers.
+        phrase = keyword_phrase(cleaned_question)
+        if phrase is not None:
+            chunks = self._with_literal_matches(cleaned_question, where, limit, phrase, chunks)
+
         kept = [c for c in chunks if c.distance <= self._settings.max_retrieval_distance]
 
         logger.info(
@@ -206,6 +328,97 @@ class Retriever:
             profile.subject,
         )
         return kept
+
+    def _with_literal_matches(
+        self,
+        question: str,
+        where: dict[str, Any],
+        limit: int,
+        phrase: str,
+        vector_hits: list[RetrievedChunk],
+    ) -> list[RetrievedChunk]:
+        """Put literal matches for ``phrase`` ahead of the vector results.
+
+        Three passes, most specific first:
+
+        1. ``"<phrase> là"`` -- the shape a Vietnamese textbook definition
+           actually takes ("Quang hợp là quá trình lá cây sử dụng..."). This
+           is the one sentence a "X là gì?" question needs, and it is often
+           ranked well below the lesson's objectives box by vector distance
+           alone.
+        2. ``"<phrase>"`` -- anywhere the term appears, for questions that
+           are not quite definitions.
+        3. Only if both came back empty: the last two words of the phrase,
+           for a term the student prefixed with a category word ("biện pháp
+           chơi chữ" is printed as "chơi chữ").
+
+        Args:
+            question: The student's question, embedded for ranking within
+                each pass.
+            where: The mandatory grade/subject filter.
+            limit: Maximum passages to return in total.
+            phrase: The term extracted by :func:`keyword_phrase`.
+            vector_hits: Results of the plain vector pass, used to fill the
+                remaining slots.
+
+        Returns:
+            At most ``limit`` passages, literal matches first.
+        """
+        definitions = self._query(question, where, limit, contains=f"{phrase} là")
+        literal = self._query(question, where, limit, contains=phrase)
+
+        if not definitions and not literal:
+            words = phrase.split()
+            if len(words) >= 3:
+                shorter = " ".join(words[-2:])
+                literal = self._query(question, where, limit, contains=shorter)
+                if literal:
+                    logger.info("Literal match on the shorter term %r", shorter)
+
+        if definitions or literal:
+            logger.info(
+                "Literal match on %r: %d definition-shaped, %d other passage(s)",
+                phrase,
+                len(definitions),
+                len(literal),
+            )
+        return _merge_by_passage([*definitions, *literal], vector_hits, limit)
+
+    def _query(
+        self,
+        question: str,
+        where: dict[str, Any],
+        limit: int,
+        *,
+        contains: str | None = None,
+    ) -> list[RetrievedChunk]:
+        """Run one ChromaDB query, optionally filtered to a literal substring.
+
+        Args:
+            question: The text to embed and match against.
+            where: The mandatory grade/subject metadata filter.
+            limit: Maximum passages to return.
+            contains: When given, only passages whose text contains this
+                substring are considered.
+
+        Returns:
+            Matching passages, nearest first.
+
+        Raises:
+            RuntimeError: If the ChromaDB query fails.
+        """
+        extra: dict[str, Any] = {"where_document": {"$contains": contains}} if contains else {}
+        try:
+            response = self._collection.query(
+                query_texts=[question],
+                n_results=limit,
+                where=where,
+                include=["documents", "metadatas", "distances"],
+                **extra,
+            )
+        except (chromadb.errors.ChromaError, ValueError, RuntimeError) as exc:
+            raise RuntimeError(f"ChromaDB query failed: {exc}") from exc
+        return self._parse_response(response)
 
     @staticmethod
     def _parse_response(response: dict[str, Any]) -> list[RetrievedChunk]:

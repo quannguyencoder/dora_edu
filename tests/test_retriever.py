@@ -6,7 +6,7 @@ import pytest
 
 from dora_edu.models import StudentProfile
 from dora_edu.rag_engine import retriever as retriever_module
-from dora_edu.rag_engine.retriever import Retriever, build_metadata_filter
+from dora_edu.rag_engine.retriever import Retriever, build_metadata_filter, keyword_phrase
 from tests.conftest import FakeCollection
 
 
@@ -194,3 +194,151 @@ def test_retrieve_best_subject_on_an_unknown_grade_returns_none(retriever) -> No
 
     assert chunks == []
     assert subject is None
+
+
+# --- literal (full-text) matching alongside vector search ------------------
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("Quang hợp là gì?", "quang hợp"),
+        ("Thế nào là tam giác cân?", "tam giác cân"),
+        ("Định luật Ôm phát biểu thế nào?", "định luật ôm"),
+        ("Nguyên tử gồm những hạt nào?", "nguyên tử"),
+        ("Khái niệm số hữu tỉ", "số hữu tỉ"),
+    ],
+)
+def test_keyword_phrase_strips_the_question_leaving_the_term(question, expected) -> None:
+    assert keyword_phrase(question) == expected
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        # Not definition-shaped: a literal search for the whole sentence
+        # would match nothing at all, so there is no term to extract.
+        "Giúp mình bài 3 trang 20 với",
+        "Tại sao lá cây có màu xanh?",
+        # Too short to be a useful substring filter on its own.
+        "Số là gì?",
+    ],
+)
+def test_keyword_phrase_declines_when_there_is_no_usable_term(question) -> None:
+    assert keyword_phrase(question) is None
+
+
+def test_a_passage_containing_the_term_is_retrieved_even_when_it_ranks_badly(
+    monkeypatch, settings
+) -> None:
+    # The real failure this fixes: "tam giác cân" embeds close to grade-2
+    # pages about weighing things ("cân nặng"), which pushed the actual
+    # tam-giác-cân page out of the results entirely.
+    rows = [
+        {
+            "text": "Mai can nang khoang 31 kg. Viet can nang khoang 32 kg.",
+            "distance": 0.32,
+            "metadata": {
+                "grade": 2,
+                "subject": "Toán",
+                "book_title": "Toán 2",
+                "source_file": "Toan2.pdf",
+                "chunk_index": 1,
+                "page_start": 61,
+                "page_end": 61,
+            },
+        },
+        {
+            "text": "Tam giác cân là tam giác có hai cạnh bên bằng nhau.",
+            "distance": 0.80,
+            "metadata": {
+                "grade": 7,
+                "subject": "Toán",
+                "book_title": "Toán 7 - tập 1",
+                "source_file": "Toan7.pdf",
+                "chunk_index": 2,
+                "page_start": 81,
+                "page_end": 81,
+            },
+        },
+    ]
+    collection = FakeCollection(rows)
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    chunks = Retriever(settings).retrieve(
+        "Thế nào là tam giác cân?", StudentProfile(grade=7, subject="Toán"), top_k=2
+    )
+
+    # The literal match comes first despite its larger vector distance: the
+    # prompt leans on the earlier passages.
+    assert "Tam giác cân là" in chunks[0].text
+    assert len(chunks) == 2
+
+
+def test_the_literal_pass_looks_for_the_definition_sentence_first(
+    monkeypatch, settings
+) -> None:
+    collection = FakeCollection([])
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    Retriever(settings).retrieve("Quang hợp là gì?", StudentProfile(grade=7, subject="Toán"))
+
+    contains = [
+        (call.get("where_document") or {}).get("$contains") for call in collection.queries
+    ]
+    assert "quang hợp là" in contains
+    assert "quang hợp" in contains
+
+
+def test_a_question_with_no_usable_term_runs_one_plain_query(monkeypatch, settings) -> None:
+    collection = FakeCollection([])
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    Retriever(settings).retrieve(
+        "Tại sao lá cây có màu xanh?", StudentProfile(grade=7, subject="Toán")
+    )
+
+    assert len(collection.queries) == 1
+    assert "where_document" not in collection.queries[0]
+
+
+def test_every_literal_query_still_carries_the_grade_and_subject_filter(
+    monkeypatch, settings
+) -> None:
+    # The safety rule is structural: no query may reach ChromaDB unscoped,
+    # and the extra passes are queries like any other.
+    collection = FakeCollection([])
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    Retriever(settings).retrieve("Quang hợp là gì?", StudentProfile(grade=7, subject="Toán"))
+
+    assert len(collection.queries) > 1
+    for call in collection.queries:
+        fields = {list(clause)[0] for clause in call["where"]["$and"]}
+        assert fields == {"grade", "subject"}
+
+
+def test_a_passage_is_never_returned_twice_by_two_passes(monkeypatch, settings) -> None:
+    rows = [
+        {
+            "text": "Quang hợp là quá trình lá cây dùng ánh sáng.",
+            "distance": 0.40,
+            "metadata": {
+                "grade": 7,
+                "subject": "Khoa học tự nhiên",
+                "book_title": "Khoa học tự nhiên 7",
+                "source_file": "KHTN7.pdf",
+                "chunk_index": 5,
+                "page_start": 104,
+                "page_end": 104,
+            },
+        }
+    ]
+    collection = FakeCollection(rows)
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    chunks = Retriever(settings).retrieve(
+        "Quang hợp là gì?", StudentProfile(grade=7, subject="Khoa học tự nhiên")
+    )
+
+    assert len(chunks) == 1
