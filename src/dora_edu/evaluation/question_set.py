@@ -160,16 +160,19 @@ OUT_OF_TEXTBOOK_QUESTIONS: tuple[EvalQuestion, ...] = (
         note="Sự kiện sau thời điểm biên soạn sách, không có trong SGK.",
     ),
     EvalQuestion(
-        "Công ước Liên Hợp Quốc về Luật Biển năm 1982 quy định những gì?",
+        "Tổ chức Thương mại Thế giới (WTO) có vai trò gì?",
         6,
         "Lịch sử và Địa lí",
         False,
         note=(
-            "Không có trong SGK Lịch sử và Địa lí cấp Tiểu học hay lớp 6. "
-            "Câu trước ở vị trí này ('Liên Hợp Quốc thành lập năm nào?') đã bị "
-            "thay: bot trả lời đúng từ SGK lớp 5 và nói rõ đó là kiến thức lớp "
-            "dưới — tức là đúng theo thiết kế, nên kỳ vọng 'phải từ chối' của "
-            "câu hỏi cũ mới là chỗ sai."
+            "Không có trong SGK Lịch sử và Địa lí từ lớp 1 đến lớp 6 — đã kiểm "
+            "bằng cách tìm chữ 'WTO' và 'Thương mại Thế giới' trong toàn bộ kho: "
+            "không đoạn nào chứa. Hai câu trước ở vị trí này đều bị thay vì chính "
+            "lí do đó: 'Liên Hợp Quốc thành lập năm nào?' và 'Công ước Luật Biển "
+            "1982' đều có trong SGK lớp 5, nên bot trả lời (có dẫn nguồn, có nói "
+            "rõ là kiến thức lớp dưới) là ĐÚNG — chỗ sai là kỳ vọng của câu hỏi. "
+            "Bài học: một câu 'ngoài sách' phải được kiểm bằng tìm chữ trong kho "
+            "trước khi tin, chứ không chỉ dựa vào cảm nhận chương trình học."
         ),
     ),
     EvalQuestion(

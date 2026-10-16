@@ -338,17 +338,17 @@ def format_markdown(report: EvalReport) -> str:
         f"| Nêu trang không hề được tra ra | {len(report.invented_citations)} |",
         f"| Dùng đoạn sai môn hoặc vượt lớp | {len(report.out_of_scope)} |",
         f"| Cần người đọc lại để chấm đúng/sai | {len(report.needs_human_review)} |",
-        "",
-        "Nhóm \"cần người đọc lại\" không phải là lỗi: phần lớn là những câu bot "
-        "cố tình KHÔNG nói ngay đáp số mà dẫn dắt để học sinh tự tìm (ví dụ hỏi "
-        "năm diễn ra một sự kiện, bot chỉ đúng trang rồi hỏi lại) — đúng cách dạy "
-        "gợi mở của dự án. Cột tự động chỉ kiểm được từ khoá, nên những câu này "
-        "cần người đọc để kết luận.",
         f"| Lỗi kỹ thuật, chưa hỏi được | {len(report.provider_errors)} |",
         "",
         "Các chỉ số trên là tự động. Riêng việc câu trả lời có ĐÚNG nội dung hay "
         "không thì vẫn cần người (hoặc thầy cô) đọc lại — bảng ở mục 3 có đủ câu "
         "trả lời và trang sách để đối chiếu.",
+        "",
+        'Nhóm "cần người đọc lại" không phải là lỗi: phần lớn là những câu bot '
+        "cố tình KHÔNG nói ngay đáp số mà dẫn dắt để học sinh tự tìm (ví dụ hỏi "
+        "năm diễn ra một sự kiện, bot chỉ đúng trang rồi hỏi lại) — đúng cách dạy "
+        "gợi mở của dự án. Cột tự động chỉ kiểm được từ khoá, nên những câu này "
+        "cần người đọc để kết luận.",
         "",
     ]
     if report.provider_errors:

@@ -334,3 +334,34 @@ def test_a_rate_limited_question_is_asked_again_before_giving_up() -> None:
     assert generator.calls == 2
     assert report.provider_errors == ()
     assert report.outcomes[0].verdict == "ĐẠT"
+
+
+def test_the_summary_table_is_not_broken_by_the_explanatory_note() -> None:
+    # A paragraph inserted between two table rows ends the table: the rows
+    # after it render as literal "| ... |" text. Found in a real report.
+    report = run_benchmark(
+        (_IN_BOOK,),
+        delay_seconds=0,
+        retriever=FakeRetriever([_chunk()]),
+        generator=FakeGenerator("Theo sách Toán 6, tập 1, trang 12: có hai ước."),
+    )
+
+    lines = format_markdown(report).splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith("| Chỉ số"))
+    first_table = []
+    for line in lines[start:]:
+        if not line.startswith("|"):
+            break
+        first_table.append(line)
+
+    # The last row of the summary table must still be inside the table, not
+    # stranded after a paragraph.
+    assert any("Lỗi kỹ thuật" in row for row in first_table)
+
+
+def test_every_out_of_textbook_question_was_checked_against_the_corpus() -> None:
+    # Two questions in a row had to be replaced because the content *was* in
+    # a lower grade's book, and the bot answering them was correct. The note
+    # is where that check is recorded, so it has to say something real.
+    for q in question_set.OUT_OF_TEXTBOOK_QUESTIONS:
+        assert len(q.note) > 20, q.question

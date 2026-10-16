@@ -31,7 +31,7 @@ import pytesseract
 from pypdf import PdfReader
 
 from dora_edu.data_pipeline.pdf_parser import discover_pdfs
-from dora_edu.page_numbering import OFFSETS_PATH
+from dora_edu.page_numbering import OFFSETS_PATH, load_offsets
 
 logger = logging.getLogger(__name__)
 
@@ -198,21 +198,35 @@ def scan_all(root: Path, *, samples: int = 14) -> list[BookOffset]:
 
 
 def write_offsets(results: list[BookOffset], path: Path = OFFSETS_PATH) -> None:
-    """Write the confident offsets where :mod:`dora_edu.page_numbering` finds them.
+    """Merge the confident offsets into the file :mod:`dora_edu.page_numbering` reads.
+
+    Merged rather than overwritten: scanning one grade with more samples
+    (``--path data/raw_pdfs/8 --samples 80``) is the normal way to pin down
+    the books a broad scan could not measure, and that must not discard the
+    hundred-odd books already measured.
 
     Args:
         results: Output of :func:`scan_all`.
         path: Destination JSON file.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
+    offsets = dict(load_offsets(path))
+    for result in results:
+        if result.confident and result.offset is not None:
+            offsets[result.source_file] = result.offset
+
     payload = {
         "measured_on": date.today().isoformat(),
         "note": (
             "Số trang in trên sách = số trang PDF - offset. Sách không đo được "
             "thì không có trong danh sách này và vẫn dùng số trang PDF."
         ),
-        "offsets": {r.source_file: r.offset for r in results if r.confident},
-        "unmeasured": [r.source_file for r in results if not r.confident],
+        "offsets": dict(sorted(offsets.items())),
+        "unmeasured": sorted(
+            r.source_file
+            for r in results
+            if not r.confident and r.source_file not in offsets
+        ),
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
