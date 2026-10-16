@@ -687,3 +687,57 @@ def test_chamdiem_before_asking_anything_explains_what_to_do(citing_tutor) -> No
 
 def test_chamdiem_is_listed_in_the_help_message() -> None:
     assert "/chamdiem" in prompts.HELP_MESSAGE
+
+
+def test_the_reminder_names_the_page_the_answer_itself_cited(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # Found live: the answer said "trang 71-72" while the reminder below it
+    # said "trang 70" -- the reminder was listing the nearest retrieved
+    # passages instead of the ones the answer actually leaned on, which is
+    # exactly the page a student would then fail to find anything on.
+    monkeypatch.setattr(
+        retriever_module, "get_collection", lambda *a, **k: FakeCollection(textbook_rows)
+    )
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=FakeGenerator(
+            answer="Theo sách SGK Toán 6, trang 12: phân số gồm tử số và mẫu số.",
+            cite_chunks=True,
+        ),
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+        feedback=FeedbackStore(),
+    )
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+
+    reply = _ask(tutor, "Phan so la gi?")
+
+    assert "trang 12" in reply.text.split("📖")[1]
+    assert reply.citations == ["SGK Toán 6, trang 12"]
+
+
+def test_a_page_the_llm_invented_is_left_out_of_the_reminder(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # The reminder is built from retrieval metadata, so a page number the
+    # LLM made up matches nothing and cannot reach the student.
+    monkeypatch.setattr(
+        retriever_module, "get_collection", lambda *a, **k: FakeCollection(textbook_rows)
+    )
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=FakeGenerator(
+            answer="Theo sách SGK Toán 6, trang 999: ...", cite_chunks=True
+        ),
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+        feedback=FeedbackStore(),
+    )
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+
+    reply = _ask(tutor, "Phan so la gi?")
+
+    assert "trang 999" not in reply.text.split("📖")[1]

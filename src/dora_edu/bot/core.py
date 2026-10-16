@@ -410,6 +410,15 @@ class TutorService:
         result = self._generator.generate(question, chunks, profile, session.history())
         session.record_turn(question, result.answer)
 
+        # Of the ten passages retrieved, an answer normally leans on one or
+        # two; pointing the student at all ten would send them leafing
+        # through pages unrelated to their question. The answer names its
+        # own pages (rule 8), so those are matched back against what was
+        # actually retrieved -- which also drops a page the LLM invented.
+        # Empty citations mean the answer is not grounded in any passage (a
+        # refusal), and a refusal has no page to check.
+        cited = prompts.select_cited_sources(result.answer, chunks) if result.citations else []
+
         # Logged before sending, and for refusals too: a refusal the student
         # believes is wrong ("the book *does* cover this!") is exactly as
         # worth collecting as a wrong answer.
@@ -420,18 +429,16 @@ class TutorService:
             subject=profile.subject,
             question=question,
             answer=result.answer,
-            citations=result.citations,
+            citations=cited,
             grounded=result.grounded,
         )
         session.last_feedback_id = feedback_id
 
-        # The page reminder is built from retrieval metadata, not from the
-        # LLM's prose, so it can only ever name a page actually retrieved.
-        reminder = prompts.build_page_check_reminder(result.citations)
+        # Built from retrieval metadata, not from the LLM's prose, so it can
+        # only ever name a page that really was retrieved.
+        reminder = prompts.build_page_check_reminder(cited)
         text = f"{result.answer}\n\n{reminder}" if reminder else result.answer
-        return OutgoingMessage(
-            text=text, citations=result.citations, feedback_id=feedback_id
-        )
+        return OutgoingMessage(text=text, citations=cited, feedback_id=feedback_id)
 
     def _detect_subject(self, question: str, grade: int) -> str | None:
         """Work out which subject of ``grade`` a subject-less question is about.
