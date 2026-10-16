@@ -302,10 +302,15 @@ Có hai cách xem phản hồi:
 **1. Ngay trong Discord** — nhắn riêng cho bot `/phanhoi`. Bot trả lời số liệu
 tổng hợp và 5 lượt báo sai gần nhất, kèm **tên bạn đã báo** và lý do bạn ấy ghi.
 
-Hai lớp bảo vệ, vì báo cáo có tên của học sinh khác:
-1. Chỉ các ID khai trong `ADMIN_USER_IDS` mới xem được (để trống = không ai xem được).
+Hai cách mở khoá — dùng cách nào cũng được:
+- **Mật khẩu:** `/phanhoi <mật khẩu>`, mật khẩu đặt ở `FEEDBACK_PASSWORD` trong `.env`
+- **Theo tài khoản:** khai ID Discord vào `ADMIN_USER_IDS` thì không cần gõ mật khẩu
+
+Và hai lớp bảo vệ, vì báo cáo có tên của học sinh khác:
+1. Không khai cả hai = **không ai xem được** (mặc định an toàn).
 2. Chỉ trả lời trong **tin nhắn riêng** với bot. Gõ trong phòng chung thì bot từ
    chối và nhắc nhắn riêng — vì tin nhắn trong phòng chung thì cả phòng đều đọc được.
+   Nếu lỡ gõ cả mật khẩu ở phòng chung, bot báo ngay là mật khẩu đã lộ và nhắc đổi.
 
 **2. Xuất phiếu đầy đủ cho thầy cô:**
 
@@ -758,12 +763,17 @@ Two ways to read it:
 **1. In Discord** — direct-message the bot `/phanhoi` for the totals and the
 five most recent reports, each naming **who reported it** and what they said.
 
-Two gates, because the reports name other students:
-1. Only ids listed in `ADMIN_USER_IDS` (empty by default, so nobody can).
+Two ways in — either works:
+- **A password:** `/phanhoi <password>`, set in `FEEDBACK_PASSWORD`
+- **By account:** list Discord ids in `ADMIN_USER_IDS` and skip the password
+
+And two gates, because the reports name other students:
+1. With neither configured, **nobody** can read it.
 2. Only in a one-to-one chat. Asked in a shared channel the bot refuses and
    says to DM instead — a reply in a shared channel is readable by everyone
    in it, and being an admin is permission to read the reports, not
-   permission to show them to the class.
+   permission to show them to the class. If the password itself was typed
+   there, the bot says plainly that it has leaked and to change it.
 
 **2. The full sheet for a teacher:**
 

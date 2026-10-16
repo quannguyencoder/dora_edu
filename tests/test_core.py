@@ -921,3 +921,96 @@ def test_a_non_admin_is_refused_before_the_channel_is_even_considered(
     )
 
     assert reply.text == prompts.ADMIN_ONLY_MESSAGE
+
+
+# --- reading the feedback with a password ----------------------------------
+
+
+def _password_tutor(monkeypatch, textbook_rows, settings, password: str):
+    monkeypatch.setattr(
+        retriever_module, "get_collection", lambda *a, **k: FakeCollection(textbook_rows)
+    )
+    settings = settings.model_copy(
+        update={"admin_user_ids": "", "feedback_password": password}
+    )
+    feedback = FeedbackStore()
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=FakeGenerator(cite_chunks=True),
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+        feedback=feedback,
+    )
+    answer_id = feedback.record_answer(
+        channel="discord", user_id="7", display_name="Hoàng Khang", grade=6,
+        subject="Toán", question="Phân số là gì?", answer="...",
+        citations=["Toán 6 - tập 2, trang 5"], grounded=True,
+    )
+    feedback.record_report(answer_id, "7", "trang này nói khác", "Hoàng Khang")
+    return tutor
+
+
+def _dm(tutor, text: str, user_id: str = "1"):
+    return tutor.handle(
+        IncomingMessage(channel="discord", user_id=user_id, text=text, is_private=True)
+    )
+
+
+def test_the_right_password_opens_the_feedback(monkeypatch, textbook_rows, settings) -> None:
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
+
+    reply = _dm(tutor, "/phanhoi matkhau-cua-nhom")
+
+    assert "Hoàng Khang" in reply.text
+    assert "trang này nói khác" in reply.text
+
+
+def test_a_wrong_password_shows_nothing(monkeypatch, textbook_rows, settings) -> None:
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
+
+    reply = _dm(tutor, "/phanhoi doan-bua")
+
+    assert reply.text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
+    assert "Hoàng Khang" not in reply.text
+
+
+def test_no_password_configured_means_nobody_gets_in(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # An unconfigured deployment must not be openable by guessing.
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "")
+
+    assert _dm(tutor, "/phanhoi").text == prompts.ADMIN_ONLY_MESSAGE
+    assert _dm(tutor, "/phanhoi bat-ky-gi").text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
+
+
+def test_typing_the_password_in_a_shared_channel_warns_that_it_leaked(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # Everyone in the channel just read the password. Saying so matters more
+    # than a terse refusal: a password the owner still believes is secret is
+    # worse than no password at all.
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
+
+    reply = tutor.handle(
+        IncomingMessage(
+            channel="discord", user_id="1", text="/phanhoi matkhau-cua-nhom",
+            is_private=False,
+        )
+    )
+
+    assert reply.text == prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE
+    assert "đổi mật khẩu" in reply.text
+    # And the feedback itself is still not shown.
+    assert "Hoàng Khang" not in reply.text
+
+
+def test_the_password_is_never_written_to_the_log(
+    monkeypatch, textbook_rows, settings, caplog
+) -> None:
+    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
+
+    with caplog.at_level("INFO"):
+        _dm(tutor, "/phanhoi sai-mat-khau-nay")
+
+    assert "sai-mat-khau-nay" not in caplog.text

@@ -83,6 +83,13 @@ class Settings(BaseSettings):
     #: deployment never leaks one student's report to another.
     #: Parsed with :func:`parse_model_list`.
     admin_user_ids: str = ""
+
+    #: Password for /phanhoi, as an alternative to listing user ids: anyone
+    #: who types it may read the feedback. Empty (the default) disables the
+    #: password route entirely, so an unconfigured deployment cannot be
+    #: opened by guessing. Kept out of the repository by .gitignore, since
+    #: .env is never committed.
+    feedback_password: str = ""
     log_level: str = "INFO"
 
     @field_validator("chunk_overlap")

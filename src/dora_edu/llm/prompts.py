@@ -279,6 +279,21 @@ ADMIN_ONLY_MESSAGE = (
     "Lệnh này dành cho thầy cô phụ trách bạn nhé. Bạn cứ hỏi bài bình thường thôi! 😊"
 )
 
+#: Shown when the password is typed in a channel other people can read.
+#: Warning the owner matters more than keeping the refusal terse: a password
+#: they still believe is secret is worse than no password at all.
+FEEDBACK_PASSWORD_LEAKED_MESSAGE = (
+    "⚠️ Bạn vừa gõ mật khẩu ở phòng chat chung — mọi người trong phòng đều đọc "
+    "được tin nhắn đó, nên mật khẩu này coi như đã lộ.\n\n"
+    "Bạn nên: (1) xoá tin nhắn vừa gõ, (2) đổi mật khẩu trong tệp .env, và "
+    "(3) lần sau nhắn riêng cho mình rồi mới gõ /phanhoi <mật khẩu> nhé."
+)
+
+#: Shown when the password does not match.
+FEEDBACK_WRONG_PASSWORD_MESSAGE = (
+    "Mật khẩu chưa đúng rồi bạn ơi. 🔑 Bạn kiểm tra lại giúp mình nhé."
+)
+
 #: Shown when an admin asks for the feedback summary in a shared channel.
 #: The summary names the students who reported and quotes what they wrote,
 #: so it is only ever printed in a one-to-one chat with the bot.

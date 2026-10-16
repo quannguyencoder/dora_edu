@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
+import secrets
 
 from dora_edu.bot.adapter import IncomingMessage, OutgoingMessage
 from dora_edu.bot.feedback import FeedbackStore
@@ -219,7 +220,7 @@ class TutorService:
         if name in {"chamdiem", "rate"}:
             return self._rate_answer(argument, message, session)
         if name in {"phanhoi", "thongke"}:
-            return self._show_feedback(message)
+            return self._show_feedback(argument, message)
         if name in {"xoa", "reset"}:
             session.clear_history()
             return OutgoingMessage(text="Mình đã xoá lịch sử trò chuyện rồi nhé! Bạn hỏi tiếp đi. 😊")
@@ -275,7 +276,29 @@ class TutorService:
             citations=record.citations,
         )
 
-    def _show_feedback(self, message: IncomingMessage) -> OutgoingMessage:
+    def _is_allowed_feedback_reader(self, password: str, user_id: str) -> bool:
+        """Whether this person may read the feedback reports.
+
+        Args:
+            password: What they typed after the command, possibly empty.
+            user_id: Their id on the channel they are writing from.
+
+        Returns:
+            ``True`` when they are on the admin list, or gave the right
+            password. ``False`` when neither is configured, so a deployment
+            nobody has set up cannot be opened by guessing.
+        """
+        if user_id in parse_model_list(self._settings.admin_user_ids):
+            return True
+        expected = self._settings.feedback_password
+        if not expected or not password:
+            return False
+        # Constant-time comparison: a plain `==` returns faster the earlier
+        # the first wrong character is, which leaks the password one
+        # character at a time to anyone patient enough to measure.
+        return secrets.compare_digest(password, expected)
+
+    def _show_feedback(self, argument: str, message: IncomingMessage) -> OutgoingMessage:
         """Show the collected feedback, for whoever runs the bot.
 
         Reading the review sheet means running ``dora-feedback`` in a
@@ -284,25 +307,39 @@ class TutorService:
         question in the chat app, with the reporters' names, so the team
         can act on feedback the day it arrives.
 
-        Restricted to the ids in ``ADMIN_USER_IDS``: the reports name other
-        students, so they are not for classmates to browse.
+        Two ways in, because the reports name other students and are not for
+        classmates to browse: being listed in ``ADMIN_USER_IDS``, or typing
+        the password in ``FEEDBACK_PASSWORD``. With neither configured,
+        nobody can read it.
 
         Args:
+            argument: Everything after the command -- the password, if given.
             message: The incoming message, for the requester's identity.
 
         Returns:
-            The summary, or a polite refusal for a non-admin.
+            The summary, or a refusal explaining what is missing.
         """
-        admins = parse_model_list(self._settings.admin_user_ids)
-        if not admins or message.user_id not in admins:
-            logger.info("Non-admin %s asked for the feedback summary", message.user_id)
-            return OutgoingMessage(text=prompts.ADMIN_ONLY_MESSAGE)
+        password = argument.strip()
+        if password and not message.is_private:
+            # The password was just typed into a channel everyone can read,
+            # so it is no longer a secret. Say so plainly: a password the
+            # owner believes is private but isn't is worse than none.
+            logger.warning("Feedback password was typed in a shared channel")
+            return OutgoingMessage(text=prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE)
+
+        if not self._is_allowed_feedback_reader(password, message.user_id):
+            # Deliberately never logs the attempted password.
+            logger.info("Refused feedback summary for %s", message.user_id)
+            return OutgoingMessage(
+                text=prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
+                if password
+                else prompts.ADMIN_ONLY_MESSAGE
+            )
 
         if not message.is_private:
             # A reply in a shared study channel is visible to everyone in it,
             # and this one names the students who reported and what they said.
-            # Being an admin is permission to read it, not permission to show
-            # it to the class.
+            # Being allowed to read it is not permission to show it to the class.
             logger.info("Refusing to print the feedback summary in a shared channel")
             return OutgoingMessage(text=prompts.FEEDBACK_PRIVATE_ONLY_MESSAGE)
 
