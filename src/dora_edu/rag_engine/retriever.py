@@ -72,7 +72,25 @@ _QUESTION_SUFFIXES = (
     "dùng để làm gì",
     "khác nhau thế nào",
     "khác nhau như thế nào",
+    "viết thế nào",
+    "viết như thế nào",
+    "là sao",
+    "do ai lãnh đạo",
+    "do ai",
+    "ở đâu",
+    "khi nào",
+    "năm nào",
+    "bao nhiêu",
+    "gồm mấy phần",
 )
+
+#: A question short enough that it is already the term itself, with no
+#: question words to strip: "hằng đẳng thức đáng nhớ", "định lí Pythagore".
+#: Searching for it literally is exactly right; treating it as "not
+#: definition-shaped" (because nothing could be stripped) is what made the
+#: bot answer "Bình phương của một tổng viết thế nào?" from a copyright
+#: page at the back of the book.
+_MAX_BARE_TERM_WORDS = 6
 
 #: Leading/trailing punctuation and filler a student types around the term.
 _EDGE_NOISE = re.compile(r"^[\s,.:;?!\"'-]+|[\s,.:;?!\"'-]+$")
@@ -115,10 +133,12 @@ def keyword_phrase(question: str) -> str | None:
     phrase = _EDGE_NOISE.sub("", " ".join(phrase.split()))
     if not _MIN_KEYWORD_LENGTH <= len(phrase) <= _MAX_KEYWORD_LENGTH:
         return None
-    # Nothing was stripped: the question is not definition-shaped, so a
-    # literal search for the whole sentence would only ever match nothing.
+    # Nothing was stripped. A long sentence is a real question and searching
+    # for it literally would match nothing -- but a short one is already
+    # just the term ("hằng đẳng thức đáng nhớ"), which is exactly what a
+    # literal search wants.
     if phrase == _EDGE_NOISE.sub("", question.lower()):
-        return None
+        return phrase if len(phrase.split()) <= _MAX_BARE_TERM_WORDS else None
     return phrase
 
 
@@ -161,8 +181,18 @@ _OVERFETCH = 3
 
 
 def _passage_key(chunk: RetrievedChunk) -> tuple[Any, Any]:
-    """Identify a passage across two queries that may both return it."""
-    return (chunk.metadata.get("source_file"), chunk.metadata.get("chunk_index"))
+    """Identify a passage across two queries that may both return it.
+
+    Falls back to the text when the metadata does not identify the chunk:
+    without that, two different passages that both lack ``source_file``
+    would share the key ``(None, None)`` and the second would be discarded
+    as a duplicate -- silently losing a passage the student needed.
+    """
+    source = chunk.metadata.get("source_file")
+    index = chunk.metadata.get("chunk_index")
+    if source is None or index is None:
+        return ("text", chunk.text)
+    return (source, index)
 
 
 def _prefer_the_students_own_grade(

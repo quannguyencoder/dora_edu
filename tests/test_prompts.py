@@ -214,3 +214,31 @@ def test_citations_and_page_numbers_survive_the_rewrite() -> None:
     assert "trang 40" in cleaned
     assert "A² - B² = (A - B)(A + B)" in cleaned
     assert "ngữ cảnh" not in cleaned
+
+
+# --- how formulas are written for a chat app -------------------------------
+
+
+def test_the_prompt_asks_for_caret_exponents_not_the_word_mu() -> None:
+    # Discord renders no LaTeX and no superscripts, so "x^2" is the clearest
+    # form a student can also type back into a calculator. Spelling it
+    # "x mũ 2" reads as prose and gets unwieldy in a longer expression.
+    prompt = prompts.build_system_prompt(StudentProfile(grade=8, subject="Toán"))
+
+    assert "x^2" in prompt
+    assert 'KHÔNG viết chữ "mũ"' in prompt
+
+
+def test_the_prompt_still_forbids_latex() -> None:
+    prompt = prompts.build_system_prompt(StudentProfile(grade=8, subject="Toán"))
+
+    assert "LaTeX" in prompt
+    assert "\\frac" in prompt
+
+
+def test_the_prompt_gives_a_rule_for_fractions_too() -> None:
+    # The corpus is full of them, and a/b is the only form that survives a
+    # chat app intact.
+    prompt = prompts.build_system_prompt(StudentProfile(grade=6, subject="Toán"))
+
+    assert "a/b" in prompt

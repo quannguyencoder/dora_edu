@@ -430,3 +430,56 @@ def test_the_reported_distance_is_the_real_one_not_the_adjusted_one(
     )
 
     assert {round(c.distance, 2) for c in chunks} == {0.40, 0.45}
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        # Already just the term: nothing to strip, and searching for it
+        # literally is exactly right.
+        ("hằng đẳng thức đáng nhớ", "hằng đẳng thức đáng nhớ"),
+        ("định lí Pythagore", "định lí pythagore"),
+        # Question forms that are not "X là gì?" but still name a term.
+        ("Bình phương của một tổng viết thế nào?", "bình phương của một tổng"),
+        ("Khởi nghĩa Tây Sơn do ai lãnh đạo?", "khởi nghĩa tây sơn"),
+        ("Nhà Lý được thành lập năm nào?", "nhà lý được thành lập"),
+    ],
+)
+def test_a_term_is_found_in_questions_that_are_not_definitions(question, expected) -> None:
+    # Found live: "Bình phương của một tổng viết thế nào?" ran no literal
+    # pass at all, and the top three vector hits were the copyright page at
+    # the back of the book.
+    assert keyword_phrase(question) == expected
+
+
+def test_a_long_sentence_with_nothing_to_strip_is_still_declined() -> None:
+    # Searching for a whole sentence literally matches nothing, so it is
+    # not worth a query.
+    assert keyword_phrase("Giúp mình giải bài tập số 3 trang 20 sách giáo khoa với") is None
+
+
+def test_two_passages_without_identifying_metadata_are_not_merged_into_one(
+    monkeypatch, settings
+) -> None:
+    # Keyed only on (source_file, chunk_index), two chunks missing both
+    # would share the key (None, None) and one would vanish as a duplicate.
+    rows = [
+        {
+            "text": "Phan so lop 6.",
+            "distance": 0.10,
+            "metadata": {"grade": 6, "subject": "Toán", "book_title": "SGK", "page_start": 1},
+        },
+        {
+            "text": "Ham so bac nhat lop 9.",
+            "distance": 0.11,
+            "metadata": {"grade": 9, "subject": "Toán", "book_title": "SGK", "page_start": 2},
+        },
+    ]
+    collection = FakeCollection(rows)
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    chunks = Retriever(settings).retrieve(
+        "hàm số bậc nhất", StudentProfile(grade=9, subject="Toán")
+    )
+
+    assert len(chunks) == 2
