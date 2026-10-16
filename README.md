@@ -11,6 +11,8 @@ Unlike standard ChatGPT or generic AI assistants that might hallucinate answers 
 1. **Metadata Isolation:** A 6th-grade student asking about Math will only receive answers from Math textbooks of grade 6 or below (never grade 7+) — the grade filter is a ceiling, not an exact match, so reviewing earlier material is allowed but reaching ahead is not. `Retriever.retrieve()` only accepts a `StudentProfile`, whose `grade` and `subject` are both mandatory — so no query can reach ChromaDB unfiltered.
 2. **Context-bound Generation:** The system prompt forces the LLM to reply with *"Mình chưa tìm thấy thông tin này trong sách giáo khoa của bạn"* if the answer cannot be found in the retrieved documents. When retrieval returns nothing, that answer is returned **without calling the LLM at all**.
 3. **Socratic Tutoring:** The bot guides students toward the answer with hints and questions instead of handing over the finished solution, preventing rote copying.
+4. **Verifiable by the student:** No RAG system is right 100% of the time, and a young student has no way to tell. So every grounded answer ends by naming the page they can open — *"📖 Bạn mở sách Toán 6, tập 1, trang 71 để kiểm tra lại nhé"* — built from ChromaDB metadata rather than the LLM's prose, so it can never point at a page that was not retrieved. The page number is the one **printed in the paper book**, not the PDF's index (see `dora-scan-page-offsets`).
+5. **Wrong answers get reported, not lost:** every answer carries a `🚩 Báo sai` button that files the question, the answer and the cited pages for a teacher to review, plus a `⭐ Chấm điểm` form collecting 1-5 scores for clarity and for whether the hinting actually helped.
 
 ## 🏗️ System Architecture
 
@@ -118,10 +120,45 @@ dora-run-zalo-bot       # Zalo OA, webhook server (put a reverse proxy + TLS in 
 | `/lop <1-12>` | Set the student's grade (required) |
 | `/mon <tên môn>` | Pin the subject, e.g. `/mon Toán` (optional — the subject is auto-detected per question otherwise) |
 | `/toi` | Show the current grade and subject |
+| `/baosai` | Flag the last answer as wrong (the Discord `🚩 Báo sai` button does the same) |
+| `/chamdiem <dễ hiểu> <gợi mở>` | Rate the last answer 1-5 on each, e.g. `/chamdiem 5 4` |
 | `/xoa` | Clear the conversation history |
 | `/trogiup` | Show help |
 
 The bot refuses to search the textbooks until a grade is set. The subject is auto-detected from each question unless pinned with `/mon`; the grade filter is a ceiling, not an exact match, so a student can also be shown content from any grade at or below their own (e.g. reviewing earlier material) but never from a grade above it.
+
+## 📏 Measuring quality (not just testing code)
+
+`pytest` proves the code does what it says, with fakes and no network. These
+tools measure how well the **real** index and the **real** LLM do on **real**
+textbook questions — which costs API calls and takes minutes.
+
+```bash
+dora-eval                 # ask the 50-question benchmark and score the answers
+dora-ocr-audit --help     # spot-check OCR quality, formulas and fractions first
+dora-feedback             # turn students' "Báo sai"/ratings into a teacher review sheet
+dora-scan-page-offsets    # measure, per book, how far the PDF index runs ahead of the printed page
+```
+
+**The benchmark** (`src/dora_edu/evaluation/question_set.py`) is 50 questions
+across grades 6-9 and seven subjects, of which **10 are deliberately outside the
+textbook** — for those, refusing is the correct answer, which is the only way to
+test the zero-hallucination promise rather than demonstrate it. No question uses
+a passage that was ever hand-patched, so the result measures the pipeline and not
+the patches. `dora-eval` reports, per question: answered or refused and whether
+that was right, whether every cited page was actually retrieved, and whether any
+passage came from the wrong subject or a higher grade. Reports land in
+`data/eval/` as Markdown plus a CSV with an empty column for a teacher's verdict,
+because whether an answer is *correct* still needs a person.
+
+**The OCR audit** exists because every book here is a scan, and Tesseract fails
+worst exactly where it matters most. It has already caught `a . b = b . a` read
+as `a - b = b - a` (a true commutative law turned false), `a/b` read as a bare
+`=`, and whole formula boxes losing every exponent. Confirmed cases are corrected
+in `manual_patches.py` and re-applied after every ingest.
+
+See `docs/dinh-huong-va-ban-quyen.md` for the development roadmap, the textbook
+copyright position, and the teacher review process.
 
 ## 🧪 Tests
 
@@ -129,7 +166,7 @@ The bot refuses to search the textbooks until a grade is set. The subject is aut
 pytest
 ```
 
-The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, filename-to-metadata inference for the real textbook corpus, the real Discord and Zalo adapters, and a throwaway fake channel proving that adding a new channel requires no changes to the RAG or LLM layers.
+The suite covers the guardrails directly: grade/subject isolation, the anti-hallucination short circuit, the Socratic prompt contract, filename-to-metadata inference for the real textbook corpus, printed-page citation, the feedback store and its buttons, the benchmark scoring, the real Discord and Zalo adapters, and a throwaway fake channel proving that adding a new channel requires no changes to the RAG or LLM layers.
 
 ## 🤝 Contributing
 
