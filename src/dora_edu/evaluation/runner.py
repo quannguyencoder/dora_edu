@@ -233,6 +233,7 @@ def run_benchmark(
     *,
     settings: Settings | None = None,
     delay_seconds: float = DEFAULT_DELAY_SECONDS,
+    retry_delay_seconds: float | None = None,
     retriever: Retriever | None = None,
     generator: AnswerGenerator | None = None,
 ) -> EvalReport:
@@ -243,6 +244,9 @@ def run_benchmark(
         settings: Application settings; the process singleton when omitted.
         delay_seconds: Pause between questions, to stay inside the free
             tier's per-minute request limit.
+        retry_delay_seconds: How long to wait before re-asking a question
+            the provider refused; three times ``delay_seconds`` (at least
+            15s) when omitted.
         retriever: Override the retriever (used by the tests).
         generator: Override the LLM backend (used by the tests).
 
@@ -264,6 +268,19 @@ def run_benchmark(
             question.question,
         )
         outcome = ask_one(question, retriever, generator)
+        if outcome.provider_error and delay_seconds:
+            # The free tier rate-limits by the minute, so one 429 in a
+            # 50-question run is routine -- and a question that never
+            # reached the LLM measures nothing. One patient retry keeps the
+            # run from quietly shrinking its own sample.
+            retry_delay = (
+                retry_delay_seconds
+                if retry_delay_seconds is not None
+                else max(delay_seconds * 3, 15.0)
+            )
+            logger.warning("    -> lỗi kỹ thuật, thử lại sau %.0fs", retry_delay)
+            time.sleep(retry_delay)
+            outcome = ask_one(question, retriever, generator)
         logger.info("    -> %s (%d đoạn)", outcome.verdict, outcome.retrieved)
         outcomes.append(outcome)
         if delay_seconds and index < len(questions):
@@ -285,16 +302,20 @@ def format_markdown(report: EvalReport) -> str:
     Returns:
         The full report, in Vietnamese.
     """
-    in_book = report.in_textbook
-    out_book = report.out_of_textbook
-    answered = tuple(o for o in in_book if not o.refused and not o.provider_error)
+    # Every rate counts only the questions that actually reached the LLM: a
+    # provider outage is not evidence either way, and counting it as a
+    # correct refusal would flatter the result.
+    in_book = tuple(o for o in report.in_textbook if not o.provider_error)
+    out_book = tuple(o for o in report.out_of_textbook if not o.provider_error)
+    answered = tuple(o for o in in_book if not o.refused)
 
     lines = [
         "# Kết quả kiểm thử DoraEdu",
         "",
         f"Ngày chạy: {date.today().isoformat()}",
         f"Số câu: {len(report.outcomes)} "
-        f"({len(in_book)} câu có trong sách, {len(out_book)} câu cố tình hỏi ngoài sách)",
+        f"({len(report.in_textbook)} câu có trong sách, "
+        f"{len(report.out_of_textbook)} câu cố tình hỏi ngoài sách)",
         "",
         "## 1. Tổng hợp",
         "",
@@ -317,6 +338,15 @@ def format_markdown(report: EvalReport) -> str:
         "không thì vẫn cần người (hoặc thầy cô) đọc lại — bảng ở mục 3 có đủ câu "
         "trả lời và trang sách để đối chiếu.",
         "",
+    ]
+    if report.provider_errors:
+        lines += [
+            f"Lưu ý: {len(report.provider_errors)} câu không gọi được API (hết lượt "
+            "miễn phí trong phút đó) nên KHÔNG được tính vào các tỉ lệ ở trên — "
+            "những câu đó chưa thật sự được hỏi, nên không thể coi là đúng hay sai.",
+            "",
+        ]
+    lines += [
         "## 2. Những câu cần xem lại trước",
         "",
     ]

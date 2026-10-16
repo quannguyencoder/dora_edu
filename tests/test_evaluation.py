@@ -281,3 +281,56 @@ def test_provider_outages_are_reported_separately() -> None:
     assert report.hallucinations == ()
     assert report.wrong_refusals == ()
     assert "Lỗi kỹ thuật, chưa hỏi được | 2" in format_markdown(report)
+
+
+def test_a_provider_outage_is_excluded_from_the_rates_not_counted_as_correct() -> None:
+    # Found in a real run: both questions that hit the rate limit were
+    # out-of-textbook ones, and the report credited them as "refused
+    # correctly" -- 10/10 instead of the honest 8/8.
+    from dora_edu.llm.generator import _SERVICE_ERROR_ANSWER
+
+    good = ask_one(
+        _OUT_OF_BOOK, FakeRetriever([]), FakeGenerator(NO_CONTEXT_ANSWER)
+    )
+    broken = ask_one(
+        _OUT_OF_BOOK, FakeRetriever([]), FakeGenerator(_SERVICE_ERROR_ANSWER)
+    )
+
+    markdown = format_markdown(EvalReport(outcomes=(good, broken)))
+
+    assert "Câu ngoài sách bị từ chối đúng | 1/1" in markdown
+    assert "KHÔNG được tính vào các tỉ lệ" in markdown
+
+
+def test_a_rate_limited_question_is_asked_again_before_giving_up() -> None:
+    from dora_edu.llm.generator import _RATE_LIMIT_ANSWER
+
+    class FlakyGenerator:
+        """Fails once, then answers -- what a per-minute quota looks like."""
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def generate(self, question, chunks, profile, history=None):
+            self.calls += 1
+            answer = (
+                _RATE_LIMIT_ANSWER
+                if self.calls == 1
+                else "Theo sách Toán 6, tập 1, trang 12: có hai ước."
+            )
+            return GeneratedAnswer(
+                answer=answer, grounded=bool(chunks), citations=[c.citation for c in chunks]
+            )
+
+    generator = FlakyGenerator()
+    report = run_benchmark(
+        (_IN_BOOK,),
+        delay_seconds=0.01,
+        retry_delay_seconds=0,
+        retriever=FakeRetriever([_chunk()]),
+        generator=generator,
+    )
+
+    assert generator.calls == 2
+    assert report.provider_errors == ()
+    assert report.outcomes[0].verdict == "ĐẠT"
