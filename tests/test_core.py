@@ -6,6 +6,7 @@ import pytest
 
 from dora_edu.bot.adapter import IncomingMessage
 from dora_edu.bot.core import TutorService, parse_command
+from dora_edu.bot.feedback import FeedbackStore
 from dora_edu.bot.session import SessionStore
 from dora_edu.llm import prompts
 from dora_edu.rag_engine import retriever as retriever_module
@@ -430,3 +431,259 @@ def test_a_meta_question_about_the_bot_lists_subjects_without_touching_retrieval
     assert "Lịch sử" in reply.text
     assert collection.queries == []
     assert generator.calls == []
+
+
+# --- "Báo sai" and the page-check reminder ---------------------------------
+
+
+@pytest.fixture
+def citing_tutor(monkeypatch, textbook_rows, settings) -> tuple[TutorService, FeedbackStore]:
+    """A tutor whose generator cites its chunks, plus the store it writes to."""
+    monkeypatch.setattr(
+        retriever_module, "get_collection", lambda *a, **k: FakeCollection(textbook_rows)
+    )
+    feedback = FeedbackStore()
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=FakeGenerator(cite_chunks=True),
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+        feedback=feedback,
+    )
+    return tutor, feedback
+
+
+def _ask(tutor: TutorService, text: str, user_id: str = "1"):
+    return tutor.handle(IncomingMessage(channel="discord", user_id=user_id, text=text))
+
+
+def test_an_answer_ends_with_the_page_the_student_can_check(citing_tutor) -> None:
+    tutor, _ = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+
+    reply = _ask(tutor, "Phan so la gi?")
+
+    assert "Bạn mở sách" in reply.text
+    assert "SGK Toán 6, trang 12" in reply.text
+    assert reply.citations == ["SGK Toán 6, trang 12"]
+
+
+def test_the_reminder_cites_only_pages_that_were_actually_retrieved(citing_tutor) -> None:
+    # The page line is built from ChromaDB metadata, never from the LLM's
+    # prose, so a 6th-grader can never be sent to a 9th-grade page.
+    tutor, _ = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+
+    reply = _ask(tutor, "Phan so la gi?")
+
+    assert "SGK Toán 9" not in reply.text
+    assert "SGK Lịch sử 6" not in reply.text
+
+
+def test_an_answer_carries_a_feedback_id_so_a_channel_can_offer_a_report_button(
+    citing_tutor,
+) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+
+    reply = _ask(tutor, "Phan so la gi?")
+
+    assert reply.feedback_id is not None
+    logged = feedback.get_answer(reply.feedback_id)
+    assert logged is not None
+    assert logged.question == "Phan so la gi?"
+    assert logged.channel == "discord"
+
+
+def test_baosai_records_the_question_answer_and_page(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    answer = _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, f"/baosai {answer.feedback_id}")
+
+    assert "Cảm ơn bạn đã báo" in reply.text
+    assert "SGK Toán 6, trang 12" in reply.text
+    reports = feedback.recent_reports()
+    assert len(reports) == 1
+    assert reports[0].answer.question == "Phan so la gi?"
+    assert reports[0].answer.citations == ["SGK Toán 6, trang 12"]
+    assert reports[0].reporter_id == "1"
+
+
+def test_baosai_without_an_id_flags_the_students_last_answer(citing_tutor) -> None:
+    # Telegram and Zalo have no button to carry the id, so a bare /baosai
+    # has to work there.
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/baosai")
+
+    assert "Cảm ơn bạn đã báo" in reply.text
+    assert [r.answer.question for r in feedback.recent_reports()] == ["Phan so la gi?"]
+
+
+def test_baosai_with_free_text_still_flags_the_last_answer(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/baosai cau nay sai roi")
+
+    assert "Cảm ơn bạn đã báo" in reply.text
+    assert len(feedback.recent_reports()) == 1
+
+
+def test_baosai_before_asking_anything_explains_what_to_do(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+
+    reply = _ask(tutor, "/baosai")
+
+    assert reply.text == prompts.FEEDBACK_NOTHING_TO_REPORT_MESSAGE
+    assert feedback.recent_reports() == []
+
+
+def test_baosai_for_an_answer_the_bot_no_longer_has_says_so(citing_tutor) -> None:
+    tutor, _ = citing_tutor
+
+    reply = _ask(tutor, "/baosai 4242")
+
+    assert reply.text == prompts.FEEDBACK_UNKNOWN_MESSAGE
+
+
+def test_a_wrong_refusal_can_be_reported_like_any_wrong_answer(
+    monkeypatch, textbook_rows, settings
+) -> None:
+    # Only grade-9 rows are indexed, so a grade-6 student's question
+    # retrieves nothing and the bot declines to answer.
+    monkeypatch.setattr(
+        retriever_module,
+        "get_collection",
+        lambda *a, **k: FakeCollection([r for r in textbook_rows if r["metadata"]["grade"] == 9]),
+    )
+    feedback = FeedbackStore()
+    tutor = TutorService(
+        retriever=Retriever(settings),
+        generator=FakeGenerator(cite_chunks=True),
+        sessions=SessionStore(max_turns=2),
+        settings=settings,
+        feedback=feedback,
+    )
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    refusal = _ask(tutor, "Dao ham cua ham so hop la gi?")
+    assert refusal.citations == []
+
+    reply = _ask(tutor, f"/baosai {refusal.feedback_id}")
+
+    assert "Cảm ơn bạn đã báo" in reply.text
+    reports = feedback.recent_reports()
+    assert len(reports) == 1
+    assert reports[0].answer.grounded is False
+
+
+def test_baosai_is_listed_in_the_help_message() -> None:
+    assert "/baosai" in prompts.HELP_MESSAGE
+
+
+# --- the 1-5 rating the classroom trial collects ---------------------------
+
+
+def test_chamdiem_stores_both_scores_for_the_last_answer(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/chamdiem 5 4")
+
+    assert reply.text == prompts.RATING_THANKS_MESSAGE
+    summary = feedback.summary()
+    assert (summary.ratings, summary.raters) == (1, 1)
+    assert (summary.average_clarity, summary.average_guidance) == (5, 4)
+
+
+def test_chamdiem_keeps_a_free_text_note(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    answer = _ask(tutor, "Phan so la gi?")
+
+    _ask(tutor, "/chamdiem 4 5 mình thích cách hỏi lại")
+
+    ratings = feedback.ratings_for(answer.feedback_id)
+    assert [r.comment for r in ratings] == ["mình thích cách hỏi lại"]
+
+
+def test_a_second_rating_from_the_same_student_replaces_the_first(citing_tutor) -> None:
+    # Otherwise one tester tapping twice would count as two testers and skew
+    # the classroom average.
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    _ask(tutor, "/chamdiem 2 2")
+    _ask(tutor, "/chamdiem 5 5")
+
+    summary = feedback.summary()
+    assert summary.ratings == 1
+    assert summary.average_clarity == 5
+
+
+def test_two_students_rating_the_same_answer_both_count(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    answer = _ask(tutor, "Phan so la gi?")
+
+    _ask(tutor, "/chamdiem 5 5")
+    # A classmate rating the same answer, from their own session.
+    _ask(tutor, f"/chamdiem #{answer.feedback_id} 3 3", user_id="2")
+
+    summary = feedback.summary()
+    assert (summary.ratings, summary.raters) == (2, 2)
+    assert summary.average_clarity == 4
+
+
+def test_chamdiem_without_a_score_explains_the_scale(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/chamdiem")
+
+    assert reply.text == prompts.RATING_USAGE_MESSAGE
+    assert feedback.summary().ratings == 0
+
+
+def test_a_score_outside_one_to_five_is_explained_not_stored(citing_tutor) -> None:
+    tutor, feedback = citing_tutor
+    _ask(tutor, "/lop 6")
+    _ask(tutor, "/mon toan")
+    _ask(tutor, "Phan so la gi?")
+
+    reply = _ask(tutor, "/chamdiem 9 4")
+
+    assert reply.text == prompts.RATING_USAGE_MESSAGE
+    assert feedback.summary().ratings == 0
+
+
+def test_chamdiem_before_asking_anything_explains_what_to_do(citing_tutor) -> None:
+    tutor, _ = citing_tutor
+
+    reply = _ask(tutor, "/chamdiem 5 5")
+
+    assert reply.text == prompts.FEEDBACK_NOTHING_TO_REPORT_MESSAGE
+
+
+def test_chamdiem_is_listed_in_the_help_message() -> None:
+    assert "/chamdiem" in prompts.HELP_MESSAGE

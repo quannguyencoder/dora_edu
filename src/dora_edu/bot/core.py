@@ -8,8 +8,10 @@ messaging library, so Telegram and Zalo behave identically by construction.
 from __future__ import annotations
 
 import logging
+import re
 
 from dora_edu.bot.adapter import IncomingMessage, OutgoingMessage
+from dora_edu.bot.feedback import FeedbackStore
 from dora_edu.bot.session import Session, SessionStore
 from dora_edu.config import Settings, get_settings
 from dora_edu.llm import prompts
@@ -49,6 +51,49 @@ def parse_command(text: str) -> tuple[str, str] | None:
     return command, argument.strip()
 
 
+#: How a channel's own control passes the answer it refers to: "#12". The "#"
+#: is what keeps it apart from a score -- a student typing "/chamdiem 5 4"
+#: means "clarity 5, guidance 4 for the last answer", and without the marker
+#: a leading 5 would be indistinguishable from the id of answer 5.
+_FEEDBACK_ID_TOKEN = re.compile(r"^#(\d+)$")
+
+
+def _parse_rating(
+    argument: str, *, fallback_id: int | None
+) -> tuple[int | None, int | None, int | None, str | None]:
+    """Parse a ``/chamdiem`` argument into an answer id, two scores and a note.
+
+    Accepts what a student plausibly types (``"5 4"``, ``"5"``, ``"5 4 hơi
+    dài"``) as well as what the Discord rating form sends (``"#12 5 4"``).
+
+    Args:
+        argument: Everything after the command name.
+        fallback_id: The answer to rate when the argument names none.
+
+    Returns:
+        An ``(answer_id, clarity, guidance, comment)`` tuple; any element
+        may be ``None`` when the argument did not carry it.
+    """
+    tokens = argument.split()
+    answer_id = fallback_id
+    if tokens:
+        match = _FEEDBACK_ID_TOKEN.match(tokens[0])
+        if match:
+            answer_id = int(match.group(1))
+            tokens = tokens[1:]
+
+    scores: list[int] = []
+    while tokens and tokens[0].isdigit() and len(scores) < 2:
+        scores.append(int(tokens.pop(0)))
+
+    return (
+        answer_id,
+        scores[0] if scores else None,
+        scores[1] if len(scores) > 1 else None,
+        " ".join(tokens).strip() or None,
+    )
+
+
 class TutorService:
     """Turns a student message into a textbook-grounded tutoring reply."""
 
@@ -58,6 +103,7 @@ class TutorService:
         generator: AnswerGenerator,
         sessions: SessionStore | None = None,
         settings: Settings | None = None,
+        feedback: FeedbackStore | None = None,
     ) -> None:
         """Wire the service to its retrieval, generation and session backends."""
         self._settings = settings or get_settings()
@@ -71,6 +117,10 @@ class TutorService:
         self._sessions = sessions if sessions is not None else SessionStore(
             max_turns=self._settings.session_max_turns
         )
+        # Defaulting to an in-memory store (rather than one pointed at
+        # settings.feedback_db_path) keeps tests from writing a database
+        # file; the bot entry points pass a persistent one explicitly.
+        self._feedback = feedback if feedback is not None else FeedbackStore()
 
     def __call__(self, message: IncomingMessage) -> OutgoingMessage:
         """Satisfy the :class:`~dora_edu.bot.adapter.MessageHandler` protocol."""
@@ -132,6 +182,10 @@ class TutorService:
             return reply
         if name in {"toi", "me"}:
             return self._describe_profile(session)
+        if name in {"baosai", "report"}:
+            return self._report_wrong_answer(argument, message, session)
+        if name in {"chamdiem", "rate"}:
+            return self._rate_answer(argument, message, session)
         if name in {"xoa", "reset"}:
             session.clear_history()
             return OutgoingMessage(text="Mình đã xoá lịch sử trò chuyện rồi nhé! Bạn hỏi tiếp đi. 😊")
@@ -140,6 +194,106 @@ class TutorService:
         return OutgoingMessage(
             text=f"Mình chưa hiểu lệnh /{name}. Bạn xem lại các lệnh bằng /trogiup nhé!"
         )
+
+    def _report_wrong_answer(
+        self, argument: str, message: IncomingMessage, session: Session
+    ) -> OutgoingMessage:
+        """Record that a student flagged an answer as wrong.
+
+        The id comes either from the channel's report control (a Discord
+        button passes it as the command argument) or, when the channel has
+        no buttons, from the last answer in this student's session.
+
+        Args:
+            argument: The feedback id, or empty for "the last answer".
+            message: The incoming message, used for the reporter's identity.
+            session: The student's session.
+
+        Returns:
+            A thank-you naming the page to check, or an explanation of why
+            the answer could no longer be flagged.
+        """
+        answer_id = session.last_feedback_id
+        if argument.strip():
+            try:
+                answer_id = int(argument.strip())
+            except ValueError:
+                # A button always sends a well-formed id, so this is a
+                # student typing "/baosai cau nay sai" -- treat the text as
+                # "the last answer" rather than rejecting them outright.
+                answer_id = session.last_feedback_id
+        if answer_id is None:
+            return OutgoingMessage(text=prompts.FEEDBACK_NOTHING_TO_REPORT_MESSAGE)
+
+        record = self._feedback.record_report(answer_id, message.user_id)
+        if record is None:
+            return OutgoingMessage(text=prompts.FEEDBACK_UNKNOWN_MESSAGE)
+
+        logger.info(
+            "Answer %s flagged by %s on %s (grade=%s subject=%s grounded=%s)",
+            answer_id,
+            message.user_id,
+            message.channel,
+            record.grade,
+            record.subject,
+            record.grounded,
+        )
+        return OutgoingMessage(
+            text=prompts.build_feedback_thanks(record.citations),
+            citations=record.citations,
+        )
+
+    def _rate_answer(
+        self, argument: str, message: IncomingMessage, session: Session
+    ) -> OutgoingMessage:
+        """Record one student's 1-5 scores for an answer.
+
+        This is how the classroom trial collects its numbers: each tester
+        scores how easy the answer was to understand, and whether the
+        Socratic hinting actually helped them work it out themselves, on the
+        same 1-5 scale a teacher would use.
+
+        Args:
+            argument: ``"<clarity> <guidance> [ghi chú]"`` as a student
+                types it, or ``"<id> <clarity> <guidance> [ghi chú]"`` as
+                the Discord rating form sends it.
+            message: The incoming message, for the rater's identity.
+            session: The student's session, holding the answer to rate when
+                no id is given.
+
+        Returns:
+            A thank-you, or an explanation of what to type instead.
+        """
+        answer_id, clarity, guidance, comment = _parse_rating(
+            argument, fallback_id=session.last_feedback_id
+        )
+        if answer_id is None:
+            return OutgoingMessage(text=prompts.FEEDBACK_NOTHING_TO_REPORT_MESSAGE)
+        if clarity is None and guidance is None:
+            return OutgoingMessage(text=prompts.RATING_USAGE_MESSAGE)
+
+        try:
+            record = self._feedback.record_rating(
+                answer_id,
+                message.user_id,
+                clarity=clarity,
+                guidance=guidance,
+                comment=comment,
+            )
+        except ValueError:
+            # A score outside 1-5: a typo in a hand-typed command, not a bug.
+            return OutgoingMessage(text=prompts.RATING_USAGE_MESSAGE)
+        if record is None:
+            return OutgoingMessage(text=prompts.FEEDBACK_UNKNOWN_MESSAGE)
+
+        logger.info(
+            "Answer %s rated by %s (clarity=%s guidance=%s)",
+            answer_id,
+            message.user_id,
+            clarity,
+            guidance,
+        )
+        return OutgoingMessage(text=prompts.RATING_THANKS_MESSAGE)
 
     def _set_grade(self, argument: str, session: Session) -> OutgoingMessage:
         """Set or update the student's grade, keeping any subject already chosen."""
@@ -255,7 +409,29 @@ class TutorService:
 
         result = self._generator.generate(question, chunks, profile, session.history())
         session.record_turn(question, result.answer)
-        return OutgoingMessage(text=result.answer)
+
+        # Logged before sending, and for refusals too: a refusal the student
+        # believes is wrong ("the book *does* cover this!") is exactly as
+        # worth collecting as a wrong answer.
+        feedback_id = self._feedback.record_answer(
+            channel=message.channel,
+            user_id=message.user_id,
+            grade=profile.grade,
+            subject=profile.subject,
+            question=question,
+            answer=result.answer,
+            citations=result.citations,
+            grounded=result.grounded,
+        )
+        session.last_feedback_id = feedback_id
+
+        # The page reminder is built from retrieval metadata, not from the
+        # LLM's prose, so it can only ever name a page actually retrieved.
+        reminder = prompts.build_page_check_reminder(result.citations)
+        text = f"{result.answer}\n\n{reminder}" if reminder else result.answer
+        return OutgoingMessage(
+            text=text, citations=result.citations, feedback_id=feedback_id
+        )
 
     def _detect_subject(self, question: str, grade: int) -> str | None:
         """Work out which subject of ``grade`` a subject-less question is about.

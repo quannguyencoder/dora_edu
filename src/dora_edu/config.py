@@ -72,6 +72,10 @@ class Settings(BaseSettings):
     #: Persists each student's grade/subject across bot restarts (conversation
     #: history is not persisted -- it is cheap to rebuild and not worth it).
     session_db_path: Path = Path("./data/sessions.db")
+
+    #: Answers students flagged with "Báo sai", for teacher review. Only
+    #: flagged answers are written here -- never the whole conversation.
+    feedback_db_path: Path = Path("./data/feedback.db")
     log_level: str = "INFO"
 
     @field_validator("chunk_overlap")

@@ -30,6 +30,10 @@ class Session:
     max_turns: int
     grade: int | None = None
     subject: str | None = None
+    #: Feedback id of the most recent answer, so a bare ``/baosai`` (no
+    #: button to carry the id -- Telegram, Zalo, or a student typing it)
+    #: still flags the right answer.
+    last_feedback_id: int | None = None
     _messages: deque[dict[str, str]] = field(default_factory=deque, repr=False)
 
     def __post_init__(self) -> None:
@@ -60,6 +64,7 @@ class Session:
     def clear_history(self) -> None:
         """Drop the conversation history but keep the grade/subject profile."""
         self._messages.clear()
+        self.last_feedback_id = None
 
 
 class SessionStore:

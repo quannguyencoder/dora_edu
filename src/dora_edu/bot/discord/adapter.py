@@ -22,6 +22,89 @@ logger = logging.getLogger(__name__)
 #: Discord rejects messages longer than this many characters.
 _MAX_DISCORD_MESSAGE = 2000
 
+#: Prefix of the "Báo sai" button's ``custom_id``; the feedback id follows it.
+#: Discord sends this string straight back on a click, which is what lets the
+#: button keep working after a restart -- the click is handled in
+#: ``on_interaction`` from the id alone, with no in-memory view to look up.
+_REPORT_CUSTOM_ID_PREFIX = "dora:report:"
+
+#: What the student presses when an answer looks wrong.
+_REPORT_BUTTON_LABEL = "🚩 Báo sai"
+
+#: Prefix of the "Chấm điểm" button's ``custom_id``, same scheme as above.
+_RATE_CUSTOM_ID_PREFIX = "dora:rate:"
+
+#: What the student presses to score an answer 1-5.
+_RATE_BUTTON_LABEL = "⭐ Chấm điểm"
+
+
+def build_feedback_view(feedback_id: int) -> discord.ui.View:
+    """Build the row of feedback controls that sits under an answer.
+
+    Args:
+        feedback_id: Id of the answer in the feedback store.
+
+    Returns:
+        A view holding the "Báo sai" and "Chấm điểm" buttons, never timing
+        out so they stay pressable for as long as the message is on screen.
+    """
+    view = discord.ui.View(timeout=None)
+    view.add_item(
+        discord.ui.Button(
+            label=_REPORT_BUTTON_LABEL,
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"{_REPORT_CUSTOM_ID_PREFIX}{feedback_id}",
+        )
+    )
+    view.add_item(
+        discord.ui.Button(
+            label=_RATE_BUTTON_LABEL,
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"{_RATE_CUSTOM_ID_PREFIX}{feedback_id}",
+        )
+    )
+    return view
+
+
+class _RatingModal(discord.ui.Modal):
+    """The 1-5 form a student fills in after pressing "Chấm điểm".
+
+    The two questions are the ones the classroom trial asks: was the answer
+    easy to understand, and did the hinting help the student work it out
+    themselves. Both arrive as text, because Discord modals have no numeric
+    input -- :func:`~dora_edu.bot.core._parse_rating` is what decides
+    whether what was typed is a usable score.
+    """
+
+    clarity: discord.ui.TextInput = discord.ui.TextInput(
+        label="Câu trả lời có dễ hiểu không? (1-5)",
+        placeholder="5",
+        max_length=1,
+    )
+    guidance: discord.ui.TextInput = discord.ui.TextInput(
+        label="Gợi mở có giúp bạn tự nghĩ ra? (1-5)",
+        placeholder="4",
+        max_length=1,
+    )
+    comment: discord.ui.TextInput = discord.ui.TextInput(
+        label="Góp ý thêm (không bắt buộc)",
+        style=discord.TextStyle.paragraph,
+        required=False,
+        max_length=300,
+    )
+
+    def __init__(self, feedback_id: str, client: "_TutorDiscordClient") -> None:
+        super().__init__(title="Chấm điểm câu trả lời")
+        self._feedback_id = feedback_id
+        self._client = client
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        """Forward the filled-in form as the ordinary ``/chamdiem`` command."""
+        argument = f"#{self._feedback_id} {self.clarity.value} {self.guidance.value}"
+        if self.comment.value:
+            argument = f"{argument} {self.comment.value}"
+        await self._client.handle_feedback_interaction(interaction, f"/chamdiem {argument}")
+
 
 def split_for_discord(text: str, limit: int = _MAX_DISCORD_MESSAGE) -> list[str]:
     """Split a reply into Discord-sized pieces, preferring line boundaries.
@@ -85,11 +168,68 @@ class _TutorDiscordClient(discord.Client):
             logger.error("Rejected malformed Discord message: %s", exc)
             return
 
+        pieces = split_for_discord(reply.text)
+        # The buttons belong under the end of the answer, so a long reply
+        # split across several messages only carries them on the last one.
+        view = build_feedback_view(reply.feedback_id) if reply.feedback_id else None
         try:
-            for piece in split_for_discord(reply.text):
-                await message.channel.send(piece)
+            for index, piece in enumerate(pieces):
+                is_last = index == len(pieces) - 1
+                await message.channel.send(piece, view=view if is_last else None)
         except discord.DiscordException as exc:
             logger.error("Discord rejected the reply to %s: %s", message.author.id, exc)
+
+    async def on_interaction(self, interaction: discord.Interaction) -> None:
+        """Route a feedback button press to the shared tutoring handler.
+
+        Each press is turned into the equivalent text command -- ``/baosai``
+        or ``/chamdiem`` -- so the buttons are pure Discord rendering: a
+        Telegram or Zalo student typing the same command reaches exactly the
+        same code. Dispatching from ``custom_id`` here (rather than from a
+        per-message view callback) is also what keeps the buttons working
+        after a restart, since nothing has to be looked up in memory.
+        """
+        custom_id = str((interaction.data or {}).get("custom_id", ""))
+        if custom_id.startswith(_REPORT_CUSTOM_ID_PREFIX):
+            feedback_id = custom_id[len(_REPORT_CUSTOM_ID_PREFIX) :]
+            await self.handle_feedback_interaction(interaction, f"/baosai {feedback_id}")
+            return
+        if custom_id.startswith(_RATE_CUSTOM_ID_PREFIX):
+            feedback_id = custom_id[len(_RATE_CUSTOM_ID_PREFIX) :]
+            try:
+                # A rating needs two numbers, so it opens a form instead of
+                # being recorded straight from the press; the submitted form
+                # comes back through this same method as /chamdiem.
+                await interaction.response.send_modal(_RatingModal(feedback_id, self))
+            except discord.DiscordException as exc:
+                logger.error("Discord rejected the rating form for %s: %s", interaction.user.id, exc)
+
+    async def handle_feedback_interaction(
+        self, interaction: discord.Interaction, command: str
+    ) -> None:
+        """Run ``command`` on behalf of the interacting student and reply privately.
+
+        Args:
+            interaction: The button press or submitted form.
+            command: The equivalent text command to run, e.g. ``"/baosai 12"``.
+        """
+        try:
+            reply = await asyncio.to_thread(
+                self._adapter.dispatch,
+                str(interaction.user.id),
+                command,
+                interaction.user.display_name,
+            )
+        except ValueError as exc:
+            logger.error("Rejected malformed Discord interaction: %s", exc)
+            return
+
+        try:
+            # Ephemeral: the acknowledgement is for the student who pressed,
+            # and should not add noise to a shared study channel.
+            await interaction.response.send_message(reply.text, ephemeral=True)
+        except discord.DiscordException as exc:
+            logger.error("Discord rejected the feedback ack for %s: %s", interaction.user.id, exc)
 
 
 class DiscordAdapter(ChannelAdapter):

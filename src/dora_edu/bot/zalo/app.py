@@ -6,6 +6,7 @@ import logging
 import sys
 
 from dora_edu.bot.core import TutorService
+from dora_edu.bot.feedback import FeedbackStore
 from dora_edu.bot.session import SessionStore
 from dora_edu.bot.zalo.adapter import ZaloAdapter
 from dora_edu.config import get_settings
@@ -37,6 +38,7 @@ def main() -> int:
                 max_turns=settings.session_max_turns, db_path=settings.session_db_path
             ),
             settings=settings,
+            feedback=FeedbackStore(db_path=settings.feedback_db_path),
         )
         adapter = ZaloAdapter(
             tutor,

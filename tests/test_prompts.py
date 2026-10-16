@@ -110,3 +110,54 @@ def test_build_messages_orders_system_history_then_question() -> None:
 
     assert [m["role"] for m in messages] == ["system", "user", "assistant", "user"]
     assert "Cau hoi moi" in messages[-1]["content"]
+
+
+def test_the_page_reminder_names_the_page_the_answer_came_from() -> None:
+    reminder = prompts.build_page_check_reminder(["Toán 8 - tập 1, trang 40"])
+
+    assert "Toán 8 - tập 1, trang 40" in reminder
+    assert "Báo sai" in reminder
+
+
+def test_the_page_reminder_is_empty_when_nothing_was_retrieved() -> None:
+    # A refusal has no page to check, so there is nothing to promise.
+    assert prompts.build_page_check_reminder([]) == ""
+
+
+def test_the_page_reminder_never_sends_a_student_to_another_book() -> None:
+    # Retrieval may legitimately return a lower grade's book (revision is
+    # allowed), but an answer about Toán 8 must not tell the student to go
+    # and check Toán 7.
+    reminder = prompts.build_page_check_reminder(
+        [
+            "Toán 8 - tập 1, trang 40",
+            "Toán 7 - tập 2, trang 4-5",
+            "Toán 7 - tập 2, trang 59",
+        ]
+    )
+
+    assert "Toán 8 - tập 1, trang 40" in reminder
+    assert "Toán 7" not in reminder
+
+
+def test_the_page_reminder_keeps_several_pages_of_the_same_book() -> None:
+    reminder = prompts.build_page_check_reminder(
+        ["Toán 8 - tập 1, trang 40", "Toán 8 - tập 1, trang 31"]
+    )
+
+    assert "trang 40" in reminder
+    assert "trang 31" in reminder
+
+
+def test_the_feedback_thanks_points_at_the_page_as_the_final_authority() -> None:
+    thanks = prompts.build_feedback_thanks(["Toán 8 - tập 1, trang 40"])
+
+    assert "Toán 8 - tập 1, trang 40" in thanks
+    assert "sách giấy" in thanks
+
+
+def test_the_feedback_thanks_handles_a_refusal_with_no_pages() -> None:
+    thanks = prompts.build_feedback_thanks([])
+
+    assert "Cảm ơn" in thanks
+    assert "trang" not in thanks.replace("trang sách", "")

@@ -8,6 +8,8 @@ tutor Socratically instead of handing over finished answers.
 
 from __future__ import annotations
 
+import re
+
 from dora_edu.models import RetrievedChunk, StudentProfile
 
 #: Returned verbatim when retrieval finds nothing, so the "zero-hallucination"
@@ -60,6 +62,176 @@ def build_capability_message(grade: int, subjects: list[str]) -> str:
     )
 
 
+#: Beyond this, the reminder stops being something a student can act on.
+_MAX_CITED_SOURCES = 2
+
+#: Splits "Toán 8 - tập 1, trang 40" into the book and the page part.
+_CITATION_BOOK_SEPARATOR = ", trang "
+
+
+def _same_book_as_best_match(citations: list[str]) -> list[str]:
+    """Keep only the pages worth opening, from the best-matching book.
+
+    Retrieval returns its chunks ranked by distance, and the tail of that
+    list is often a loosely-related passage from another book -- for a
+    grade-8 student, often a *lower grade's* book, which the grade filter
+    allows for revision. Telling that student to go and check a Toán 7 page
+    for a Toán 8 answer is worse than citing nothing, so only pages from the
+    same book as the closest match survive here.
+
+    Args:
+        citations: Source labels, best match first.
+
+    Returns:
+        At most :data:`_MAX_CITED_SOURCES` labels, in rank order.
+    """
+    unique = list(dict.fromkeys(c for c in citations if c.strip()))
+    if not unique:
+        return []
+    best_book = unique[0].split(_CITATION_BOOK_SEPARATOR, 1)[0]
+    same_book = [c for c in unique if c.split(_CITATION_BOOK_SEPARATOR, 1)[0] == best_book]
+    return same_book[:_MAX_CITED_SOURCES]
+
+#: A page number as rule 8 makes the LLM write it ("Theo sách Toán 6, tập 1,
+#: trang 79"). Used only to work out which of the retrieved passages the
+#: answer actually leaned on -- never to invent a page.
+_PAGE_IN_ANSWER = re.compile(r"trang\s+(\d{1,3})", re.IGNORECASE)
+
+
+def select_cited_sources(
+    answer: str, chunks: list[RetrievedChunk], *, limit: int = _MAX_CITED_SOURCES
+) -> list[str]:
+    """Pick which retrieved passages the answer should send the student to check.
+
+    Retrieval returns up to ``retrieval_top_k`` passages but an answer
+    normally uses one or two of them, so listing every retrieved page would
+    send a student leafing through pages that have nothing to do with their
+    question. The answer names its pages by rule 8, so this matches those
+    page numbers back against the retrieved passages and keeps only the ones
+    that line up -- a page number the answer invented matches nothing and is
+    therefore dropped, which is the point: the student is only ever pointed
+    at a page that really was retrieved.
+
+    Args:
+        answer: The generated answer text.
+        chunks: The passages it was generated from, nearest first.
+        limit: Maximum sources to return.
+
+    Returns:
+        Source labels in the order the answer mentions them, falling back to
+        the nearest passage when the answer names no page at all; empty when
+        nothing was retrieved.
+    """
+    if not chunks:
+        return []
+
+    selected: list[str] = []
+    for match in _PAGE_IN_ANSWER.finditer(answer):
+        page = int(match.group(1))
+        for chunk in chunks:
+            # Printed page numbers, matching what the citation (and so the
+            # answer) talks about -- not the PDF's own page indices.
+            start = chunk.page_start
+            end = chunk.page_end or start
+            if start is None or not start <= page <= end:
+                continue
+            if chunk.citation not in selected:
+                selected.append(chunk.citation)
+            break
+    if not selected:
+        # The answer cited no page (or none that was retrieved) -- the
+        # nearest passage is still the best place for the student to look.
+        selected = [chunks[0].citation]
+    return selected[:limit]
+
+
+def build_page_check_reminder(citations: list[str]) -> str:
+    """Invite the student to verify the answer against the printed page.
+
+    The bot can be wrong, and a young student has no easy way to tell -- so
+    every grounded answer ends by naming the page they can open to check it
+    themselves. The pages come from ChromaDB metadata
+    (:attr:`~dora_edu.models.RetrievedChunk.citation`), never from the LLM's
+    own prose, so this line cannot cite a page that was not actually
+    retrieved.
+
+    Args:
+        citations: Source labels of the chunks the answer was built from.
+
+    Returns:
+        The reminder, or an empty string when nothing was retrieved (a
+        refusal has no page to check).
+    """
+    unique = _same_book_as_best_match(citations)
+    if not unique:
+        return ""
+    listed = "; ".join(unique)
+    return (
+        f"📖 Bạn mở sách {listed} để kiểm tra lại nhé.\n"
+        "Nếu thấy mình trả lời chưa đúng, bạn bấm nút “🚩 Báo sai” "
+        "(hoặc gõ /baosai) để mình ghi lại nha!"
+    )
+
+
+def build_feedback_thanks(citations: list[str]) -> str:
+    """Thank a student for flagging an answer, and point them at the page.
+
+    Args:
+        citations: Pages the flagged answer was built from; empty when the
+            bot had refused to answer at all.
+
+    Returns:
+        The reply, in Vietnamese.
+    """
+    opening = (
+        "Cảm ơn bạn đã báo! 🙏 Mình đã ghi lại câu hỏi, câu trả lời và trang sách "
+        "để thầy cô xem lại.\n\n"
+    )
+    unique = _same_book_as_best_match(citations)
+    if not unique:
+        return opening + (
+            "Nếu bạn chắc là sách có phần này, bạn thử hỏi lại bằng đúng từ ngữ "
+            "trong sách giúp mình nhé — có thể mình tìm chưa ra thôi. 📘"
+        )
+    listed = "; ".join(unique)
+    return opening + (
+        f"Trong lúc chờ, bạn mở sách {listed} đối chiếu giúp mình nhé — "
+        "sách giấy luôn là chuẩn cuối cùng. 📘"
+    )
+
+#: Shown when a student flags an answer the bot no longer holds.
+FEEDBACK_UNKNOWN_MESSAGE = (
+    "Mình không còn giữ câu trả lời đó nữa rồi (có thể mình vừa khởi động lại). 😅\n\n"
+    "Bạn hỏi lại câu đó một lần nữa rồi bấm “🚩 Báo sai” ngay dưới câu trả lời mới nhé!"
+)
+
+#: Shown when a student types /baosai before asking anything.
+FEEDBACK_NOTHING_TO_REPORT_MESSAGE = (
+    "Bạn hỏi mình một câu trước đã nhé, rồi nếu câu trả lời chưa đúng thì bấm "
+    "“🚩 Báo sai” (hoặc gõ /baosai) ngay dưới câu đó. 😊"
+)
+
+#: Shown after a student submits the 1-5 rating form.
+RATING_THANKS_MESSAGE = (
+    "Cảm ơn bạn đã chấm điểm! ⭐ Mình ghi lại rồi — góp ý của bạn giúp mình "
+    "giảng dễ hiểu hơn cho các bạn sau nữa. 😊"
+)
+
+#: Shown when /chamdiem arrives without a usable 1-5 score.
+RATING_USAGE_MESSAGE = (
+    "Bạn chấm cho mình 2 điểm từ 1 đến 5 nhé:\n"
+    "• Điểm 1: câu trả lời có DỄ HIỂU không?\n"
+    "• Điểm 2: cách gợi mở có giúp bạn TỰ NGHĨ RA không?\n\n"
+    "Ví dụ: /chamdiem 5 4 — hoặc bấm nút “⭐ Chấm điểm” ngay dưới câu trả lời "
+    "thì tiện hơn. 😊"
+)
+
+#: Shown when a non-admin tries the teacher-facing statistics command.
+ADMIN_ONLY_MESSAGE = (
+    "Lệnh này dành cho thầy cô phụ trách bạn nhé. Bạn cứ hỏi bài bình thường thôi! 😊"
+)
+
+
 WELCOME_MESSAGE = (
     "Chào bạn! Mình là DoraEdu 🎒 — gia sư đồng hành cùng bạn 24/7.\n\n"
     "Mình chỉ trả lời dựa trên sách giáo khoa chính thức của Bộ Giáo dục và Đào tạo, "
@@ -77,6 +249,9 @@ HELP_MESSAGE = (
     "mặc định mình tự nhận diện môn theo câu hỏi)\n"
     "• /toi — xem lớp và môn bạn đang chọn\n"
     "• /xoa — xoá lịch sử trò chuyện\n"
+    "• /baosai — báo cho mình biết câu trả lời vừa rồi bị sai\n"
+    "• /chamdiem <dễ hiểu> <gợi mở> — chấm 1-5 cho câu trả lời vừa rồi, "
+    "ví dụ: /chamdiem 5 4\n"
     "• /trogiup — xem lại hướng dẫn này\n\n"
     "Còn lại, bạn chỉ cần nhắn câu hỏi cho mình thôi! 😊"
 )

@@ -32,11 +32,26 @@ class IncomingMessage(BaseModel):
 
 
 class OutgoingMessage(BaseModel):
-    """A reply to send back to the student."""
+    """A reply to send back to the student.
+
+    Beyond the text, a reply may carry structured extras that each channel
+    renders in its own way: Discord turns ``feedback_id`` into a "Báo sai"
+    button, while Telegram and Zalo leave it to the student to type
+    ``/baosai``. Keeping them as data here -- rather than baking a button
+    into the text -- is what lets the core stay channel-agnostic.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     text: str = Field(min_length=1)
+    citations: list[str] = Field(
+        default_factory=list,
+        description="Textbook pages the answer came from, straight from ChromaDB metadata.",
+    )
+    feedback_id: int | None = Field(
+        default=None,
+        description="Id of this answer in the feedback store, when it can be flagged as wrong.",
+    )
 
 
 class MessageHandler(Protocol):
@@ -44,6 +59,32 @@ class MessageHandler(Protocol):
 
     def __call__(self, message: IncomingMessage) -> OutgoingMessage:
         """Turn one student message into one reply."""
+        ...
+
+
+class FeedbackHandler(Protocol):
+    """The side of the brain that receives a student's verdict on an answer.
+
+    A channel with interactive controls (Discord buttons, a Telegram inline
+    keyboard) calls these directly; a channel without them reaches the same
+    code through the ``/baosai`` command, which is plain text and so needs
+    nothing beyond :class:`MessageHandler`.
+    """
+
+    def report_wrong_answer(self, feedback_id: int, reporter_id: str) -> OutgoingMessage:
+        """Record that ``feedback_id``'s answer looks wrong to the student."""
+        ...
+
+    def rate_answer(
+        self,
+        feedback_id: int,
+        user_id: str,
+        *,
+        clarity: int | None = None,
+        guidance: int | None = None,
+        comment: str | None = None,
+    ) -> OutgoingMessage:
+        """Record one student's 1-5 scores for ``feedback_id``'s answer."""
         ...
 
 
