@@ -73,6 +73,24 @@ _RESTORE_DIACRITICS_PROMPT_TEMPLATE = (
 )
 
 
+def is_provider_error_answer(answer: str) -> bool:
+    """Return whether ``answer`` is an apology for the provider being down.
+
+    These are not tutoring answers at all: the LLM never saw the question.
+    Anything measuring answer quality (see
+    :mod:`dora_edu.evaluation.runner`) has to tell them apart from a real
+    answer and from a real refusal, or a rate-limited run looks like a run
+    full of hallucinations.
+
+    Args:
+        answer: The text that was sent to the student.
+
+    Returns:
+        ``True`` for the service-error or rate-limit apology.
+    """
+    return answer.strip() in {_SERVICE_ERROR_ANSWER.strip(), _RATE_LIMIT_ANSWER.strip()}
+
+
 def _parse_classification(raw: str, subjects: list[str]) -> str | None:
     """Turn a classification reply into a subject, the meta sentinel, or ``None``.
 
