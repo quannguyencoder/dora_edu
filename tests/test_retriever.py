@@ -92,10 +92,14 @@ def test_empty_question_is_rejected_before_touching_the_database(retriever, coll
     assert collection.queries == []
 
 
-def test_top_k_is_forwarded_to_chromadb(retriever, collection) -> None:
-    retriever.retrieve("Phan so", StudentProfile(grade=6, subject="Toán"), top_k=3)
+def test_top_k_decides_how_many_passages_come_back(retriever, collection) -> None:
+    chunks = retriever.retrieve("Phan so", StudentProfile(grade=6, subject="Toán"), top_k=3)
 
-    assert collection.queries[0]["n_results"] == 3
+    assert len(chunks) <= 3
+    # More than top_k is fetched on purpose: the grade re-ranking can only
+    # promote a passage that was fetched, so the pool has to be wider than
+    # the result.
+    assert collection.queries[0]["n_results"] > 3
 
 
 # --- Subject auto-detection (retrieve_best_subject / list_subjects) --------
@@ -342,3 +346,87 @@ def test_a_passage_is_never_returned_twice_by_two_passes(monkeypatch, settings) 
     )
 
     assert len(chunks) == 1
+
+
+# --- preferring the student's own grade ------------------------------------
+
+
+def _history_rows() -> list[dict]:
+    """A topic both a primary and a lower-secondary book cover."""
+    return [
+        {
+            "text": "Chiến dịch Điện Biên Phủ toàn thắng, kể cho học sinh nhỏ.",
+            "distance": 0.40,
+            "metadata": {
+                "grade": 5,
+                "subject": "Lịch sử và Địa lí",
+                "book_title": "Lịch sử và Địa lí 5",
+                "source_file": "LSDL5.pdf",
+                "chunk_index": 1,
+                "page_start": 66,
+                "page_end": 66,
+            },
+        },
+        {
+            "text": "Chiến thắng Điện Biên Phủ năm 1954 buộc Pháp phải ký Hiệp định Giơ-ne-vơ.",
+            "distance": 0.45,
+            "metadata": {
+                "grade": 9,
+                "subject": "Lịch sử và Địa lí",
+                "book_title": "Lịch sử và Địa lí 9",
+                "source_file": "LSDL9.pdf",
+                "chunk_index": 2,
+                "page_start": 40,
+                "page_end": 40,
+            },
+        },
+    ]
+
+
+def test_the_students_own_grade_wins_a_close_call(monkeypatch, settings) -> None:
+    # Found live: a grade-9 student asking about Điện Biên Phủ was answered
+    # from the grade-5 book, which the grade ceiling allows but which is not
+    # what they are studying.
+    collection = FakeCollection(_history_rows())
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    chunks = Retriever(settings).retrieve(
+        "Chiến thắng Điện Biên Phủ diễn ra năm nào?",
+        StudentProfile(grade=9, subject="Lịch sử và Địa lí"),
+    )
+
+    assert chunks[0].metadata["grade"] == 9
+
+
+def test_a_lower_grade_passage_still_wins_when_it_is_clearly_closer(
+    monkeypatch, settings
+) -> None:
+    # Revising earlier material has to keep working, so the adjustment is
+    # small: a much better match from a lower grade still comes first.
+    rows = _history_rows()
+    rows[0]["distance"] = 0.20  # the grade-5 passage is now far closer
+    collection = FakeCollection(rows)
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    chunks = Retriever(settings).retrieve(
+        "Chiến thắng Điện Biên Phủ diễn ra năm nào?",
+        StudentProfile(grade=9, subject="Lịch sử và Địa lí"),
+    )
+
+    assert chunks[0].metadata["grade"] == 5
+
+
+def test_the_reported_distance_is_the_real_one_not_the_adjusted_one(
+    monkeypatch, settings
+) -> None:
+    # The adjustment only orders the results; a logged or reported distance
+    # must still be what ChromaDB measured.
+    collection = FakeCollection(_history_rows())
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    chunks = Retriever(settings).retrieve(
+        "Chiến thắng Điện Biên Phủ diễn ra năm nào?",
+        StudentProfile(grade=9, subject="Lịch sử và Địa lí"),
+    )
+
+    assert {round(c.distance, 2) for c in chunks} == {0.40, 0.45}

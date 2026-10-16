@@ -173,6 +173,14 @@ def build_page_check_reminder(citations: list[str]) -> str:
     )
 
 
+#: The passage labels the prompt numbers its context with ("[Đoạn 1]").
+#: A student sees a chat message, not a numbered list, so a reference to
+#: one is pure noise to them. In square brackets it is a bare label and is
+#: dropped; written into a sentence ("xem lại đoạn 1") it has a grammatical
+#: job, so it becomes "đoạn này".
+_BRACKETED_PASSAGE_LABEL = re.compile(r"\[\s*[ĐđDd]o[ạa]n\s+\d+\s*\]\s*")
+_INLINE_PASSAGE_LABEL = re.compile(r"\b([ĐđDd])o([ạa])n\s+\d+\b")
+
 #: Internal wording the LLM is told never to use with a student (rule 11)
 #: but occasionally does anyway -- "bạn hãy xem lại đoạn 1 trong ngữ cảnh
 #: nhé" means nothing to a child, who sees no numbered passages. Rewritten
@@ -191,7 +199,9 @@ def hide_internal_wording(answer: str) -> str:
     """Replace prompt-internal terms in ``answer`` with student-facing ones.
 
     Only wording is changed, never a fact or a citation, so this cannot make
-    an answer less faithful to the textbook.
+    an answer less faithful to the textbook. Page numbers in particular are
+    left exactly as they are -- they are the student's way of checking the
+    answer.
 
     Args:
         answer: The generated answer.
@@ -199,10 +209,12 @@ def hide_internal_wording(answer: str) -> str:
     Returns:
         The answer with internal terms rewritten.
     """
+    answer = _BRACKETED_PASSAGE_LABEL.sub("", answer)
+    answer = _INLINE_PASSAGE_LABEL.sub(r"\1o\2n này", answer)
     for internal, replacement in _INTERNAL_WORDING:
         answer = answer.replace(internal, replacement)
         answer = answer.replace(internal.capitalize(), replacement.capitalize())
-    return answer
+    return " ".join(answer.split(" "))
 
 
 def build_feedback_thanks(citations: list[str], *, gave_reason: bool = False) -> str:

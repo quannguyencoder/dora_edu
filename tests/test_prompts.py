@@ -172,7 +172,27 @@ def test_internal_wording_is_rewritten_for_a_student() -> None:
     # already forbids it, which the model broke anyway.
     answer = "Bạn hãy xem lại đoạn 1 trong ngữ cảnh nhé."
 
-    assert prompts.hide_internal_wording(answer) == "Bạn hãy xem lại đoạn 1 trong sách nhé."
+    # "đoạn 1" has a grammatical job in the sentence, so it becomes "đoạn
+    # này" rather than being dropped.
+    assert prompts.hide_internal_wording(answer) == "Bạn hãy xem lại đoạn này trong sách nhé."
+
+
+def test_a_bracketed_passage_label_is_dropped_entirely() -> None:
+    # Real answer from a benchmark run: the label is the prompt's own
+    # numbering of the passages it was given, which the student never sees.
+    answer = "Bạn hãy đọc lại phần [Đoạn 1] trong sách Lịch sử và Địa lí 8, trang 40 nhé."
+
+    cleaned = prompts.hide_internal_wording(answer)
+
+    assert "Đoạn 1" not in cleaned
+    assert "trang 40" in cleaned
+
+
+def test_a_paragraph_the_student_is_asked_to_write_is_left_alone() -> None:
+    # "đoạn văn" is ordinary Vietnamese, and a Ngữ văn exercise is full of it.
+    answer = "Em hãy viết một đoạn văn 5 câu về trải nghiệm của em."
+
+    assert prompts.hide_internal_wording(answer) == answer
 
 
 def test_a_capitalised_internal_term_is_rewritten_too() -> None:

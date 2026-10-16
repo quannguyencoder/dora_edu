@@ -37,7 +37,7 @@ from dora_edu.llm.generator import (
     build_generator,
     is_provider_error_answer,
 )
-from dora_edu.llm.prompts import NO_CONTEXT_ANSWER
+from dora_edu.llm.prompts import NO_CONTEXT_ANSWER, hide_internal_wording
 from dora_edu.models import StudentProfile
 from dora_edu.rag_engine.retriever import Retriever
 
@@ -197,6 +197,12 @@ def ask_one(
     profile = StudentProfile(grade=question.grade, subject=question.subject)
     chunks = retriever.retrieve(question.question, profile)
     result = generator.generate(question.question, chunks, profile)
+    # The same post-processing the bot applies before a student sees the
+    # answer. Without it the benchmark measures a slightly different answer
+    # than the one that gets sent -- which is how "xem lại đoạn 1 trong ngữ
+    # cảnh" ended up in a published report after the bot had stopped saying
+    # it.
+    answer = hide_internal_wording(result.answer)
 
     retrieved_pages: set[int] = set()
     in_scope = True
@@ -212,15 +218,15 @@ def ask_one(
         if int(chunk.metadata.get("grade", 0)) > question.grade:
             in_scope = False
 
-    named = _pages_named_in(result.answer)
-    lowered = result.answer.lower()
+    named = _pages_named_in(answer)
+    lowered = answer.lower()
     return QuestionOutcome(
         question=question,
-        answer=result.answer,
+        answer=answer,
         retrieved=len(chunks),
         retrieved_sources=tuple(dict.fromkeys(c.citation for c in chunks)),
-        refused=_looks_like_a_refusal(result.answer),
-        provider_error=is_provider_error_answer(result.answer),
+        refused=_looks_like_a_refusal(answer),
+        provider_error=is_provider_error_answer(answer),
         invented_pages=tuple(sorted(named - retrieved_pages)),
         cites_a_page=bool(named),
         keywords_found=tuple(k for k in question.keywords if k.lower() in lowered),

@@ -144,9 +144,51 @@ def build_metadata_filter(profile: StudentProfile) -> dict[str, Any]:
     }
 
 
+#: Added to a passage's distance for each grade it sits below the student's,
+#: when ranking. The grade filter is a ceiling so that a student can revise
+#: earlier material, but that also lets a primary-school book answer a
+#: lower-secondary question: asked about Điện Biên Phủ, a grade-9 student
+#: was answered from the grade-5 book, which does mention it, while the
+#: grade-9 chapter on it never made the top ten. Small on purpose -- a
+#: lower grade's passage that is a much better match still wins, which is
+#: what makes revision work.
+_LOWER_GRADE_PENALTY = 0.02
+
+#: How many extra passages to fetch before re-ranking. Re-ranking can only
+#: promote what was fetched, so the right passage has to be in the pool
+#: first.
+_OVERFETCH = 3
+
+
 def _passage_key(chunk: RetrievedChunk) -> tuple[Any, Any]:
     """Identify a passage across two queries that may both return it."""
     return (chunk.metadata.get("source_file"), chunk.metadata.get("chunk_index"))
+
+
+def _prefer_the_students_own_grade(
+    chunks: list[RetrievedChunk], grade: int, limit: int
+) -> list[RetrievedChunk]:
+    """Re-rank so a passage from the student's own grade comes first.
+
+    Only the ordering changes; each chunk keeps its real distance, so what
+    the logs and the benchmark report show is still what ChromaDB measured.
+
+    Args:
+        chunks: Passages from one query, nearest first.
+        grade: The student's grade.
+        limit: Maximum passages to keep.
+
+    Returns:
+        At most ``limit`` passages, best first after the grade adjustment.
+    """
+
+    def adjusted(chunk: RetrievedChunk) -> float:
+        chunk_grade = chunk.metadata.get("grade")
+        if not isinstance(chunk_grade, int):
+            return chunk.distance
+        return chunk.distance + _LOWER_GRADE_PENALTY * max(0, grade - chunk_grade)
+
+    return sorted(chunks, key=adjusted)[:limit]
 
 
 def _merge_by_passage(
@@ -292,9 +334,11 @@ class Retriever:
                 default.
 
         Returns:
-            Passages closer than ``max_retrieval_distance``, nearest first. An
-            empty list means the textbook has no relevant content, which the
-            generator turns into the "not in your textbook" answer.
+            Passages closer than ``max_retrieval_distance``, best first --
+            ranked by distance, adjusted to favour the student's own grade
+            over a lower one (see :func:`_prefer_the_students_own_grade`).
+            An empty list means the textbook has no relevant content, which
+            the generator turns into the "not in your textbook" answer.
 
         Raises:
             ValueError: If ``question`` is empty.
@@ -307,7 +351,11 @@ class Retriever:
         limit = top_k or self._settings.retrieval_top_k
         where = build_metadata_filter(profile)
 
-        chunks = self._query(cleaned_question, where, limit)
+        # Fetched wide, then re-ranked: the grade adjustment can only promote
+        # a passage that was fetched in the first place.
+        chunks = _prefer_the_students_own_grade(
+            self._query(cleaned_question, where, limit * _OVERFETCH), profile.grade, limit
+        )
 
         # Further passes restricted to passages that literally contain the
         # term being asked about. Vector distance alone misses these when
@@ -316,7 +364,9 @@ class Retriever:
         # bot refuses a question its own textbook answers.
         phrase = keyword_phrase(cleaned_question)
         if phrase is not None:
-            chunks = self._with_literal_matches(cleaned_question, where, limit, phrase, chunks)
+            chunks = self._with_literal_matches(
+                cleaned_question, where, limit, phrase, chunks, profile.grade
+            )
 
         kept = [c for c in chunks if c.distance <= self._settings.max_retrieval_distance]
 
@@ -336,6 +386,7 @@ class Retriever:
         limit: int,
         phrase: str,
         vector_hits: list[RetrievedChunk],
+        grade: int,
     ) -> list[RetrievedChunk]:
         """Put literal matches for ``phrase`` ahead of the vector results.
 
@@ -360,18 +411,28 @@ class Retriever:
             phrase: The term extracted by :func:`keyword_phrase`.
             vector_hits: Results of the plain vector pass, used to fill the
                 remaining slots.
+            grade: The student's grade, for the same re-ranking the vector
+                pass gets.
 
         Returns:
             At most ``limit`` passages, literal matches first.
         """
-        definitions = self._query(question, where, limit, contains=f"{phrase} là")
-        literal = self._query(question, where, limit, contains=phrase)
+        def pass_for(contains: str) -> list[RetrievedChunk]:
+            """One literal pass, re-ranked to favour the student's own grade."""
+            return _prefer_the_students_own_grade(
+                self._query(question, where, limit * _OVERFETCH, contains=contains),
+                grade,
+                limit,
+            )
+
+        definitions = pass_for(f"{phrase} là")
+        literal = pass_for(phrase)
 
         if not definitions and not literal:
             words = phrase.split()
             if len(words) >= 3:
                 shorter = " ".join(words[-2:])
-                literal = self._query(question, where, limit, contains=shorter)
+                literal = pass_for(shorter)
                 if literal:
                     logger.info("Literal match on the shorter term %r", shorter)
 
