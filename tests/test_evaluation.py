@@ -365,3 +365,40 @@ def test_every_out_of_textbook_question_was_checked_against_the_corpus() -> None
     # is where that check is recorded, so it has to say something real.
     for q in question_set.OUT_OF_TEXTBOOK_QUESTIONS:
         assert len(q.note) > 20, q.question
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        # Six real answers that two earlier versions of the check scored as
+        # hallucinations. Each one is the bot refusing correctly and then
+        # adding something useful.
+        "Mình đã kiểm tra kỹ các đoạn sách, nhưng mình chưa tìm thấy thông tin nào "
+        "giải thích về \"tích phân\" trong sách giáo khoa của bạn.",
+        "Rất tiếc là mình chưa tìm thấy thông tin về cách giải phương trình bậc hai "
+        "trong sách Toán 6 của bạn.",
+        "Mình đã kiểm tra kỹ nhưng chưa tìm thấy nội dung này trong sách.",
+        "Bài toán này không có trong nội dung sách giáo khoa Toán 6 rồi.",
+        "Nội dung này không thuộc chương trình lớp 6 bạn nhé.",
+        "Mình chưa tìm thấy thông tin này trong sách giáo khoa của bạn.",
+    ],
+)
+def test_every_way_the_bot_words_a_refusal_is_recognised(answer) -> None:
+    outcome = ask_one(_OUT_OF_BOOK, FakeRetriever([_chunk(grade=7)]), FakeGenerator(answer))
+
+    assert outcome.refused, answer
+    assert outcome.handled_correctly
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "Theo sách Toán 6, tập 1, trang 12: số nguyên tố chỉ có hai ước.",
+        "Theo sách Toán 6, tập 2, trang 55: nếu điểm I nằm giữa A và B sao cho "
+        "IA = IB thì I là trung điểm của đoạn thẳng AB.",
+    ],
+)
+def test_a_real_answer_is_never_mistaken_for_a_refusal(answer) -> None:
+    outcome = ask_one(_IN_BOOK, FakeRetriever([_chunk()]), FakeGenerator(answer))
+
+    assert not outcome.refused, answer

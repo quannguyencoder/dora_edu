@@ -46,10 +46,23 @@ logger = logging.getLogger(__name__)
 #: Page numbers as rule 8 makes the LLM write them ("trang 79", "trang 12-13").
 _PAGE_IN_ANSWER = re.compile(r"trang\s+(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?", re.IGNORECASE)
 
-#: The opening words of the fixed refusal, which the LLM is told to reproduce
-#: when the context does not cover the question. Matching on this phrase
-#: (rather than on the whole message) also catches the LLM wording it itself.
-_REFUSAL_MARKER = "chưa tìm thấy thông tin này trong sách"
+#: How a refusal is worded. The fixed message is one phrasing; the model
+#: re-words it freely whenever it adds something useful ("...mình chưa tìm
+#: thấy thông tin về tích phân trong sách giáo khoa của bạn. Có lẽ đây là
+#: nội dung lớp trên..."). Two earlier versions of this check matched fixed
+#: strings and scored those re-wordings as hallucinations -- the measuring
+#: tool marking the bot down for behaving better than required -- so it
+#: matches the shape of a refusal instead.
+_REFUSAL_PATTERNS = (
+    # "chưa tìm thấy thông tin / nội dung / phần nào ..."
+    r"(chưa|không)\s+tìm\s+thấy\s+(thông\s+tin|nội\s+dung|khái\s+niệm|phần|bài|câu)",
+    # "không có trong sách giáo khoa / nội dung sách ..."
+    r"(không|chưa)\s+(có|nằm|thuộc)\s+(trong\s+)?(nội\s+dung\s+)?sách",
+    # "ngoài phạm vi / không thuộc chương trình ..."
+    r"(không\s+thuộc|ngoài)\s+(chương\s+trình|phạm\s+vi)",
+)
+
+_REFUSAL = re.compile("|".join(_REFUSAL_PATTERNS), re.IGNORECASE)
 
 #: Seconds between questions. The Gemini free tier limits requests per
 #: minute, and a benchmark that trips the rate limit measures the quota
@@ -159,8 +172,8 @@ class EvalReport:
 
 
 def _looks_like_a_refusal(answer: str) -> bool:
-    """Return whether ``answer`` is the "not in your textbook" reply."""
-    return _REFUSAL_MARKER in answer.lower() or answer.strip() == NO_CONTEXT_ANSWER.strip()
+    """Return whether ``answer`` declines to answer from the textbook."""
+    return bool(_REFUSAL.search(answer)) or answer.strip() == NO_CONTEXT_ANSWER.strip()
 
 
 def _pages_named_in(answer: str) -> set[int]:
