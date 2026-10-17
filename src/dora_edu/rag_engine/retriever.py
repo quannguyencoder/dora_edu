@@ -84,6 +84,63 @@ _QUESTION_SUFFIXES = (
     "gồm mấy phần",
 )
 
+#: Foreign names a Vietnamese textbook may print either way. Measured
+#: against this corpus rather than assumed: it prints "Thalès" and "Ta-lét",
+#: "Ohm" and "Ôm", but only "Descartes" and only "Euclid" -- so a student
+#: typing the Vietnamese spelling of those two finds nothing at all. Found
+#: live: a grade-8 student asked "toạ độ decat là gì" and was told the
+#: textbook does not cover it, while Toán 8 tập 2 discusses Descartes on
+#: page 47.
+#:
+#: Each row lists the spellings of one name; any of them can stand in for
+#: any other when the literal search comes back empty.
+_NAME_SPELLINGS: tuple[tuple[str, ...], ...] = (
+    ("descartes", "đề-các", "đề các", "đêcac", "decat", "đecac"),
+    ("pythagore", "py-ta-go", "pytago", "pi-ta-go", "pitago"),
+    ("thalès", "thales", "ta-lét", "talet", "ta lét"),
+    ("euclid", "euclide", "ơ-clít", "o-clit", "ơclit"),
+    ("newton", "niu-tơn", "niuton"),
+)
+
+#: How many re-spelled variants to try. Each one is another query, and the
+#: first alternative spelling is nearly always the one the book uses.
+_MAX_NAME_VARIANTS = 6
+
+
+def name_variants(phrase: str) -> list[str]:
+    """Return ``phrase`` re-spelled with each alternative form of a name in it.
+
+    Args:
+        phrase: The term extracted from the student's question, lower-cased.
+
+    Returns:
+        Alternative spellings to try, most promising first; empty when the
+        phrase contains no name this knows about.
+    """
+    variants: list[str] = []
+    for spellings in _NAME_SPELLINGS:
+        found = next((s for s in spellings if s in phrase), None)
+        if found is None:
+            continue
+        others = [other for other in spellings if other != found]
+        # ChromaDB's substring filter is case-sensitive and a textbook
+        # capitalises a person's name, while the phrase arrives lower-cased
+        # from keyword_phrase -- so each spelling is tried capitalised too.
+        # Without this, searching for "descartes" misses every page that
+        # says "Descartes".
+        cased = [other.capitalize() for other in others]
+        # The whole phrase re-spelled first: it is the most specific thing
+        # that can match. Then the name on its own, because the book often
+        # discusses the person without using the student's exact phrase --
+        # Toán 8 names Descartes but never writes "toạ độ Descartes".
+        variants.extend(phrase.replace(found, other) for other in cased)
+        variants.extend(cased)
+        variants.extend(phrase.replace(found, other) for other in others)
+        variants.extend(others)
+        break
+    return list(dict.fromkeys(variants))[:_MAX_NAME_VARIANTS]
+
+
 #: A question short enough that it is already the term itself, with no
 #: question words to strip: "hằng đẳng thức đáng nhớ", "định lí Pythagore".
 #: Searching for it literally is exactly right; treating it as "not
@@ -457,6 +514,15 @@ class Retriever:
 
         definitions = pass_for(f"{phrase} là")
         literal = pass_for(phrase)
+
+        if not definitions and not literal:
+            # The book may spell a foreign name differently from the student.
+            for variant in name_variants(phrase):
+                definitions = pass_for(f"{variant} là")
+                literal = pass_for(variant)
+                if definitions or literal:
+                    logger.info("Literal match on the alternative spelling %r", variant)
+                    break
 
         if not definitions and not literal:
             words = phrase.split()

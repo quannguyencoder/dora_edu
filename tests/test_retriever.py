@@ -6,7 +6,12 @@ import pytest
 
 from dora_edu.models import StudentProfile
 from dora_edu.rag_engine import retriever as retriever_module
-from dora_edu.rag_engine.retriever import Retriever, build_metadata_filter, keyword_phrase
+from dora_edu.rag_engine.retriever import (
+    Retriever,
+    build_metadata_filter,
+    keyword_phrase,
+    name_variants,
+)
 from tests.conftest import FakeCollection
 
 
@@ -483,3 +488,59 @@ def test_two_passages_without_identifying_metadata_are_not_merged_into_one(
     )
 
     assert len(chunks) == 2
+
+
+# --- foreign names the book spells differently -----------------------------
+
+
+@pytest.mark.parametrize(
+    ("typed", "expected"),
+    [
+        ("toạ độ decat", "toạ độ Descartes"),
+        ("định lí py-ta-go", "định lí Pythagore"),
+        ("định lí ta-lét", "định lí Thalès"),
+    ],
+)
+def test_a_name_is_re_spelled_the_way_the_book_prints_it(typed, expected) -> None:
+    # Found live: a grade-8 student asked "toạ độ decat là gì" and was told
+    # the textbook does not cover it, while Toán 8 tập 2 discusses Descartes
+    # on page 46. Capitalised, because the book capitalises a person's name
+    # and ChromaDB's substring filter is case-sensitive.
+    assert expected in name_variants(typed)
+
+
+def test_the_bare_name_is_tried_as_well_as_the_whole_phrase() -> None:
+    # The book names Descartes without ever writing "toạ độ Descartes", so
+    # the phrase alone would still find nothing.
+    assert "Descartes" in name_variants("toạ độ decat")
+
+
+def test_a_phrase_with_no_known_name_yields_no_variants() -> None:
+    assert name_variants("hằng đẳng thức đáng nhớ") == []
+
+
+def test_an_alternative_spelling_is_only_tried_when_the_first_search_fails(
+    monkeypatch, settings
+) -> None:
+    # Re-spelling costs extra queries, so it must not run when the term as
+    # typed already matches something.
+    rows = [
+        {
+            "text": "Định lí Pythagore: trong tam giác vuông, bình phương cạnh huyền...",
+            "distance": 0.2,
+            "metadata": {
+                "grade": 8, "subject": "Toán", "book_title": "Toán 8 - tập 2",
+                "source_file": "T8b.pdf", "chunk_index": 1,
+                "page_start": 93, "page_end": 93,
+            },
+        }
+    ]
+    collection = FakeCollection(rows)
+    monkeypatch.setattr(retriever_module, "get_collection", lambda *a, **k: collection)
+
+    Retriever(settings).retrieve(
+        "Định lí Pythagore là gì?", StudentProfile(grade=8, subject="Toán")
+    )
+
+    tried = [(c.get("where_document") or {}).get("$contains") for c in collection.queries]
+    assert not any(t and "py-ta-go" in t for t in tried)
