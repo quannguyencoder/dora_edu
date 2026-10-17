@@ -91,6 +91,40 @@ def is_provider_error_answer(answer: str) -> bool:
     return answer.strip() in {_SERVICE_ERROR_ANSWER.strip(), _RATE_LIMIT_ANSWER.strip()}
 
 
+def _answer_from_content(content: str, chunks: list[RetrievedChunk]) -> GeneratedAnswer:
+    """Wrap the model's reply, deciding whether it is grounded in ``chunks``.
+
+    Having retrieved a passage is not the same as having answered from it.
+    The model is told (rule 6) to refuse when the retrieved passages do not
+    cover the question, and it does so on passages that merely came back as
+    the nearest neighbours -- a student asking about Descartes' coordinates
+    was refused while a Toán 7 passage sat in the context. Marking that as
+    grounded attached the nearest page to it, so the refusal arrived with
+    "mở sách trang 1-2 để kiểm tra lại nhé" pointing at a page that has
+    nothing to do with the question.
+
+    A refusal is recognised by its wording, which on its own would also
+    catch a real answer making a passing remark ("sách không nói thêm về
+    phần này, nhưng theo trang 30..."). Naming a page settles it: a refusal
+    has no page to name, so an answer that cites one did use the book and
+    keeps its citations.
+
+    Args:
+        content: The model's reply, already non-empty.
+        chunks: The passages it was generated from.
+
+    Returns:
+        The answer, with citations only when it really used the book.
+    """
+    if prompts.is_refusal(content) and not prompts.names_a_page(content):
+        return GeneratedAnswer(answer=content, grounded=False)
+    return GeneratedAnswer(
+        answer=content,
+        grounded=True,
+        citations=[chunk.citation for chunk in chunks],
+    )
+
+
 def _parse_classification(raw: str, subjects: list[str]) -> str | None:
     """Turn a classification reply into a subject, the meta sentinel, or ``None``.
 
@@ -280,11 +314,7 @@ class OpenAIAnswerGenerator(AnswerGenerator):
             logger.warning("LLM returned an empty completion; falling back to the refusal")
             return GeneratedAnswer(answer=prompts.NO_CONTEXT_ANSWER, grounded=False)
 
-        return GeneratedAnswer(
-            answer=content,
-            grounded=True,
-            citations=[chunk.citation for chunk in chunks],
-        )
+        return _answer_from_content(content, chunks)
 
     def classify_subject(self, question: str, subjects: list[str]) -> str | None:
         """Ask the model which of ``subjects`` best fits ``question``.
@@ -504,11 +534,7 @@ class GeminiAnswerGenerator(AnswerGenerator):
                 return GeneratedAnswer(answer=_RATE_LIMIT_ANSWER, grounded=False)
             return GeneratedAnswer(answer=prompts.NO_CONTEXT_ANSWER, grounded=False)
 
-        return GeneratedAnswer(
-            answer=content,
-            grounded=True,
-            citations=[chunk.citation for chunk in chunks],
-        )
+        return _answer_from_content(content, chunks)
 
     def classify_subject(self, question: str, subjects: list[str]) -> str | None:
         """Ask the model which of ``subjects`` best fits ``question``.

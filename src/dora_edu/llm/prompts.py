@@ -21,6 +21,36 @@ NO_CONTEXT_ANSWER = (
     "/lop và /mon."
 )
 
+#: How a refusal is worded. ``NO_CONTEXT_ANSWER`` is one phrasing, but rule 6
+#: lets the model re-word it whenever it can add something useful ("...mình
+#: chưa tìm thấy thông tin về tích phân trong sách giáo khoa của bạn. Có lẽ
+#: đây là nội dung lớp trên..."), so this matches the shape of a refusal
+#: rather than any fixed string. Two earlier versions of this check compared
+#: fixed strings and scored those re-wordings as hallucinations.
+_REFUSAL_PATTERNS = (
+    # "chưa tìm thấy thông tin / nội dung / phần nào ..."
+    r"(chưa|không)\s+tìm\s+thấy\s+(thông\s+tin|nội\s+dung|khái\s+niệm|phần|bài|câu)",
+    # "không có trong sách giáo khoa / nội dung sách ..."
+    r"(không|chưa)\s+(có|nằm|thuộc)\s+(trong\s+)?(nội\s+dung\s+)?sách",
+    # "ngoài phạm vi / không thuộc chương trình ..."
+    r"(không\s+thuộc|ngoài)\s+(chương\s+trình|phạm\s+vi)",
+)
+
+_REFUSAL = re.compile("|".join(_REFUSAL_PATTERNS), re.IGNORECASE)
+
+
+def is_refusal(answer: str) -> bool:
+    """Whether ``answer`` tells the student the book does not cover this.
+
+    Lives here because this module owns the refusal wording in the first
+    place: the prompt rules decide how the model may phrase one, so the same
+    module decides how a phrasing is recognised. Both the answering flow
+    (which must not attach a page to a refusal) and the benchmark (which
+    scores a refusal as correct behaviour, not a hallucination) read it.
+    """
+    return bool(_REFUSAL.search(answer))
+
+
 #: Shown when the student has not told the bot which grade they study.
 PROFILE_REQUIRED_MESSAGE = (
     "Trước tiên bạn cho mình biết bạn đang học lớp mấy nhé! 😊\n\n"
@@ -98,6 +128,11 @@ def _same_book_as_best_match(citations: list[str]) -> list[str]:
 _PAGE_IN_ANSWER = re.compile(r"trang\s+(\d{1,3})", re.IGNORECASE)
 
 
+def names_a_page(answer: str) -> bool:
+    """Whether ``answer`` points the student at a specific page of the book."""
+    return bool(_PAGE_IN_ANSWER.search(answer))
+
+
 def select_cited_sources(
     answer: str, chunks: list[RetrievedChunk], *, limit: int = _MAX_CITED_SOURCES
 ) -> list[str]:
@@ -151,9 +186,23 @@ def select_cited_sources(
 #: passing one is where the model invents a number -- seen live, in an
 #: answer that cited the real page 125 and then referred to a page 9 that
 #: was never retrieved.
+#: A filler word may sit between the preposition and "trang" -- "xem thêm
+#: trang 9", "xem chi tiết tại trang 9". Listed rather than matched as any
+#: word, so a reference cannot swallow part of the sentence around it.
+_PAGE_REFERENCE_FILLER = r"(?:\s+(?:thêm|lại|nữa|cả|chi\s+tiết|cụ\s+thể|ở|tại|trong))*"
+
 _PASSING_PAGE_REFERENCE = re.compile(
-    r"\s*(?:ở|tại|trong|xem)\s+\*{0,2}trang\s+(\d{1,3})\*{0,2}", re.IGNORECASE
+    rf"\s*(?:ở|tại|trong|xem){_PAGE_REFERENCE_FILLER}\s+\*{{0,2}}trang\s+(\d{{1,3}})\*{{0,2}}",
+    re.IGNORECASE,
 )
+
+#: End of a sentence, used to decide how much to remove with an invented
+#: page reference.
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+")
+
+#: Fewer words than this left in a sentence after its page reference is
+#: removed and the whole sentence goes: what remains is a fragment.
+_MIN_WORDS_LEFT = 3
 
 
 def drop_invented_page_refs(answer: str, chunks: list[RetrievedChunk]) -> str:
@@ -181,7 +230,26 @@ def drop_invented_page_refs(answer: str, chunks: list[RetrievedChunk]) -> str:
     def replace(match: re.Match[str]) -> str:
         return "" if int(match.group(1)) not in pages else match.group(0)
 
-    return _PASSING_PAGE_REFERENCE.sub(replace, answer)
+    def clean(sentence: str) -> str:
+        """Drop the reference, and the sentence if that is all it was."""
+        remainder = _PASSING_PAGE_REFERENCE.sub(replace, sentence)
+        if remainder == sentence:
+            return sentence
+        # "Xem thêm trang 900 nhé." leaves " nhé." -- a fragment that reads
+        # worse than no sentence at all. A sentence that still says
+        # something ("Phần này cũng có nói về phân số.") is kept.
+        return "" if len(re.findall(r"\w+", remainder)) < _MIN_WORDS_LEFT else remainder
+
+    # Line by line: an answer is markdown, so bullets and blank lines carry
+    # meaning and must survive untouched.
+    lines = []
+    for line in answer.split("\n"):
+        if not _PASSING_PAGE_REFERENCE.search(line):
+            lines.append(line)
+            continue
+        sentences = (clean(part) for part in _SENTENCE_BREAK.split(line))
+        lines.append(" ".join(part for part in sentences if part.strip()))
+    return "\n".join(lines)
 
 
 def build_page_check_reminder(citations: list[str]) -> str:
@@ -254,6 +322,59 @@ def hide_internal_wording(answer: str) -> str:
         answer = answer.replace(internal, replacement)
         answer = answer.replace(internal.capitalize(), replacement.capitalize())
     return " ".join(answer.split(" "))
+
+
+#: Digits and a minus sign as their Unicode superscript characters. Discord
+#: has no LaTeX, so rule 10 has the model write an exponent as "x^2" -- but a
+#: student who rated an answer asked for "mũ 2" to look like "²", and these
+#: characters are plain text that every Discord client renders.
+_SUPERSCRIPT = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻")
+
+#: An exponent written the way rule 10 asks for: a caret, then digits only.
+#: An exponent that is itself an expression ("a^(n+1)") has no superscript
+#: form, so it is left as it is -- still readable, just not as pretty.
+#: Any space around the caret goes with it: "B ^ 2" should read "B²", not
+#: "B ²".
+_CARET_EXPONENT = re.compile(r"[ \t]?\^[ \t]?(-?\d{1,3})")
+
+
+def render_exponents(answer: str) -> str:
+    """Rewrite ``x^2`` as ``x²`` so an exponent reads as one on screen.
+
+    Asked for by a student in the rating box ('Như chữ "mũ 2" thành ²'):
+    the caret is how a formula is typed, not how it is read.
+
+    Args:
+        answer: The generated answer.
+
+    Returns:
+        The answer with caret exponents replaced by superscript characters.
+    """
+    return _CARET_EXPONENT.sub(lambda m: m.group(1).translate(_SUPERSCRIPT), answer)
+
+
+def polish_answer(answer: str, chunks: list[RetrievedChunk]) -> str:
+    """Put the model's reply into the exact shape a student is sent.
+
+    One function so that the benchmark scores the same text the student
+    reads. When these steps were applied by each caller in turn, the
+    measuring tool and the bot drifted apart and the benchmark marked
+    correct behaviour as wrong.
+
+    Args:
+        answer: The model's reply.
+        chunks: The passages it was generated from, for checking page refs.
+
+    Returns:
+        The answer as it will be sent.
+    """
+    cleaned = hide_internal_wording(answer)
+    # Dropping an invented page can take its whole sentence with it, so an
+    # answer that was nothing but such a sentence would come back blank --
+    # and a blank message cannot be sent. The uncleaned text is the lesser
+    # evil: a page the student finds empty, rather than no answer at all.
+    without_bad_pages = drop_invented_page_refs(cleaned, chunks)
+    return render_exponents(without_bad_pages if without_bad_pages.strip() else cleaned)
 
 
 def build_feedback_thanks(citations: list[str], *, gave_reason: bool = False) -> str:

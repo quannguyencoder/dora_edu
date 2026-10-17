@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from dora_edu.llm import prompts
 from dora_edu.models import RetrievedChunk, StudentProfile
 
@@ -288,3 +290,45 @@ def test_an_answer_with_no_page_reference_is_unchanged() -> None:
     answer = "Bạn thử nghĩ xem tục ngữ khác thành ngữ ở điểm nào nhé!"
 
     assert prompts.drop_invented_page_refs(answer, [_page_chunk(125, 126)]) == answer
+
+
+# --- exponents a student asked to see as superscript ------------------------
+
+
+@pytest.mark.parametrize(
+    ("written", "shown"),
+    [
+        ("x^2 + 2xy + y^2", "x² + 2xy + y²"),
+        ("V = a^3", "V = a³"),
+        # Spaces around the caret go with it.
+        ("B ^ 2", "B²"),
+        ("10^-3 m", "10⁻³ m"),
+        # No superscript form exists for an expression exponent.
+        ("a^(n+1)", "a^(n+1)"),
+    ],
+)
+def test_a_caret_exponent_is_shown_as_a_superscript(written, shown) -> None:
+    # Asked for by a student in the rating box: 'Như chữ "mũ 2" thành ²'.
+    assert prompts.render_exponents(written) == shown
+
+
+def test_polishing_applies_every_step_the_student_sees() -> None:
+    # One function for both the bot and the benchmark, so the text scored is
+    # the text sent. Here: an internal label dropped, an invented page
+    # removed and an exponent rendered, all in one pass.
+    answer = "[Đoạn 1] Theo ngữ cảnh, diện tích là a^2 (xem thêm trang 900)."
+
+    polished = prompts.polish_answer(answer, [_page_chunk(125, 126)])
+
+    assert "[Đoạn 1]" not in polished
+    assert "ngữ cảnh" not in polished
+    assert "trang 900" not in polished
+    assert "a²" in polished
+
+
+def test_polishing_never_returns_an_empty_answer() -> None:
+    # An answer that was nothing but a reference to an invented page would
+    # otherwise come back blank, and a blank message cannot be sent.
+    answer = "Xem chi tiết tại trang 900."
+
+    assert prompts.polish_answer(answer, [_page_chunk(125, 126)]).strip()

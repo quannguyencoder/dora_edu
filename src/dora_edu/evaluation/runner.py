@@ -39,8 +39,8 @@ from dora_edu.llm.generator import (
 )
 from dora_edu.llm.prompts import (
     NO_CONTEXT_ANSWER,
-    drop_invented_page_refs,
-    hide_internal_wording,
+    is_refusal,
+    polish_answer,
 )
 from dora_edu.models import StudentProfile
 from dora_edu.rag_engine.retriever import Retriever
@@ -49,24 +49,6 @@ logger = logging.getLogger(__name__)
 
 #: Page numbers as rule 8 makes the LLM write them ("trang 79", "trang 12-13").
 _PAGE_IN_ANSWER = re.compile(r"trang\s+(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?", re.IGNORECASE)
-
-#: How a refusal is worded. The fixed message is one phrasing; the model
-#: re-words it freely whenever it adds something useful ("...mình chưa tìm
-#: thấy thông tin về tích phân trong sách giáo khoa của bạn. Có lẽ đây là
-#: nội dung lớp trên..."). Two earlier versions of this check matched fixed
-#: strings and scored those re-wordings as hallucinations -- the measuring
-#: tool marking the bot down for behaving better than required -- so it
-#: matches the shape of a refusal instead.
-_REFUSAL_PATTERNS = (
-    # "chưa tìm thấy thông tin / nội dung / phần nào ..."
-    r"(chưa|không)\s+tìm\s+thấy\s+(thông\s+tin|nội\s+dung|khái\s+niệm|phần|bài|câu)",
-    # "không có trong sách giáo khoa / nội dung sách ..."
-    r"(không|chưa)\s+(có|nằm|thuộc)\s+(trong\s+)?(nội\s+dung\s+)?sách",
-    # "ngoài phạm vi / không thuộc chương trình ..."
-    r"(không\s+thuộc|ngoài)\s+(chương\s+trình|phạm\s+vi)",
-)
-
-_REFUSAL = re.compile("|".join(_REFUSAL_PATTERNS), re.IGNORECASE)
 
 #: Seconds between questions. The Gemini free tier limits requests per
 #: minute, and a benchmark that trips the rate limit measures the quota
@@ -177,7 +159,7 @@ class EvalReport:
 
 def _looks_like_a_refusal(answer: str) -> bool:
     """Return whether ``answer`` declines to answer from the textbook."""
-    return bool(_REFUSAL.search(answer)) or answer.strip() == NO_CONTEXT_ANSWER.strip()
+    return is_refusal(answer) or answer.strip() == NO_CONTEXT_ANSWER.strip()
 
 
 def _pages_named_in(answer: str) -> set[int]:
@@ -219,7 +201,7 @@ def ask_one(
     # than the one that gets sent -- which is how "xem lại đoạn 1 trong ngữ
     # cảnh" ended up in a published report after the bot had stopped saying
     # it.
-    answer = drop_invented_page_refs(hide_internal_wording(result.answer), chunks)
+    answer = polish_answer(result.answer, chunks)
 
     retrieved_pages: set[int] = set()
     in_scope = True

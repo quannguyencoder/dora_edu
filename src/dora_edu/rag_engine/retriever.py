@@ -31,7 +31,7 @@ from typing import Any
 import chromadb
 
 from dora_edu.config import Settings, get_settings
-from dora_edu.models import MIN_GRADE, RetrievedChunk, StudentProfile
+from dora_edu.models import MIN_GRADE, RetrievedChunk, StudentProfile, strip_diacritics
 from dora_edu.rag_engine.store import get_collection
 
 logger = logging.getLogger(__name__)
@@ -94,17 +94,35 @@ _QUESTION_SUFFIXES = (
 #:
 #: Each row lists the spellings of one name; any of them can stand in for
 #: any other when the literal search comes back empty.
+#: Spellings are compared with diacritics stripped and hyphens evened out
+#: (see :func:`_normalise_for_name_match`), so one entry here covers the
+#: accent and hyphen variations a student types: "Đề-các", "de cac" and
+#: "ĐỀ CÁC" all match the same entry. What still needs its own entry is a
+#: different *letter* -- found live: a grade-9 student typed "tọa độ Đề-cát"
+#: with a final t, which matched none of the "-các" spellings.
 _NAME_SPELLINGS: tuple[tuple[str, ...], ...] = (
-    ("descartes", "đề-các", "đề các", "đêcac", "decat", "đecac"),
+    ("descartes", "đề-các", "đề-cát", "đêcac", "decat"),
     ("pythagore", "py-ta-go", "pytago", "pi-ta-go", "pitago"),
-    ("thalès", "thales", "ta-lét", "talet", "ta lét"),
-    ("euclid", "euclide", "ơ-clít", "o-clit", "ơclit"),
+    ("thalès", "thales", "ta-lét", "talet"),
+    ("euclid", "euclide", "ơ-clít", "o-clit"),
     ("newton", "niu-tơn", "niuton"),
 )
 
 #: How many re-spelled variants to try. Each one is another query, and the
 #: first alternative spelling is nearly always the one the book uses.
 _MAX_NAME_VARIANTS = 6
+
+
+def _normalise_for_name_match(text: str) -> str:
+    """Reduce ``text`` to the form names are compared in.
+
+    Diacritics dropped, hyphens treated as spaces and case ignored, so the
+    table needs one entry per spelling of a name rather than one per way of
+    typing it. Word boundaries are kept (hyphens become spaces rather than
+    disappearing) so a name cannot match across two unrelated words.
+    """
+    plain = strip_diacritics(text).lower().replace("-", " ")
+    return re.sub(r"\s+", " ", plain).strip()
 
 
 def name_variants(phrase: str) -> list[str]:
@@ -118,8 +136,11 @@ def name_variants(phrase: str) -> list[str]:
         phrase contains no name this knows about.
     """
     variants: list[str] = []
+    normalised = _normalise_for_name_match(phrase)
     for spellings in _NAME_SPELLINGS:
-        found = next((s for s in spellings if s in phrase), None)
+        found = next(
+            (s for s in spellings if _normalise_for_name_match(s) in normalised), None
+        )
         if found is None:
             continue
         others = [other for other in spellings if other != found]
@@ -133,9 +154,14 @@ def name_variants(phrase: str) -> list[str]:
         # that can match. Then the name on its own, because the book often
         # discusses the person without using the student's exact phrase --
         # Toán 8 names Descartes but never writes "toạ độ Descartes".
-        variants.extend(phrase.replace(found, other) for other in cased)
+        # Re-spelling needs the listed form to appear literally; when it
+        # matched only after normalising ("de cac" against "đề-các"), the
+        # replacement would be a no-op and re-query the phrase as it stands.
+        if found in phrase:
+            variants.extend(phrase.replace(found, other) for other in cased)
         variants.extend(cased)
-        variants.extend(phrase.replace(found, other) for other in others)
+        if found in phrase:
+            variants.extend(phrase.replace(found, other) for other in others)
         variants.extend(others)
         break
     return list(dict.fromkeys(variants))[:_MAX_NAME_VARIANTS]

@@ -515,8 +515,30 @@ def test_the_bare_name_is_tried_as_well_as_the_whole_phrase() -> None:
     assert "Descartes" in name_variants("toạ độ decat")
 
 
+@pytest.mark.parametrize(
+    "typed",
+    [
+        # Found live: a grade-9 student typed a final t, which matched none of
+        # the "-các" spellings, so the lookup never ran and the bot refused a
+        # question Toán 8 tập 2 trang 46 answers.
+        "tọa độ đề-cát",
+        # Accents, hyphens and case all even out before the comparison.
+        "toa do de cac",
+        "tọa độ đề các",
+    ],
+)
+def test_a_name_is_matched_however_the_student_accents_it(typed) -> None:
+    assert "Descartes" in name_variants(typed)
+
+
 def test_a_phrase_with_no_known_name_yields_no_variants() -> None:
     assert name_variants("hằng đẳng thức đáng nhớ") == []
+
+
+def test_normalising_cannot_match_a_name_across_two_words() -> None:
+    # Dropping diacritics turns "đọc lít" into "doc lit"; hyphens become
+    # spaces rather than vanishing so it cannot be read as "ơ-clít".
+    assert name_variants("cách đọc lít nước") == []
 
 
 def test_an_alternative_spelling_is_only_tried_when_the_first_search_fails(

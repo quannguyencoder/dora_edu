@@ -87,6 +87,52 @@ def test_an_empty_completion_falls_back_to_the_refusal(generator) -> None:
     assert result.grounded is False
 
 
+def test_a_refusal_the_model_wrote_itself_carries_no_citation(generator) -> None:
+    """The case a student hit: refused, yet pointed at the nearest page.
+
+    Asked "toạ độ decat là gì", the model refused -- but a Toán 7 passage
+    was in the context, so the answer was logged as grounded and the student
+    was told to open a page that had nothing to do with their question.
+    """
+    _install(generator, _StubCompletions(prompts.NO_CONTEXT_ANSWER))
+
+    result = generator.generate("toa do decat la gi", [_chunk()], PROFILE)
+
+    assert result.grounded is False
+    assert result.citations == []
+
+
+def test_a_rewritten_refusal_is_recognised_too(generator) -> None:
+    _install(
+        generator,
+        _StubCompletions(
+            "Mình chưa tìm thấy thông tin về tích phân trong sách giáo khoa của bạn. "
+            "Có lẽ đây là nội dung của lớp trên nhé!"
+        ),
+    )
+
+    result = generator.generate("Tich phan la gi?", [_chunk()], PROFILE)
+
+    assert result.grounded is False
+    assert result.citations == []
+
+
+def test_an_answer_that_cites_a_page_keeps_its_citation(generator) -> None:
+    """A real answer may still say "the book doesn't go further than this"."""
+    _install(
+        generator,
+        _StubCompletions(
+            "Theo sách Toán 6, tập 1, trang 12, phân số gồm tử số và mẫu số. "
+            "Phần mở rộng thì không có trong sách của bạn đâu nhé!"
+        ),
+    )
+
+    result = generator.generate("Phan so la gi?", [_chunk()], PROFILE)
+
+    assert result.grounded is True
+    assert result.citations == ["SGK Toán 6, trang 12"]
+
+
 def _openai_request() -> httpx.Request:
     """Build the minimal request object the OpenAI exception types require."""
     return httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
