@@ -480,7 +480,9 @@ class TutorService:
             )
 
         result = self._generator.generate(question, chunks, profile, session.history())
-        answer = prompts.hide_internal_wording(result.answer)
+        answer = prompts.drop_invented_page_refs(
+            prompts.hide_internal_wording(result.answer), chunks
+        )
         session.record_turn(question, answer)
 
         # Of the ten passages retrieved, an answer normally leans on one or

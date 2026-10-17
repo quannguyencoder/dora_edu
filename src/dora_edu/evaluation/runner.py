@@ -37,7 +37,11 @@ from dora_edu.llm.generator import (
     build_generator,
     is_provider_error_answer,
 )
-from dora_edu.llm.prompts import NO_CONTEXT_ANSWER, hide_internal_wording
+from dora_edu.llm.prompts import (
+    NO_CONTEXT_ANSWER,
+    drop_invented_page_refs,
+    hide_internal_wording,
+)
 from dora_edu.models import StudentProfile
 from dora_edu.rag_engine.retriever import Retriever
 
@@ -215,7 +219,7 @@ def ask_one(
     # than the one that gets sent -- which is how "xem lại đoạn 1 trong ngữ
     # cảnh" ended up in a published report after the bot had stopped saying
     # it.
-    answer = hide_internal_wording(result.answer)
+    answer = drop_invented_page_refs(hide_internal_wording(result.answer), chunks)
 
     retrieved_pages: set[int] = set()
     in_scope = True

@@ -145,6 +145,45 @@ def select_cited_sources(
     return selected[:limit]
 
 
+#: A page mentioned in passing ("... ở trang 9", "xem thêm tại trang 12"),
+#: as opposed to the answer's main citation ("Theo sách Toán 6, tập 1,
+#: trang 71"). The main one is copied from the context and is reliable; a
+#: passing one is where the model invents a number -- seen live, in an
+#: answer that cited the real page 125 and then referred to a page 9 that
+#: was never retrieved.
+_PASSING_PAGE_REFERENCE = re.compile(
+    r"\s*(?:ở|tại|trong|xem)\s+\*{0,2}trang\s+(\d{1,3})\*{0,2}", re.IGNORECASE
+)
+
+
+def drop_invented_page_refs(answer: str, chunks: list[RetrievedChunk]) -> str:
+    """Remove passing references to pages that were never retrieved.
+
+    The reminder under the answer is already built from metadata, so it can
+    never name an invented page -- but a page number inside the answer's own
+    prose reaches the student too, and sends them to a page with nothing on
+    it. Only references in passing are touched, and only when the page was
+    not among those retrieved; the answer's own citation is left alone.
+
+    Args:
+        answer: The generated answer.
+        chunks: The passages it was generated from.
+
+    Returns:
+        The answer with unsupported page references removed.
+    """
+    pages: set[int] = set()
+    for chunk in chunks:
+        start, end = chunk.page_start, chunk.page_end
+        if isinstance(start, int):
+            pages.update(range(start, (end if isinstance(end, int) else start) + 1))
+
+    def replace(match: re.Match[str]) -> str:
+        return "" if int(match.group(1)) not in pages else match.group(0)
+
+    return _PASSING_PAGE_REFERENCE.sub(replace, answer)
+
+
 def build_page_check_reminder(citations: list[str]) -> str:
     """Invite the student to verify the answer against the printed page.
 

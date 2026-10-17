@@ -242,3 +242,49 @@ def test_the_prompt_gives_a_rule_for_fractions_too() -> None:
     prompt = prompts.build_system_prompt(StudentProfile(grade=6, subject="Toán"))
 
     assert "a/b" in prompt
+
+
+# --- page numbers the model invented in passing ----------------------------
+
+
+def _page_chunk(start: int, end: int) -> RetrievedChunk:
+    return RetrievedChunk(
+        text="...", distance=0.2,
+        metadata={"book_title": "Ngữ văn 7 - tập 2", "page_start": start, "page_end": end},
+    )
+
+
+def test_a_page_mentioned_in_passing_that_was_never_retrieved_is_removed() -> None:
+    # Real answer: it cited the genuine page 125 and then pointed at a page 9
+    # that no retrieved passage covers. A student opening page 9 finds
+    # nothing, and concludes the bot makes things up.
+    answer = (
+        "Theo sách Ngữ văn 7, tập 2, trang 125: tục ngữ là sáng tác dân gian. "
+        "Sách cũng nói thêm về đặc điểm ở trang 9: có vần, nhịp nhàng."
+    )
+
+    cleaned = prompts.drop_invented_page_refs(answer, [_page_chunk(125, 126)])
+
+    assert "trang 9" not in cleaned
+    assert "trang 125" in cleaned
+    assert "có vần, nhịp nhàng" in cleaned
+
+
+def test_a_page_in_passing_that_was_retrieved_is_kept() -> None:
+    answer = "Khái niệm này còn được nhắc ở trang 126 nữa nhé."
+
+    assert prompts.drop_invented_page_refs(answer, [_page_chunk(125, 126)]) == answer
+
+
+def test_the_answers_own_citation_is_never_touched() -> None:
+    # Even when the cited page looks wrong, the main citation is left alone:
+    # it is copied from the context, and rewriting it would do more harm.
+    answer = "Theo sách Ngữ văn 7, tập 2, trang 900: tục ngữ là sáng tác dân gian."
+
+    assert prompts.drop_invented_page_refs(answer, [_page_chunk(125, 126)]) == answer
+
+
+def test_an_answer_with_no_page_reference_is_unchanged() -> None:
+    answer = "Bạn thử nghĩ xem tục ngữ khác thành ngữ ở điểm nào nhé!"
+
+    assert prompts.drop_invented_page_refs(answer, [_page_chunk(125, 126)]) == answer
