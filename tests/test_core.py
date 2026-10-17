@@ -910,10 +910,10 @@ def test_the_feedback_summary_is_shown_in_a_direct_message(
     assert "sai rồi" in reply.text
 
 
-def test_a_non_admin_is_refused_before_the_channel_is_even_considered(
+def test_a_non_admin_is_refused_even_in_a_direct_message(
     monkeypatch, textbook_rows, settings
 ) -> None:
-    # Even in a direct message, a student must not read other students' reports.
+    # Even one to one, a student must not read other students' reports.
     tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
 
     reply = tutor.handle(
@@ -923,178 +923,27 @@ def test_a_non_admin_is_refused_before_the_channel_is_even_considered(
     assert reply.text == prompts.ADMIN_ONLY_MESSAGE
 
 
-# --- reading the feedback with a password ----------------------------------
-
-
-def _password_tutor(monkeypatch, textbook_rows, settings, password: str):
-    monkeypatch.setattr(
-        retriever_module, "get_collection", lambda *a, **k: FakeCollection(textbook_rows)
-    )
-    settings = settings.model_copy(
-        update={"admin_user_ids": "", "feedback_password": password}
-    )
-    feedback = FeedbackStore()
-    tutor = TutorService(
-        retriever=Retriever(settings),
-        generator=FakeGenerator(cite_chunks=True),
-        sessions=SessionStore(max_turns=2),
-        settings=settings,
-        feedback=feedback,
-    )
-    answer_id = feedback.record_answer(
-        channel="discord", user_id="7", display_name="Hoàng Khang", grade=6,
-        subject="Toán", question="Phân số là gì?", answer="...",
-        citations=["Toán 6 - tập 2, trang 5"], grounded=True,
-    )
-    feedback.record_report(answer_id, "7", "trang này nói khác", "Hoàng Khang")
-    return tutor
-
-
-def _dm(tutor, text: str, user_id: str = "1"):
-    return tutor.handle(
-        IncomingMessage(channel="discord", user_id=user_id, text=text, is_private=True)
-    )
-
-
-def test_the_right_password_opens_the_feedback(monkeypatch, textbook_rows, settings) -> None:
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
-
-    reply = _dm(tutor, "/phanhoi matkhau-cua-nhom")
-
-    assert "Hoàng Khang" in reply.text
-    assert "trang này nói khác" in reply.text
-
-
-def test_a_wrong_password_shows_nothing(monkeypatch, textbook_rows, settings) -> None:
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
-
-    reply = _dm(tutor, "/phanhoi doan-bua")
-
-    assert reply.text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
-    assert "Hoàng Khang" not in reply.text
-
-
-def test_no_password_configured_means_nobody_gets_in(
-    monkeypatch, textbook_rows, settings
-) -> None:
-    # An unconfigured deployment must not be openable by guessing.
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "")
-
-    assert _dm(tutor, "/phanhoi").text == prompts.ADMIN_ONLY_MESSAGE
-    assert _dm(tutor, "/phanhoi bat-ky-gi").text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
-
-
-def test_typing_the_password_in_a_shared_channel_warns_that_it_leaked(
-    monkeypatch, textbook_rows, settings
-) -> None:
-    # Everyone in the channel just read the password. Saying so matters more
-    # than a terse refusal: a password the owner still believes is secret is
-    # worse than no password at all.
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
-
-    reply = tutor.handle(
-        IncomingMessage(
-            channel="discord", user_id="1", text="/phanhoi matkhau-cua-nhom",
-            is_private=False,
-        )
-    )
-
-    assert reply.text == prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE
-    assert "đổi mật khẩu" in reply.text
-    # And the feedback itself is still not shown.
-    assert "Hoàng Khang" not in reply.text
-
-
-def test_the_password_is_never_written_to_the_log(
-    monkeypatch, textbook_rows, settings, caplog
-) -> None:
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cua-nhom")
-
-    with caplog.at_level("INFO"):
-        _dm(tutor, "/phanhoi sai-mat-khau-nay")
-
-    assert "sai-mat-khau-nay" not in caplog.text
-
-
-# --- changing the password from the chat app -------------------------------
-
-
-def test_the_password_can_be_changed_with_the_old_one(
-    monkeypatch, textbook_rows, settings
-) -> None:
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
-
-    reply = _dm(tutor, "/doimatkhau matkhau-cu matkhau-moi-123")
-
-    assert reply.text == prompts.PASSWORD_CHANGED_MESSAGE
-    # The new one works...
-    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-moi-123").text
-    # ...and the old one no longer does, which is the point of changing it.
-    assert _dm(tutor, "/phanhoi matkhau-cu").text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
-
-
-def test_the_wrong_old_password_changes_nothing(
-    monkeypatch, textbook_rows, settings
-) -> None:
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
-
-    reply = _dm(tutor, "/doimatkhau doan-bua matkhau-moi-123")
-
-    assert reply.text == prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
-    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-cu").text
-
-
-def test_an_admin_can_change_the_password_without_the_old_one(
-    monkeypatch, textbook_rows, settings
-) -> None:
-    # The point of the admin list: someone who has forgotten the password
-    # can still rotate it after a leak.
+def test_a_password_is_not_a_way_in(monkeypatch, textbook_rows, settings) -> None:
+    # Identity is the only credential: a shared secret would also admit
+    # whoever learns it, over a shoulder or forwarded to a friend, and these
+    # reports name children.
     tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="99")
 
-    reply = _dm(tutor, "/doimatkhau matkhau-moi-123", user_id="99")
-
-    assert reply.text == prompts.PASSWORD_CHANGED_MESSAGE
-    # The password the admin just set now opens the summary for anyone who
-    # types it -- a classmate with the password, not just the admin.
-    opened = _dm(tutor, "/phanhoi matkhau-moi-123", user_id="7")
-    assert "Phản hồi của học sinh" in opened.text
+    for attempt in ("/phanhoi matkhau", "/phanhoi 123456", "/phanhoi dora-v4k3aypqc6"):
+        reply = tutor.handle(
+            IncomingMessage(channel="discord", user_id="7", text=attempt, is_private=True)
+        )
+        assert reply.text == prompts.ADMIN_ONLY_MESSAGE, attempt
 
 
-def test_a_too_short_password_is_refused(monkeypatch, textbook_rows, settings) -> None:
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
-
-    reply = _dm(tutor, "/doimatkhau matkhau-cu abc")
-
-    assert reply.text == prompts.PASSWORD_TOO_SHORT_MESSAGE
-    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-cu").text
-
-
-def test_changing_the_password_in_a_shared_channel_is_refused(
+def test_no_admin_configured_means_nobody_reads_the_reports(
     monkeypatch, textbook_rows, settings
 ) -> None:
-    # Both passwords would have been read by everyone in the channel.
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
+    # A fresh install must not be readable by whoever asks first.
+    tutor, _ = _admin_tutor(monkeypatch, textbook_rows, settings, admin_ids="")
 
     reply = tutor.handle(
-        IncomingMessage(
-            channel="discord", user_id="1",
-            text="/doimatkhau matkhau-cu matkhau-moi-123", is_private=False,
-        )
+        IncomingMessage(channel="discord", user_id="99", text="/phanhoi", is_private=True)
     )
 
-    assert reply.text == prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE
-    assert "Hoàng Khang" in _dm(tutor, "/phanhoi matkhau-cu").text
-
-
-def test_the_password_is_stored_hashed_not_in_the_clear(
-    monkeypatch, textbook_rows, settings
-) -> None:
-    # The database gets copied around (backups, handing it to a teacher), so
-    # a readable password in it would outlive every place it belonged.
-    tutor = _password_tutor(monkeypatch, textbook_rows, settings, "matkhau-cu")
-
-    _dm(tutor, "/doimatkhau matkhau-cu matkhau-moi-123")
-
-    stored = tutor._feedback._stored_password()
-    assert "matkhau-moi-123" not in stored
-    assert tutor._feedback.check_password("matkhau-moi-123")
+    assert reply.text == prompts.ADMIN_ONLY_MESSAGE

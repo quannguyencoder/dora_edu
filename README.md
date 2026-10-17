@@ -302,22 +302,10 @@ Có hai cách xem phản hồi:
 **1. Ngay trong Discord** — nhắn riêng cho bot `/phanhoi`. Bot trả lời số liệu
 tổng hợp và 5 lượt báo sai gần nhất, kèm **tên bạn đã báo** và lý do bạn ấy ghi.
 
-Hai cách mở khoá — dùng cách nào cũng được:
-- **Mật khẩu:** `/phanhoi <mật khẩu>`, mật khẩu ban đầu đặt ở `FEEDBACK_PASSWORD` trong `.env`
-- **Theo tài khoản:** khai ID Discord vào `ADMIN_USER_IDS` thì không cần gõ mật khẩu
+Chỉ tài khoản khai trong `ADMIN_USER_IDS` mới xem được. Không dùng mật khẩu chung: mật khẩu cũng mở cửa cho bất kỳ ai học được nó — nhìn trộm lúc gõ, hoặc được chuyển cho bạn khác — mà báo cáo thì có tên trẻ em, nên danh tính tài khoản là thứ duy nhất được chấp nhận.
 
-Đổi mật khẩu ngay trong chat (nhắn riêng cho bot):
-
-```
-/doimatkhau <mật khẩu cũ> <mật khẩu mới>
-```
-
-Người trong `ADMIN_USER_IDS` đổi được mà không cần mật khẩu cũ — để vẫn xoay được
-mật khẩu khi lỡ quên hoặc khi mật khẩu bị lộ. Mật khẩu mới lưu **dạng băm** trong
-`data/feedback.db`, không lưu chữ thật, và ghi đè mật khẩu trong `.env`.
-
-Và hai lớp bảo vệ, vì báo cáo có tên của học sinh khác:
-1. Không khai cả hai = **không ai xem được** (mặc định an toàn).
+Hai lớp bảo vệ:
+1. Không khai ai = **không ai xem được** (mặc định an toàn).
 2. Chỉ trả lời trong **tin nhắn riêng** với bot. Gõ trong phòng chung thì bot từ
    chối và nhắc nhắn riêng — vì tin nhắn trong phòng chung thì cả phòng đều đọc được.
    Nếu lỡ gõ cả mật khẩu ở phòng chung, bot báo ngay là mật khẩu đã lộ và nhắc đổi.
@@ -436,8 +424,7 @@ dora-run-zalo-bot      # Zalo OA webhook (cần TLS phía trước và đăng k�
 | `/chamdiem <dễ hiểu> <gợi mở>` | Chấm 1–5, ví dụ: `/chamdiem 5 4` |
 | `/xoa` | Xoá lịch sử trò chuyện |
 | `/trogiup` | Xem hướng dẫn |
-| `/phanhoi [mật khẩu]` | *(chỉ quản trị, chỉ trong tin nhắn riêng)* Xem phản hồi đã thu được, kèm tên người báo |
-| `/doimatkhau <cũ> <mới>` | *(chỉ quản trị, chỉ trong tin nhắn riêng)* Đổi mật khẩu xem phản hồi |
+| `/phanhoi` | *(chỉ quản trị, chỉ trong tin nhắn riêng)* Xem phản hồi đã thu được, kèm tên người báo |
 
 ---
 
@@ -774,23 +761,10 @@ Two ways to read it:
 **1. In Discord** — direct-message the bot `/phanhoi` for the totals and the
 five most recent reports, each naming **who reported it** and what they said.
 
-Two ways in — either works:
-- **A password:** `/phanhoi <password>`, initially set in `FEEDBACK_PASSWORD`
-- **By account:** list Discord ids in `ADMIN_USER_IDS` and skip the password
+Only accounts listed in `ADMIN_USER_IDS` can read it. No shared password: a password also admits whoever learns it — over a shoulder, forwarded to a friend — and these reports name children, so identity is the only credential accepted.
 
-Rotate it from the chat app (in a direct message):
-
-```
-/doimatkhau <old password> <new password>
-```
-
-Anyone on `ADMIN_USER_IDS` can change it without the old one, so a forgotten
-or leaked password can still be rotated. The new password is stored **salted
-and hashed** in `data/feedback.db` — never in the clear — and takes precedence
-over the one in `.env`.
-
-And two gates, because the reports name other students:
-1. With neither configured, **nobody** can read it.
+Two gates:
+1. With none configured, **nobody** can read it.
 2. Only in a one-to-one chat. Asked in a shared channel the bot refuses and
    says to DM instead — a reply in a shared channel is readable by everyone
    in it, and being an admin is permission to read the reports, not
@@ -912,8 +886,7 @@ dora-run-zalo-bot      # Zalo OA webhook (put TLS in front, register the URL)
 | `/chamdiem <dễ hiểu> <gợi mở>` | Rate 1–5, e.g. `/chamdiem 5 4` |
 | `/xoa` | Clear conversation history |
 | `/trogiup` | Help |
-| `/phanhoi [password]` | *(admins only, direct message only)* Show collected feedback, with reporters' names |
-| `/doimatkhau <old> <new>` | *(admins only, direct message only)* Change the feedback password |
+| `/phanhoi` | *(admins only, direct message only)* Show collected feedback, with reporters' names |
 
 ---
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import re
-import secrets
 
 from dora_edu.bot.adapter import IncomingMessage, OutgoingMessage
 from dora_edu.bot.feedback import FeedbackStore
@@ -220,9 +219,7 @@ class TutorService:
         if name in {"chamdiem", "rate"}:
             return self._rate_answer(argument, message, session)
         if name in {"phanhoi", "thongke"}:
-            return self._show_feedback(argument, message)
-        if name in {"doimatkhau", "password"}:
-            return self._change_password(argument, message)
+            return self._show_feedback(message)
         if name in {"xoa", "reset"}:
             session.clear_history()
             return OutgoingMessage(text="Mình đã xoá lịch sử trò chuyện rồi nhé! Bạn hỏi tiếp đi. 😊")
@@ -278,77 +275,7 @@ class TutorService:
             citations=record.citations,
         )
 
-    def _is_allowed_feedback_reader(self, password: str, user_id: str) -> bool:
-        """Whether this person may read the feedback reports.
-
-        Args:
-            password: What they typed after the command, possibly empty.
-            user_id: Their id on the channel they are writing from.
-
-        Returns:
-            ``True`` when they are on the admin list, or gave the right
-            password. ``False`` when neither is configured, so a deployment
-            nobody has set up cannot be opened by guessing.
-        """
-        if user_id in parse_model_list(self._settings.admin_user_ids):
-            return True
-        if not password:
-            return False
-        if self._feedback.has_password():
-            # A password set from the chat app wins over the one in .env, so
-            # changing it actually changes it -- otherwise the old one from
-            # the config file would keep working forever.
-            return self._feedback.check_password(password)
-        expected = self._settings.feedback_password
-        if not expected:
-            return False
-        # Constant-time comparison: a plain `==` returns faster the earlier
-        # the first wrong character is, which leaks the password one
-        # character at a time to anyone patient enough to measure.
-        return secrets.compare_digest(password, expected)
-
-    def _change_password(self, argument: str, message: IncomingMessage) -> OutgoingMessage:
-        """Change the feedback password from the chat app.
-
-        Whoever can already read the feedback may change the password:
-        either an id on the admin list, or anyone who types the current
-        password. That is what makes rotating it possible after it leaks,
-        without editing a file on the machine running the bot.
-
-        Args:
-            argument: ``"<mật khẩu cũ> <mật khẩu mới>"``, or just the new
-                password for an admin who needs no old one.
-            message: The incoming message, for identity and privacy.
-
-        Returns:
-            Confirmation, or what is missing.
-        """
-        if not message.is_private:
-            logger.warning("Password change attempted in a shared channel")
-            return OutgoingMessage(text=prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE)
-
-        parts = argument.split()
-        is_admin = message.user_id in parse_model_list(self._settings.admin_user_ids)
-
-        if is_admin and len(parts) == 1:
-            old, new = "", parts[0]
-        elif len(parts) == 2:
-            old, new = parts
-        else:
-            return OutgoingMessage(text=prompts.PASSWORD_USAGE_MESSAGE)
-
-        if not is_admin and not self._is_allowed_feedback_reader(old, message.user_id):
-            logger.info("Refused password change for %s", message.user_id)
-            return OutgoingMessage(text=prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE)
-
-        if len(new) < prompts.MIN_PASSWORD_LENGTH:
-            return OutgoingMessage(text=prompts.PASSWORD_TOO_SHORT_MESSAGE)
-
-        self._feedback.set_password(new)
-        logger.info("Feedback password changed by %s", message.user_id)
-        return OutgoingMessage(text=prompts.PASSWORD_CHANGED_MESSAGE)
-
-    def _show_feedback(self, argument: str, message: IncomingMessage) -> OutgoingMessage:
+    def _show_feedback(self, message: IncomingMessage) -> OutgoingMessage:
         """Show the collected feedback, for whoever runs the bot.
 
         Reading the review sheet means running ``dora-feedback`` in a
@@ -357,34 +284,22 @@ class TutorService:
         question in the chat app, with the reporters' names, so the team
         can act on feedback the day it arrives.
 
-        Two ways in, because the reports name other students and are not for
-        classmates to browse: being listed in ``ADMIN_USER_IDS``, or typing
-        the password in ``FEEDBACK_PASSWORD``. With neither configured,
-        nobody can read it.
+        One way in: the channel account has to be listed in
+        ``ADMIN_USER_IDS``. A password would be a second way in for anyone
+        who learns it -- over someone's shoulder, forwarded to a friend --
+        and these reports name other students, so identity is the only
+        credential accepted. Empty list means nobody, including after a
+        fresh install.
 
         Args:
-            argument: Everything after the command -- the password, if given.
             message: The incoming message, for the requester's identity.
 
         Returns:
-            The summary, or a refusal explaining what is missing.
+            The summary, or a refusal.
         """
-        password = argument.strip()
-        if password and not message.is_private:
-            # The password was just typed into a channel everyone can read,
-            # so it is no longer a secret. Say so plainly: a password the
-            # owner believes is private but isn't is worse than none.
-            logger.warning("Feedback password was typed in a shared channel")
-            return OutgoingMessage(text=prompts.FEEDBACK_PASSWORD_LEAKED_MESSAGE)
-
-        if not self._is_allowed_feedback_reader(password, message.user_id):
-            # Deliberately never logs the attempted password.
+        if message.user_id not in parse_model_list(self._settings.admin_user_ids):
             logger.info("Refused feedback summary for %s", message.user_id)
-            return OutgoingMessage(
-                text=prompts.FEEDBACK_WRONG_PASSWORD_MESSAGE
-                if password
-                else prompts.ADMIN_ONLY_MESSAGE
-            )
+            return OutgoingMessage(text=prompts.ADMIN_ONLY_MESSAGE)
 
         if not message.is_private:
             # A reply in a shared study channel is visible to everyone in it,

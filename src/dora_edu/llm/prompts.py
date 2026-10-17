@@ -279,44 +279,6 @@ ADMIN_ONLY_MESSAGE = (
     "Lệnh này dành cho thầy cô phụ trách bạn nhé. Bạn cứ hỏi bài bình thường thôi! 😊"
 )
 
-#: Shown when the password is typed in a channel other people can read.
-#: Warning the owner matters more than keeping the refusal terse: a password
-#: they still believe is secret is worse than no password at all.
-FEEDBACK_PASSWORD_LEAKED_MESSAGE = (
-    "⚠️ Bạn vừa gõ mật khẩu ở phòng chat chung — mọi người trong phòng đều đọc "
-    "được tin nhắn đó, nên mật khẩu này coi như đã lộ.\n\n"
-    "Bạn nên: (1) xoá tin nhắn vừa gõ, (2) đổi mật khẩu trong tệp .env, và "
-    "(3) lần sau nhắn riêng cho mình rồi mới gõ /phanhoi <mật khẩu> nhé."
-)
-
-#: Shown when the password does not match.
-FEEDBACK_WRONG_PASSWORD_MESSAGE = (
-    "Mật khẩu chưa đúng rồi bạn ơi. 🔑 Bạn kiểm tra lại giúp mình nhé."
-)
-
-#: Short enough to type on a phone, long enough not to be guessed by a
-#: classmate who watched someone type it once.
-MIN_PASSWORD_LENGTH = 8
-
-#: Shown when /doimatkhau is called without the right arguments.
-PASSWORD_USAGE_MESSAGE = (
-    "Cách đổi mật khẩu xem phản hồi:\n\n"
-    "`/doimatkhau <mật khẩu cũ> <mật khẩu mới>`\n\n"
-    "Nhớ nhắn riêng cho mình, đừng gõ ở phòng chat chung nhé! 🔒"
-)
-
-#: Shown when the new password is too short to be worth having.
-PASSWORD_TOO_SHORT_MESSAGE = (
-    f"Mật khẩu mới cần ít nhất {MIN_PASSWORD_LENGTH} ký tự bạn nhé — ngắn quá thì "
-    "bạn khác đoán ra mất. 🔑"
-)
-
-#: Shown after a successful change.
-PASSWORD_CHANGED_MESSAGE = (
-    "✅ Đã đổi mật khẩu xong! Từ giờ dùng mật khẩu mới để gõ /phanhoi nhé.\n\n"
-    "Nhớ báo cho bạn cùng nhóm biết, và mật khẩu cũ sẽ không dùng được nữa."
-)
-
 #: Shown when an admin asks for the feedback summary in a shared channel.
 #: The summary names the students who reported and quotes what they wrote,
 #: so it is only ever printed in a one-to-one chat with the bot.
