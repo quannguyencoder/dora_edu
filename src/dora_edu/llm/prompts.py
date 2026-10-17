@@ -288,6 +288,15 @@ def build_page_check_reminder(citations: list[str]) -> str:
 _BRACKETED_PASSAGE_LABEL = re.compile(r"\[\s*[ĐđDd]o[ạa]n\s+\d+\s*\]\s*")
 _INLINE_PASSAGE_LABEL = re.compile(r"\b([ĐđDd])o([ạa])n\s+\d+\b")
 
+#: Two or more rewritten labels in a row. Found live, in an answer about
+#: when the Lý dynasty began: the model wrote "nhìn vào **Đoạn 1** và
+#: **Đoạn 2**", which the rewrite above turned into "**Đoạn này** và
+#: **Đoạn này**" -- a sentence pointing at nothing twice. Bold markers are
+#: part of the match because the model usually emphasises these labels.
+_REPEATED_PASSAGE_LABEL = re.compile(
+    r"\*{0,2}([ĐđDd])o([ạa])n này\*{0,2}(?:\s*(?:,|và|hoặc)\s*\*{0,2}[ĐđDd]o[ạa]n này\*{0,2})+"
+)
+
 #: Internal wording the LLM is told never to use with a student (rule 11)
 #: but occasionally does anyway -- "bạn hãy xem lại đoạn 1 trong ngữ cảnh
 #: nhé" means nothing to a child, who sees no numbered passages. Rewritten
@@ -300,6 +309,16 @@ _INTERNAL_WORDING = (
     ("ngữ cảnh được cung cấp", "sách"),
     ("ngữ cảnh", "sách"),
 )
+
+
+def _starts_a_sentence(text: str, position: int) -> bool:
+    """Whether ``position`` in ``text`` is where a sentence begins.
+
+    Markdown emphasis and list markers are skipped on the way back, since a
+    label often arrives as ``**Đoạn 1**`` or at the head of a bullet.
+    """
+    before = text[:position].rstrip(" \t*_-•\n")
+    return not before or before[-1] in ".!?:"
 
 
 def hide_internal_wording(answer: str) -> str:
@@ -318,6 +337,14 @@ def hide_internal_wording(answer: str) -> str:
     """
     answer = _BRACKETED_PASSAGE_LABEL.sub("", answer)
     answer = _INLINE_PASSAGE_LABEL.sub(r"\1o\2n này", answer)
+    # "Đoạn này và Đoạn này" says less than naming them once together. The
+    # model capitalises these labels wherever they sit, so the replacement
+    # takes its case from the position in the sentence instead.
+    answer = _REPEATED_PASSAGE_LABEL.sub(
+        lambda m: ("Những" if _starts_a_sentence(answer, m.start()) else "những")
+        + " đoạn dưới đây",
+        answer,
+    )
     for internal, replacement in _INTERNAL_WORDING:
         answer = answer.replace(internal, replacement)
         answer = answer.replace(internal.capitalize(), replacement.capitalize())

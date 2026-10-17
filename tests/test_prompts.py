@@ -332,3 +332,21 @@ def test_polishing_never_returns_an_empty_answer() -> None:
     answer = "Xem chi tiết tại trang 900."
 
     assert prompts.polish_answer(answer, [_page_chunk(125, 126)]).strip()
+
+
+def test_two_passage_labels_in_a_row_become_one_phrase() -> None:
+    # Found live, in an answer about when the Lý dynasty began: rewriting
+    # each label on its own produced "Đoạn này và Đoạn này", a sentence that
+    # points at nothing twice.
+    answer = "bạn hãy thử nhìn vào **Đoạn 1** và **Đoạn 2** trong phần sách nhé"
+
+    cleaned = prompts.hide_internal_wording(answer)
+
+    assert "Đoạn này và" not in cleaned
+    assert "những đoạn dưới đây" in cleaned
+
+
+def test_a_capitalised_run_of_labels_keeps_its_case() -> None:
+    assert prompts.hide_internal_wording("Đoạn 1 và đoạn 2 đều nói về phân số.").startswith(
+        "Những đoạn dưới đây"
+    )
